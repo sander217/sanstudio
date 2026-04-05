@@ -1,0 +1,13 @@
+{
+  "name": "Design Agent Studio",
+  "id": "design-agent-studio",
+  "api": "1.0.0",
+  "main": "code.js",
+  "ui": "ui.html",
+  "capabilities": [],
+  "enableProposedApi": false,
+  "editorType": ["figma"],
+  "networkAccess": {
+    "allowedDomains": ["127.0.0.1"]
+  }
+}

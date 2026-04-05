@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 12px;
+    color: #333;
+    padding: 16px;
+    background: #fff;
+  }
+  h2 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  .subtitle {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 16px;
+  }
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid #e5e5e5;
+    margin-bottom: 16px;
+  }
+  .tab {
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #888;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+  }
+  .tab.active {
+    color: #333;
+    border-bottom-color: #333;
+  }
+  .tab:hover { color: #333; }
+  textarea {
+    width: 100%;
+    height: 280px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 12px;
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  textarea:focus { border-color: #333; }
+  textarea::placeholder { color: #bbb; }
+  .drop-zone {
+    width: 100%;
+    height: 280px;
+    border: 2px dashed #d0d0d0;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: #333;
+    color: #333;
+    background: #fafafa;
+  }
+  .drop-zone .icon { font-size: 24px; opacity: 0.4; }
+  .drop-zone .label { font-size: 12px; font-weight: 500; }
+  .drop-zone .hint { font-size: 11px; color: #aaa; }
+  .drop-zone input[type="file"] { display: none; }
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    border: none;
+  }
+  .btn-primary {
+    background: #333;
+    color: #fff;
+  }
+  .btn-primary:hover { background: #111; }
+  .btn-primary:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  .btn-secondary {
+    background: #f5f5f5;
+    color: #666;
+    border: 1px solid #e0e0e0;
+  }
+  .btn-secondary:hover { background: #eee; }
+  .status-bar {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.5;
+    display: none;
+  }
+  .status-bar.info {
+    display: block;
+    background: #f0f4ff;
+    color: #1e40af;
+  }
+  .status-bar.success {
+    display: block;
+    background: #f0fdf4;
+    color: #166534;
+  }
+  .status-bar.error {
+    display: block;
+    background: #fef2f2;
+    color: #991b1b;
+  }
+  .status-bar.warning {
+    display: block;
+    background: #fffbeb;
+    color: #92400e;
+  }
+  .preview {
+    margin-top: 12px;
+    padding: 10px 12px;
+    background: #fafafa;
+    border-radius: 6px;
+    font-size: 11px;
+    display: none;
+  }
+  .preview.visible { display: block; }
+  .preview-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 3px 0;
+  }
+  .preview-label { color: #888; }
+  .preview-value { font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h2>Design Agent Studio</h2>
+<p class="subtitle">Import structured JSON from Gate 3</p>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('paste')">Paste JSON</div>
+  <div class="tab" onclick="switchTab('file')">Upload file</div>
+  <div class="tab" onclick="switchTab('bridge')">Auto-import</div>
+</div>
+
+<div id="paste-tab">
+  <textarea
+    id="json-input"
+    placeholder='Paste your Gate 3 JSON here...
+
+{
+  "schema_version": "0.2.0",
+  "flow_name": "...",
+  "screens": [...]
+}'
+    oninput="onJsonChange()"
+  ></textarea>
+</div>
+
+<div id="file-tab" style="display:none">
+  <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+    <div class="icon">↑</div>
+    <div class="label">Drop a .json file here</div>
+    <div class="hint">or click to browse</div>
+    <input type="file" id="file-input" accept=".json" onchange="onFileSelect(event)">
+  </div>
+</div>
+
+<div id="bridge-tab" style="display:none">
+  <div style="padding:24px;text-align:center;border:1px solid #e0e0e0;border-radius:6px;min-height:280px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
+    <div id="bridge-status-icon" style="width:12px;height:12px;border-radius:50%;background:#ccc"></div>
+    <div id="bridge-status-text" style="font-size:12px;font-weight:500;color:#888">Not connected</div>
+    <div style="font-size:11px;color:#aaa;max-width:280px;line-height:1.5" id="bridge-hint">
+      Start the bridge server:<br>
+      <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:10px">node bridge/server.js</code><br><br>
+      Then export from Claude Code:<br>
+      <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:10px">curl -X POST http://127.0.0.1:3333/push -d @design.json</code>
+    </div>
+    <button class="btn btn-secondary" style="flex:none;width:auto;padding:8px 20px" id="bridge-toggle" onclick="toggleBridge()">
+      Start listening
+    </button>
+  </div>
+</div>
+
+<div id="preview" class="preview"></div>
+<div id="status" class="status-bar"></div>
+
+<div class="actions">
+  <button class="btn btn-secondary" onclick="parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*')">
+    Cancel
+  </button>
+  <button class="btn btn-primary" id="import-btn" disabled onclick="doImport()">
+    Import to Figma
+  </button>
+</div>
+
+<script>
+let currentJson = null;
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('paste-tab').style.display = 'none';
+  document.getElementById('file-tab').style.display = 'none';
+  document.getElementById('bridge-tab').style.display = 'none';
+  if (tab === 'paste') {
+    document.querySelector('.tab:first-child').classList.add('active');
+    document.getElementById('paste-tab').style.display = '';
+  } else if (tab === 'file') {
+    document.querySelectorAll('.tab')[1].classList.add('active');
+    document.getElementById('file-tab').style.display = '';
+  } else {
+    document.querySelector('.tab:last-child').classList.add('active');
+    document.getElementById('bridge-tab').style.display = '';
+  }
+}
+
+let bridgeInterval = null;
+let bridgeActive = false;
+const BRIDGE_URL = 'http://127.0.0.1:3333';
+
+function toggleBridge() {
+  if (bridgeActive) {
+    stopBridge();
+  } else {
+    startBridge();
+  }
+}
+
+function startBridge() {
+  bridgeActive = true;
+  document.getElementById('bridge-toggle').textContent = 'Stop listening';
+  setBridgeStatus('waiting', 'Listening for export...');
+  pollBridge();
+  bridgeInterval = setInterval(pollBridge, 2000);
+}
+
+function stopBridge() {
+  bridgeActive = false;
+  if (bridgeInterval) clearInterval(bridgeInterval);
+  bridgeInterval = null;
+  document.getElementById('bridge-toggle').textContent = 'Start listening';
+  setBridgeStatus('off', 'Not connected');
+}
+
+function setBridgeStatus(state, text) {
+  var icon = document.getElementById('bridge-status-icon');
+  var label = document.getElementById('bridge-status-text');
+  label.textContent = text;
+  if (state === 'off') { icon.style.background = '#ccc'; }
+  else if (state === 'waiting') { icon.style.background = '#F59E0B'; }
+  else if (state === 'connected') { icon.style.background = '#22C55E'; }
+  else if (state === 'error') { icon.style.background = '#EF4444'; }
+}
+
+function pollBridge() {
+  if (!bridgeActive) return;
+  fetch(BRIDGE_URL + '/pull')
+    .then(function(resp) {
+      if (resp.status === 204) {
+        setBridgeStatus('waiting', 'Connected — waiting for export...');
+        return null;
+      }
+      if (resp.ok) return resp.text();
+      throw new Error('Bridge error: ' + resp.status);
+    })
+    .then(function(raw) {
+      if (!raw) return;
+      setBridgeStatus('connected', 'Received! Importing...');
+      try {
+        var data = JSON.parse(raw);
+        currentJson = raw;
+        validate(data);
+        showStatus('info', 'Auto-import: received from bridge. Building...');
+        parent.postMessage({
+          pluginMessage: { type: 'build-flow', json: raw }
+        }, '*');
+      } catch (err) {
+        showStatus('error', 'Bridge data invalid: ' + err.message);
+      }
+    })
+    .catch(function(err) {
+      if (err.message && err.message.includes('Failed to fetch')) {
+        setBridgeStatus('error', 'Bridge not running on :3333');
+      } else {
+        setBridgeStatus('error', err.message);
+      }
+    });
+}
+
+function onJsonChange() {
+  const raw = document.getElementById('json-input').value.trim();
+  if (!raw) {
+    currentJson = null;
+    document.getElementById('import-btn').disabled = true;
+    hideStatus();
+    hidePreview();
+    return;
+  }
+  try {
+    const data = JSON.parse(raw);
+    currentJson = raw;
+    validate(data);
+  } catch (e) {
+    currentJson = null;
+    document.getElementById('import-btn').disabled = true;
+    showStatus('error', 'Invalid JSON: ' + e.message);
+    hidePreview();
+  }
+}
+
+function onFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const raw = e.target.result;
+    try {
+      const data = JSON.parse(raw);
+      currentJson = raw;
+      document.getElementById('json-input').value = raw;
+      validate(data);
+      switchTab('paste');
+    } catch (err) {
+      showStatus('error', 'Invalid JSON file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function validate(data) {
+  const errors = [];
+  if (!data.schema_version) errors.push('Missing schema_version');
+  if (!data.screens || !Array.isArray(data.screens) || data.screens.length === 0) {
+    errors.push('Missing or empty screens array');
+  }
+
+  if (data.schema_version && data.schema_version !== '0.2.0' && data.schema_version !== '0.1.0') {
+    errors.push('Unsupported schema version: ' + data.schema_version + ' (expected 0.2.0)');
+  }
+
+  if (data.screens) {
+    data.screens.forEach(function(screen, i) {
+      if (!screen.name) errors.push('Screen ' + i + ': missing name');
+      if (!screen.nodes || !Array.isArray(screen.nodes)) {
+        errors.push('Screen ' + i + ': missing nodes');
+      }
+    });
+  }
+
+  if (errors.length > 0) {
+    showStatus('error', 'Validation errors:\n' + errors.map(e => '• ' + e).join('\n'));
+    document.getElementById('import-btn').disabled = true;
+    hidePreview();
+    return;
+  }
+
+  // Valid — show preview
+  document.getElementById('import-btn').disabled = false;
+  hideStatus();
+  showPreview(data);
+}
+
+function showPreview(data) {
+  const totalNodes = data.screens.reduce(function(sum, s) { return sum + (s.nodes ? s.nodes.length : 0); }, 0);
+  const screens = data.screens.map(function(s) {
+    return s.state ? s.name + ' (' + s.state + ')' : s.name;
+  });
+  const dsName = data.design_system ? data.design_system.name : 'none';
+
+  let html = '';
+  html += '<div class="preview-row"><span class="preview-label">Flow</span><span class="preview-value">' + (data.flow_name || 'unnamed') + '</span></div>';
+  html += '<div class="preview-row"><span class="preview-label">Schema</span><span class="preview-value">v' + data.schema_version + '</span></div>';
+  html += '<div class="preview-row"><span class="preview-label">Screens</span><span class="preview-value">' + data.screens.length + '</span></div>';
+  html += '<div class="preview-row"><span class="preview-label">Total nodes</span><span class="preview-value">' + totalNodes + '</span></div>';
+  html += '<div class="preview-row"><span class="preview-label">Design system</span><span class="preview-value">' + dsName + '</span></div>';
+  html += '<div class="preview-row"><span class="preview-label">Viewport</span><span class="preview-value">' + (data.viewport || 'not specified') + '</span></div>';
+
+  if (data.screens.length <= 6) {
+    html += '<div style="margin-top:6px;padding-top:6px;border-top:1px solid #e5e5e5">';
+    screens.forEach(function(s) {
+      html += '<div style="padding:2px 0;color:#555">→ ' + s + '</div>';
+    });
+    html += '</div>';
+  }
+
+  const el = document.getElementById('preview');
+  el.innerHTML = html;
+  el.classList.add('visible');
+}
+
+function hidePreview() {
+  document.getElementById('preview').classList.remove('visible');
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById('status');
+  el.className = 'status-bar ' + type;
+  el.textContent = msg;
+}
+
+function hideStatus() {
+  const el = document.getElementById('status');
+  el.className = 'status-bar';
+}
+
+function doImport() {
+  if (!currentJson) return;
+  document.getElementById('import-btn').disabled = true;
+  showStatus('info', 'Rendering...');
+  parent.postMessage({
+    pluginMessage: { type: 'build-flow', json: currentJson }
+  }, '*');
+}
+
+// Listen for messages from plugin code
+window.onmessage = function(event) {
+  const msg = event.data.pluginMessage;
+  if (!msg) return;
+
+  if (msg.type === 'status') {
+    showStatus('info', msg.message);
+  }
+  if (msg.type === 'complete') {
+    showStatus('success', msg.message);
+    document.getElementById('import-btn').disabled = false;
+  }
+  if (msg.type === 'error' || msg.type === 'validation-error') {
+    const errors = msg.errors ? msg.errors.join('\n• ') : msg.message;
+    showStatus('error', msg.type === 'validation-error' ? 'Validation errors:\n• ' + errors : errors);
+    document.getElementById('import-btn').disabled = false;
+  }
+};
+
+// Drag and drop
+const dz = document.getElementById('drop-zone');
+dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('dragover'); });
+dz.addEventListener('dragleave', function() { dz.classList.remove('dragover'); });
+dz.addEventListener('drop', function(e) {
+  e.preventDefault();
+  dz.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file && file.name.endsWith('.json')) {
+    const reader = new FileReader();
+    reader.onload = function(ev) {
+      try {
+        const data = JSON.parse(ev.target.result);
+        currentJson = ev.target.result;
+        document.getElementById('json-input').value = ev.target.result;
+        validate(data);
+        switchTab('paste');
+      } catch (err) {
+        showStatus('error', 'Invalid JSON: ' + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+});
+</script>
+
+</body>
+</html>
