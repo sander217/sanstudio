@@ -222,6 +222,8 @@ SECONDARY STATES (document in spec):
 - [States that matter but don't need hi-fi]
 ```
 
+For ITERATE: proactively generate obvious state variations (e.g., on-track / behind / completed) without asking. List what you're generating so the user can cut if needed.
+
 ---
 
 ## Step 7: Hi-Fi Mockup Generation

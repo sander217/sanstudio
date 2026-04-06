@@ -457,8 +457,15 @@ Core Design Decisions:
 3. [Decision]: [what and why]
 Flow Structure: [diagram reference + summary]
 Wireframe Contract: Locked skeleton: [list] / Flexible: [list]
-Technical Validation: Feasibility: [GREEN/YELLOW/RED] / Key constraint: [constraint] / 🔧 "[engineering translation]" / Design system impact: [impact]
-A11y Profile: Complexity: [LOW/MEDIUM/HIGH] / Key concern: [if any]
+Technical Validation:
+- Feasibility: [GREEN/YELLOW/RED]
+- Key constraint: [constraint]
+- 🔧 "[engineering translation]"
+- Design system impact: [impact]
+
+A11y Profile:
+- Complexity: [LOW/MEDIUM/HIGH]
+- Key concern: [if any]
 Implementation Sequence:
 - Phase 1: [scope] — [relative effort] — ships independently: [yes/no]
   Validate: [success signal]
