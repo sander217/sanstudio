@@ -536,17 +536,3 @@ If the user wants to stop at any point:
 - **ITERATE over-analysis:** Giving a product strategy lecture when the user wants a 
   color change.
 - **COMPARE without visuals panic:** Refusing to analyze because there are no screenshots.
-
----
-
-## Future TODOs (Phase 2)
-
-### Re-Entry Protocol
-Accept previous handoff blocks from prior sessions. Parse, reconstruct context, 
-enter at appropriate step.
-
-### i18n Awareness
-Flag CJK layout, RTL needs, string-length variability for multi-language products.
-
-### Pattern Memory
-Capture entry type frequency, insight patterns, edit rates, routing overrides.
