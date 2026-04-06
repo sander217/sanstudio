@@ -2,6 +2,11 @@
 
 Parses structured JSON from Gate 3 and creates editable Figma frames.
 
+Gate 3 also ships with a reusable technique database at
+[`skills/design-lock/design-techniques-db.md`](/Users/sanderchen/Documents/Claude/Projects/sanstudio/skills/design-lock/design-techniques-db.md).
+Before designing, the skill matches user keywords to the best-fit technique
+clusters, then records those decisions in companion docs and JSON metadata.
+
 ## Setup
 
 ```bash
@@ -64,6 +69,7 @@ to create this structure and optionally push the JSON to the local bridge server
 | Font fallback (→ Inter if font unavailable) | ✅ |
 | JSON validation (ids, parentId refs, required fields) | ✅ |
 | Design system metadata (preserved, not consumed) | ✅ Passthrough |
+| Technique cluster metadata (preserved, not consumed) | ✅ Passthrough |
 
 ## What the parser does NOT handle (yet)
 

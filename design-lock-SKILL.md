@@ -114,6 +114,50 @@ specific values you're working with.
 Propose a minimal framework (1-2 fonts, 5-7 colors, spacing base, radius, shadow).
 Confirm before proceeding.
 
+### Technique Database Retrieval (MANDATORY)
+
+Before defining the visual language or generating hi-fi, read:
+- `skills/design-lock/design-techniques-db.md`
+
+This is Gate 3's reusable technique database. It exists to import proven design
+patterns from high-performing products without blindly copying their visual skin.
+
+1. **Extract keywords** from the user's request and upstream blocks:
+   - product type
+   - screen type
+   - user intent
+   - UX risk words
+   - platform/context
+   - tone/brand words
+2. **Match against the database** and score fit.
+3. **Select 1-3 technique clusters max.** More than that usually creates a mushy design.
+4. **Explain the match before designing:**
+   ```md
+   🎯 TECHNIQUE MATCH
+   Keywords:
+   - [keyword]
+
+   Matched clusters:
+   - [Cluster Name]: [why it fits]
+
+   Techniques to apply:
+   - [technique]
+
+   Techniques intentionally excluded:
+   - [pattern you are NOT using and why]
+   ```
+5. **Adapt, don't clone.** Borrow mechanism, not brand surface.
+   - OK: hierarchy model, comparison structure, reassurance pattern
+   - Not OK: copying somebody else's exact type ramp, palette, or composition
+6. **Propagate the chosen techniques into all outputs:**
+   - HTML mockup structure
+   - Interaction Spec
+   - DDR
+   - JSON `metadata.technique_clusters`
+   - JSON `metadata.decisions_applied`
+7. **ITERATE exception:** if the user wants a tight fidelity tweak, use the database
+   as a decision lens, not permission to redesign the structure.
+
 ---
 
 ## Step 2: Visual Direction — Progressive Refinement
@@ -552,6 +596,13 @@ Flow-level design system (defined once), per-screen nodes:
         "direction_name": "[from Gate 2 or evaluation]",
         "direction_type": "[MVP|IDEAL|CREATIVE|HYBRID|ITERATE|CRITIQUE_FIX]",
         "version": "v5",
+        "technique_clusters": [
+          {
+            "name": "[cluster name from design-techniques-db]",
+            "keywords": ["[matched keyword]"],
+            "reason": "[why selected for this screen]"
+          }
+        ],
         "decisions_applied": [
           { "decision": "[what]", "gate": "G2", "status": "LOCKED" }
         ],
@@ -602,6 +653,13 @@ Retreats: [none | G3 → G2 because X]
 
 ## Context
 [2-3 sentences from Gate 1]
+
+## Technique Clusters Applied
+### [Cluster Name]
+Matched keywords: [list]
+Why it fit: [one short paragraph]
+Applied through:
+- [specific layout / hierarchy / interaction decision]
 
 ## Key Decisions
 ### 1. [Decision]
@@ -728,6 +786,8 @@ check DDR first.
 21. **All interactive elements must work.** If it looks interactive, it must be interactive. No fake UI.
 22. **Structured diff for every ITERATE/CRITIQUE.** Changed / Kept / New / Flagged for later.
 23. **Adjacent screens flag for CRITIQUE.** Proactively note related screens that might have same issues.
+24. **Technique retrieval is mandatory.** Match 1-3 clusters from the design database before hi-fi.
+25. **Borrow patterns, not skins.** Import interaction logic and information structure, never clone another product's surface style.
 
 ---
 

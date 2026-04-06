@@ -270,9 +270,22 @@
         "direction_name": "Pre-populated Dashboard MVP",
         "direction_type": "HYBRID",
         "version": "v3",
+        "technique_clusters": [
+          {
+            "name": "Activation Onboarding",
+            "keywords": ["onboarding", "new user", "welcome"],
+            "reason": "The first screen needs to drive first value quickly for invited users."
+          },
+          {
+            "name": "Dashboard Scanability",
+            "keywords": ["dashboard", "tasks", "overview"],
+            "reason": "The layout should orient the user immediately after entry."
+          }
+        ],
         "decisions_applied": [
           { "decision": "Skip wizard, show team content immediately", "gate": "G2", "status": "LOCKED" },
-          { "decision": "Add inviter welcome message", "gate": "G2", "status": "LOCKED" }
+          { "decision": "Add inviter welcome message", "gate": "G2", "status": "LOCKED" },
+          { "decision": "Surface a focused checklist instead of a broad feature tour", "gate": "G3", "status": "LOCKED" }
         ],
         "overrides": []
       }
