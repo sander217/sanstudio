@@ -596,7 +596,7 @@ async function importFlow(data: DASFlow) {
 figma.showUI(__html__, { width: 480, height: 560 });
 
 figma.ui.onmessage = async (msg: any) => {
-  if (msg.type === 'import') {
+  if (msg.type === 'import' || msg.type === 'build-flow') {
     try {
       const data = JSON.parse(msg.json) as DASFlow;
       await importFlow(data);

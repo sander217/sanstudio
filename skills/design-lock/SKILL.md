@@ -1,0 +1,1 @@
+../../design-lock-SKILL.md

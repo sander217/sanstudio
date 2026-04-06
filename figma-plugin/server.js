@@ -8,7 +8,7 @@
 const http = require('http');
 
 const PORT = 3333;
-const HOST = '127.0.0.1';
+const HOST = 'localhost';
 
 // In-memory queue — latest push wins
 let pendingJson = null;
