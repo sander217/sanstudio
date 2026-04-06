@@ -193,9 +193,9 @@
     <div id="bridge-status-text" style="font-size:12px;font-weight:500;color:#888">Not connected</div>
     <div style="font-size:11px;color:#aaa;max-width:280px;line-height:1.5" id="bridge-hint">
       Start the bridge server:<br>
-      <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:10px">node bridge/server.js</code><br><br>
+      <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:10px">node server.js</code><br><br>
       Then export from Claude Code:<br>
-      <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:10px">curl -X POST http://127.0.0.1:3333/push -d @design.json</code>
+      <code style="background:#f5f5f5;padding:2px 6px;border-radius:3px;font-size:10px">curl -X POST http://localhost:3333/push -d @.../latest/figma/design-export.json</code>
     </div>
     <button class="btn btn-secondary" style="flex:none;width:auto;padding:8px 20px" id="bridge-toggle" onclick="toggleBridge()">
       Start listening
@@ -237,7 +237,7 @@ function switchTab(tab) {
 
 let bridgeInterval = null;
 let bridgeActive = false;
-const BRIDGE_URL = 'http://127.0.0.1:3333';
+const BRIDGE_URL = 'http://localhost:3333';
 
 function toggleBridge() {
   if (bridgeActive) {

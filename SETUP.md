@@ -112,15 +112,15 @@ npx tsc
 開一個新的 Terminal tab（保持開著）：
 
 ```bash
-cd .claude/skills/design-agent-studio/figma-plugin
-node bridge/server.js
+cd .claude/skills/design-agent-studio
+node figma-plugin/server.js
 ```
 
 你會看到：
 
 ```
   Design Agent Studio — Bridge Server
-  Listening on http://127.0.0.1:3333
+  Listening on http://localhost:3333
 
   POST /push  — send JSON from Claude Code
   GET  /pull  — Figma Plugin fetches pending JSON
@@ -128,6 +128,7 @@ node bridge/server.js
 ```
 
 > 這個 Terminal 需要一直開著。bridge server 是 Claude Code 和 Figma Plugin 之間的橋樑。
+> Claude 產生的 HTML / JSON / handoff docs 會寫到 `/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output`，不會塞進 repo 根目錄。
 
 ### 步驟 2：Figma Plugin 開始監聽
 
@@ -141,7 +142,7 @@ node bridge/server.js
 回到你跑 Claude Code 的 Terminal（不是 bridge server 那個），測試一下：
 
 ```bash
-curl -s -X POST http://127.0.0.1:3333/push \
+curl -s -X POST http://localhost:3333/push \
   -H "Content-Type: application/json" \
   -d @.claude/skills/design-agent-studio/figma-plugin/test-sample.json
 ```
@@ -165,7 +166,7 @@ curl -s -X POST http://127.0.0.1:3333/push \
 ```bash
 # Terminal Tab 1：Bridge Server（保持開著）
 cd your-project
-node .claude/skills/design-agent-studio/figma-plugin/bridge/server.js
+node .claude/skills/design-agent-studio/figma-plugin/server.js
 
 # Terminal Tab 2：Claude Code
 cd your-project
@@ -201,6 +202,8 @@ claude
 
 當你對設計滿意，說 "export"。Claude Code 會自動把 JSON 送到 bridge server，Figma Plugin 自動接收並畫出設計。
 
+HTML mockup 會留在外部 output session 裡，Figma 只讀 `figma/design-export.json`。
+
 ---
 
 ## 目錄結構
@@ -224,8 +227,20 @@ your-project/
         ├── ui.html                              ← Plugin 介面
         ├── tsconfig.json                        ← TypeScript 設定
         ├── test-sample.json                     ← 測試用 JSON
-        └── bridge/
-            └── server.js                        ← Bridge Server
+        └── server.js                            ← Bridge Server
+```
+
+外部輸出目錄：
+
+```text
+/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output/
+├── latest -> sessions/<timestamp>-<slug>
+└── sessions/
+    └── <timestamp>-<slug>/
+        ├── session.json
+        ├── html/
+        ├── figma/
+        └── docs/
 ```
 
 ---
@@ -255,20 +270,20 @@ cat .claude/skills/design-agent-studio/CLAUDE.md >> CLAUDE.md
 
 ```bash
 # 檢查 server 是否在跑
-curl http://127.0.0.1:3333/status
+curl http://localhost:3333/status
 ```
 
 如果回應 `connection refused`，server 沒在跑。重新啟動：
 
 ```bash
-node .claude/skills/design-agent-studio/figma-plugin/bridge/server.js
+node .claude/skills/design-agent-studio/figma-plugin/server.js
 ```
 
 ### Auto-import 燈號一直是紅色
 
 紅色 = Plugin 連不到 bridge server。確認：
-1. Bridge server 有在跑（看 Terminal 有沒有 "Listening on http://127.0.0.1:3333"）
-2. `manifest.json` 裡 `allowedDomains` 包含 `"127.0.0.1"`
+1. Bridge server 有在跑（看 Terminal 有沒有 "Listening on http://localhost:3333"）
+2. `manifest.json` 裡 `devAllowedDomains` 包含 `"http://localhost:3333"`
 3. 重新載入 Plugin（Figma → Plugins → Development → 重新選 manifest）
 
 ### TypeScript 編譯失敗

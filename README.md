@@ -30,6 +30,20 @@ This produces `code.js` from `code.ts`. The plugin needs two files to run:
 4. Click "Import to Figma"
 5. Screens appear on your canvas, arranged horizontally with labels
 
+The plugin imports JSON, not HTML. Keep preview HTML artifacts in the external output
+folder and export the Figma JSON alongside them:
+
+```text
+/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output/
+  latest/
+    html/
+    figma/design-export.json
+    docs/
+```
+
+Use [`scripts/export-design-session.sh`](/Users/sanderchen/Documents/Claude/Projects/sanstudio/scripts/export-design-session.sh)
+to create this structure and optionally push the JSON to the local bridge server.
+
 ## What the parser handles
 
 | Feature | Status |
@@ -82,7 +96,7 @@ multi-state, and the design_system block.
 
 ## Schema version
 
-This parser targets **schema v0.2.0** as defined in `design-lock-SKILL.md`.
+This parser targets **schema v0.2.0** as defined in [`skills/design-lock/SKILL.md`](/Users/sanderchen/Documents/Claude/Projects/sanstudio/skills/design-lock/SKILL.md).
 Key differences from v0.1.0:
 - `design_system` defined at flow level (not per-screen)
 - `layoutSizingHorizontal/Vertical` replaces bare `width: "FILL"`
