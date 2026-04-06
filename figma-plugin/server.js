@@ -14,6 +14,87 @@ const HOST = 'localhost';
 let pendingJson = null;
 let pushCount = 0;
 
+function analyzeFlow(data) {
+  const screens = Array.isArray(data.screens) ? data.screens : [];
+  const nodes = screens.reduce((acc, screen) => {
+    if (Array.isArray(screen.nodes)) acc.push(...screen.nodes);
+    return acc;
+  }, []);
+  const textNodes = nodes.filter(node => node && node.type === 'TEXT');
+  const frameNodes = nodes.filter(node => node && (node.type === 'FRAME' || node.type === 'IMAGE'));
+  const primitiveNodes = nodes.filter(node => node && node.type !== 'FRAME' && node.type !== 'IMAGE');
+
+  const screenIssues = [];
+  screens.forEach((screen, index) => {
+    const screenNodes = Array.isArray(screen.nodes) ? screen.nodes : [];
+    const screenTextNodes = screenNodes.filter(node => node && node.type === 'TEXT');
+    const screenFrameNodes = screenNodes.filter(node => node && (node.type === 'FRAME' || node.type === 'IMAGE'));
+
+    if (screenNodes.length >= 8 && screenTextNodes.length === 0) {
+      screenIssues.push(`Screen ${index + 1} "${screen.name || 'unnamed'}" has ${screenNodes.length} nodes but no TEXT nodes.`);
+    }
+
+    if (screenNodes.length >= 12 && screenTextNodes.length > 0 && screenTextNodes.length / screenNodes.length < 0.08) {
+      screenIssues.push(`Screen ${index + 1} "${screen.name || 'unnamed'}" looks frame-heavy (${screenTextNodes.length}/${screenNodes.length} TEXT nodes).`);
+    }
+
+    if (screenNodes.length >= 10 && screenFrameNodes.length / screenNodes.length > 0.9 && screenTextNodes.length <= 1) {
+      screenIssues.push(`Screen ${index + 1} "${screen.name || 'unnamed'}" is mostly container nodes.`);
+    }
+  });
+
+  return {
+    totalNodes: nodes.length,
+    textNodes: textNodes.length,
+    frameNodes: frameNodes.length,
+    primitiveNodes: primitiveNodes.length,
+    screenIssues
+  };
+}
+
+function validateFlow(data) {
+  const errors = [];
+
+  if (!data.schema_version) errors.push('Missing schema_version');
+  if (!Array.isArray(data.screens) || data.screens.length === 0) {
+    errors.push('Missing or empty screens array');
+    return { errors, stats: null };
+  }
+
+  data.screens.forEach((screen, screenIndex) => {
+    if (!screen.name) errors.push(`Screen ${screenIndex + 1}: missing name`);
+    if (!Array.isArray(screen.nodes)) {
+      errors.push(`Screen ${screenIndex + 1}: missing nodes array`);
+      return;
+    }
+
+    const ids = new Set();
+    screen.nodes.forEach((node, nodeIndex) => {
+      if (!node.id) errors.push(`Screen ${screenIndex + 1}, node ${nodeIndex + 1}: missing id`);
+      if (!node.type) errors.push(`Screen ${screenIndex + 1}, node ${nodeIndex + 1}: missing type`);
+      if (node.id && ids.has(node.id)) errors.push(`Screen ${screenIndex + 1}: duplicate node id "${node.id}"`);
+      if (node.id) ids.add(node.id);
+      if (node.parentId !== null && !screen.nodes.some(candidate => candidate.id === node.parentId)) {
+        errors.push(`Screen ${screenIndex + 1}, node "${node.id}": parentId "${node.parentId}" not found`);
+      }
+    });
+  });
+
+  if (errors.length > 0) {
+    return { errors, stats: null };
+  }
+
+  const stats = analyzeFlow(data);
+  if (stats.screenIssues.length > 0) {
+    errors.push(
+      'Export looks incomplete. The Figma bridge expects a full content tree, not container-only skeleton frames.',
+      ...stats.screenIssues
+    );
+  }
+
+  return { errors, stats };
+}
+
 const server = http.createServer((req, res) => {
   // CORS — Figma Plugin runs in a sandbox that needs these headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -32,13 +113,15 @@ const server = http.createServer((req, res) => {
     req.on('data', chunk => { body += chunk; });
     req.on('end', () => {
       try {
-        // Validate it's parseable JSON
         const data = JSON.parse(body);
+        const validation = validateFlow(data);
 
-        // Basic schema check
-        if (!data.schema_version || !data.screens) {
+        if (validation.errors.length > 0) {
           res.writeHead(400, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: 'Invalid schema: missing schema_version or screens' }));
+          res.end(JSON.stringify({
+            error: 'Invalid design export',
+            details: validation.errors
+          }));
           return;
         }
 
@@ -46,7 +129,7 @@ const server = http.createServer((req, res) => {
         pushCount++;
 
         const screenCount = data.screens.length;
-        const nodeCount = data.screens.reduce((sum, s) => sum + (s.nodes ? s.nodes.length : 0), 0);
+        const nodeCount = validation.stats.totalNodes;
 
         console.log(`[push #${pushCount}] Received "${data.flow_name}": ${screenCount} screen(s), ${nodeCount} node(s)`);
 

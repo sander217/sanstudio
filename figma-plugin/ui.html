@@ -368,6 +368,11 @@ function validate(data) {
     });
   }
 
+  const stats = analyzeFlow(data);
+  if (stats.issues.length > 0) {
+    errors.push.apply(errors, stats.issues);
+  }
+
   if (errors.length > 0) {
     showStatus('error', 'Validation errors:\n' + errors.map(e => '• ' + e).join('\n'));
     document.getElementById('import-btn').disabled = true;
@@ -378,11 +383,49 @@ function validate(data) {
   // Valid — show preview
   document.getElementById('import-btn').disabled = false;
   hideStatus();
-  showPreview(data);
+  showPreview(data, stats);
 }
 
-function showPreview(data) {
-  const totalNodes = data.screens.reduce(function(sum, s) { return sum + (s.nodes ? s.nodes.length : 0); }, 0);
+function analyzeFlow(data) {
+  const screens = Array.isArray(data.screens) ? data.screens : [];
+  const nodes = screens.reduce(function(acc, screen) {
+    if (Array.isArray(screen.nodes)) acc = acc.concat(screen.nodes);
+    return acc;
+  }, []);
+  const textNodes = nodes.filter(function(node) { return node && node.type === 'TEXT'; }).length;
+  const frameNodes = nodes.filter(function(node) { return node && (node.type === 'FRAME' || node.type === 'IMAGE'); }).length;
+  const primitiveNodes = nodes.filter(function(node) { return node && node.type !== 'FRAME' && node.type !== 'IMAGE'; }).length;
+  const issues = [];
+
+  screens.forEach(function(screen, index) {
+    const screenNodes = Array.isArray(screen.nodes) ? screen.nodes : [];
+    const screenTextNodes = screenNodes.filter(function(node) { return node && node.type === 'TEXT'; }).length;
+    const screenFrameNodes = screenNodes.filter(function(node) { return node && (node.type === 'FRAME' || node.type === 'IMAGE'); }).length;
+
+    if (screenNodes.length >= 8 && screenTextNodes === 0) {
+      issues.push('Screen ' + (index + 1) + ' "' + (screen.name || 'unnamed') + '" has ' + screenNodes.length + ' nodes but no TEXT nodes.');
+    }
+
+    if (screenNodes.length >= 12 && screenTextNodes > 0 && (screenTextNodes / screenNodes.length) < 0.08) {
+      issues.push('Screen ' + (index + 1) + ' "' + (screen.name || 'unnamed') + '" looks frame-heavy (' + screenTextNodes + '/' + screenNodes.length + ' TEXT nodes).');
+    }
+
+    if (screenNodes.length >= 10 && (screenFrameNodes / screenNodes.length) > 0.9 && screenTextNodes <= 1) {
+      issues.push('Screen ' + (index + 1) + ' "' + (screen.name || 'unnamed') + '" is mostly container nodes.');
+    }
+  });
+
+  return {
+    totalNodes: nodes.length,
+    textNodes: textNodes,
+    frameNodes: frameNodes,
+    primitiveNodes: primitiveNodes,
+    issues: issues
+  };
+}
+
+function showPreview(data, stats) {
+  const totalNodes = stats.totalNodes;
   const screens = data.screens.map(function(s) {
     return s.state ? s.name + ' (' + s.state + ')' : s.name;
   });
@@ -393,6 +436,8 @@ function showPreview(data) {
   html += '<div class="preview-row"><span class="preview-label">Schema</span><span class="preview-value">v' + data.schema_version + '</span></div>';
   html += '<div class="preview-row"><span class="preview-label">Screens</span><span class="preview-value">' + data.screens.length + '</span></div>';
   html += '<div class="preview-row"><span class="preview-label">Total nodes</span><span class="preview-value">' + totalNodes + '</span></div>';
+  html += '<div class="preview-row"><span class="preview-label">Text nodes</span><span class="preview-value">' + stats.textNodes + '</span></div>';
+  html += '<div class="preview-row"><span class="preview-label">Container nodes</span><span class="preview-value">' + stats.frameNodes + '</span></div>';
   html += '<div class="preview-row"><span class="preview-label">Design system</span><span class="preview-value">' + dsName + '</span></div>';
   html += '<div class="preview-row"><span class="preview-label">Viewport</span><span class="preview-value">' + (data.viewport || 'not specified') + '</span></div>';
 

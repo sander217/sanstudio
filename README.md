@@ -26,7 +26,7 @@ This produces `code.js` from `code.ts`. The plugin needs two files to run:
 
 1. Run the plugin in Figma
 2. Paste JSON from Gate 3 (or upload a `.json` file)
-3. The UI validates the JSON and shows a preview (screen count, node count, design system)
+3. The UI validates the JSON and shows a preview (screen count, node count, text-vs-container ratio, design system)
 4. Click "Import to Figma"
 5. Screens appear on your canvas, arranged horizontally with labels
 
@@ -43,6 +43,10 @@ folder and export the Figma JSON alongside them:
 
 Use [`scripts/export-design-session.sh`](/Users/sanderchen/Documents/Claude/Projects/sanstudio/scripts/export-design-session.sh)
 to create this structure and optionally push the JSON to the local bridge server.
+
+Important: the export JSON must contain the full visible content tree, not just
+container frames. If a screen has many frames but almost no `TEXT` nodes, the
+bridge and plugin will now reject it as an incomplete skeleton export.
 
 ## What the parser handles
 
@@ -63,6 +67,7 @@ to create this structure and optionally push the JSON to the local bridge server
 | Multi-state (grouped by name/state) | ✅ |
 | Font fallback (→ Inter if font unavailable) | ✅ |
 | JSON validation (ids, parentId refs, required fields) | ✅ |
+| Skeleton-export detection (frame-heavy, content-light JSON) | ✅ |
 | Design system metadata (preserved, not consumed) | ✅ Passthrough |
 
 ## What the parser does NOT handle (yet)

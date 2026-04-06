@@ -1,6 +1,6 @@
 ---
 name: design-lock
-version: 1.2.0
+version: 1.3.0
 description: |
   Gate 3 of Design Agent Studio. The final gate before Figma export.
   Receives context from Gate 1 (full pipeline, ITERATE direct, or COMPARE/CRITIQUE 
@@ -11,7 +11,8 @@ description: |
   
   Can retreat to Gate 2 if direction is wrong. Supports partial export.
   Handles ITERATE and CRITIQUE entries with baseline acknowledgment and 
-  structured before/after diffs.
+  structured before/after diffs. Enforces explicit composition, typography,
+  and interaction quality bars so output is intentional instead of generic.
   
   Trigger: after /direction-lock, or directly from /context-lock for ITERATE 
   and evaluated COMPARE/CRITIQUE.
@@ -39,6 +40,40 @@ failures before the designer invests hours in Figma refinement.
 
 Inherit from upstream gates. Match the user's language. For visual design 
 terminology, use English terms — they're universal in design tools and Figma.
+
+---
+
+## Quality Bar
+
+This gate is not just "make it high fidelity." It must produce design with a
+clear point of view.
+
+### Non-Negotiables
+
+- Every screen needs a **visual thesis**: one sentence explaining the intended
+  feeling and the main hierarchy move.
+- Every screen needs a **dominant focal point**. If everything shouts, nothing
+  leads.
+- Every screen needs a **contrast axis**: scale, density, color, shape, or
+  motion. Pick 1-2. Don't flatten everything into polite sameness.
+- Every screen needs a **surface strategy**. Don't default to endless identical
+  cards on a pale background unless the product genuinely calls for it.
+- Typography must feel chosen, not inherited. If there is no design system,
+  avoid defaulting to Inter/Roboto/system stacks unless the existing product
+  already uses them or the user explicitly asks for neutral utility.
+- Motion is purposeful, not decorative. Use it to orient, emphasize, or soften
+  state change.
+
+### Anti-Generic Standard
+
+Before presenting any hi-fi mockup, ask internally:
+
+1. What would make this screen recognizably *this product* if the logo were hidden?
+2. Where does the eye land first, and why?
+3. What is the one decision that makes this feel less template-like?
+4. Which common SaaS pattern am I intentionally refusing here?
+
+If those answers are vague, the design is not ready.
 
 ---
 
@@ -111,7 +146,17 @@ specific values you're working with.
 
 ### If No Design System and No Existing Design
 
-Propose a minimal framework (1-2 fonts, 5-7 colors, spacing base, radius, shadow).
+Propose a minimal framework with explicit personality:
+- Type pair: one workhorse UI face + one optional accent/display face
+- Palette: 5-7 colors including neutrals and semantic states
+- Spacing base
+- Radius strategy
+- Shadow/elevation rules
+- Surface/background treatment
+
+State the intended tone in one line: "quiet utility," "editorial confidence,"
+"playful productivity," etc.
+
 Confirm before proceeding.
 
 ---
@@ -123,10 +168,29 @@ Confirm before proceeding.
 Present 3-5 visual references matching the direction. For each, note what's 
 relevant and what to steal vs. avoid.
 
+For each reference, extract:
+- Layout/composition move
+- Typography voice
+- Surface treatment
+- Interaction energy
+- Risk if copied too literally
+
+End with a synthesis:
+- Steal: [specific principles]
+- Avoid: [specific traps]
+- Twist: [what makes this output distinct from the references]
+
 ### 2B: Style Tile (optional)
 
 Generate if direction involves significant visual decisions. Skip if user has 
 a design system, direction is straightforward, or user is impatient.
+
+When you generate one, it must include:
+- Type hierarchy sample
+- Core palette and contrast ratios
+- Surface/background samples
+- Core component attitude (button, card, input)
+- Motion tone in words (e.g., "crisp and immediate," "soft and editorial")
 
 ### 2C: Dark Mode Strategy
 
@@ -242,6 +306,26 @@ states to show. Still list what you're generating so they can cut if it's too mu
 Ask the user about promoting secondary states only for full-pipeline entries 
 (BLANK, GENERATE, CONSTRAINED) where the scope is wider.
 
+### Composition Plan (MANDATORY before hi-fi)
+
+Before writing HTML, declare the composition plan in plain language:
+
+```
+🎯 COMPOSITION PLAN
+- Visual thesis: [one sentence]
+- First focal point: [what the eye hits first]
+- Reading order: [1 → 2 → 3]
+- Density model: [airy | balanced | dense]
+- Contrast axis: [scale / color / shape / surface / motion]
+- Signature detail: [the one memorable craft move]
+```
+
+If this plan sounds like it could describe 20 unrelated products, it is too
+generic. Tighten it before generating.
+
+For small-scope ITERATE work, keep this lightweight: 3 bullets max if the
+change is local and the hierarchy impact is obvious.
+
 ---
 
 ## Step 7: Hi-Fi Mockup Generation
@@ -254,6 +338,63 @@ Flag [draft] markers. Use real content if provided.
 ### Component Decomposition
 
 Tag every element with a component type during generation. This maps to JSON export.
+
+### Design Passes (MANDATORY)
+
+Generate in passes, even if you only show the final result:
+
+1. **Hierarchy pass** — lock focal point, reading order, CTA priority, and
+   information grouping.
+2. **Composition pass** — lock rhythm, column/grid behavior, white-space
+   distribution, and edge treatment.
+3. **Typography pass** — lock font roles, scale contrast, line length, and
+   emphasis style.
+4. **Surface pass** — lock color distribution, borders/shadows, background
+   treatment, and component depth.
+5. **Interaction pass** — lock hover/pressed/focus/expanded states and motion.
+6. **Polish pass** — remove accidental sameness, awkward alignments, and
+   placeholder-looking details.
+
+Do not jump straight from "direction sounds good" to polished HTML without
+mentally walking these passes.
+
+For narrow ITERATE changes, these passes can stay internal. The rigor stays;
+the ceremony shrinks.
+
+### Contrast Pair Protocol
+
+If two materially different hi-fi approaches are both plausible and the choice
+affects hierarchy or tone, generate:
+- **Primary concept** — the recommended direction
+- **Contrast variant** — a narrowly different alternative changing one axis
+  only (density, emphasis, navigation posture, or surface treatment)
+
+Do not generate three more concepts here. Gate 3 is for decisive refinement,
+not reopening Gate 2.
+
+### Visual Craft Rules
+
+- Use asymmetry or rhythm shifts intentionally. Perfect symmetry everywhere
+  often reads generic unless the brand calls for restraint.
+- Vary container behavior. Some sections can breathe without boxes; some need
+  strong framing. Avoid making every area a card.
+- Make CTA hierarchy obvious at a glance. One action should feel inevitable.
+- Use at least one deliberate scale change in each screen: headline/body,
+  hero/detail, summary/drill-down, etc.
+- If using illustration, gradient, or glow, anchor it to product meaning.
+  Decorative atmosphere without purpose is noise.
+- Prefer a few strong visual ideas over many medium-strength embellishments.
+- Respect accessibility without flattening character. Contrast and clarity are
+  design tools, not compliance chores.
+
+### Motion & Responsiveness
+
+- Default motion timing: 120-180ms for micro-interactions, 200-300ms for
+  state transitions, unless the product tone needs slower pacing.
+- Every preview must demonstrate responsive intent for the declared viewport.
+  If desktop-first, still show how major structures collapse or wrap. If
+  mobile-first, be explicit about sticky actions, thumb reach, and scroll rhythm.
+- Respect reduced motion in HTML previews when motion is non-essential.
 
 ### HTML Mockup Technical Requirements
 
@@ -268,6 +409,10 @@ Tag every element with a component type during generation. This maps to JSON exp
   interactive elements are misleading — either make them work or make them static.
 - Annotations layer (toggleable): design decisions, spacing values, component labels
 - Dark mode toggle if applicable
+- Presentation mode and annotation mode should be separable. Default to clean
+  presentation unless the user is actively reviewing craft decisions.
+- No obvious framework chrome or unstyled browser defaults unless the design
+  direction explicitly calls for bare utility.
 ```
 
 ### Multi-Screen Flows
@@ -421,6 +566,7 @@ Typography:
 □ All text uses defined families
 □ Sizes follow scale
 □ Line heights consistent
+□ Type contrast supports hierarchy, not just correctness
 
 Color & Contrast:
 □ All colors from palette
@@ -443,6 +589,13 @@ Flow:
 □ User always knows location
 □ Back/escape defined
 □ Flow matches Gate 2 diagram
+
+Distinctiveness & Craft:
+□ Screen has a clear visual thesis
+□ Focal point is obvious within 3 seconds
+□ At least one memorable but defensible craft move exists
+□ Design does not collapse into generic SaaS/dashboard patterns unless intentional
+□ Surfaces, spacing, and typography create rhythm rather than uniform sameness
 
 Wireframe Contract:
 □ LOCKED decisions respected or explicitly OVERRIDDEN
@@ -475,6 +628,11 @@ Fix failures before export. Warnings noted but don't block.
 ### JSON Schema (v0.2)
 
 Flow-level design system (defined once), per-screen nodes:
+
+**Export completeness rule:** the JSON must represent the actual visible design,
+not just layout containers. Export all meaningful text, buttons, labels, cards,
+badges, chips, FAQ rows, slot states, and other visible UI content as nodes.
+If the Figma result would look like empty boxes, the export is invalid.
 
 ```jsonc
 {
@@ -728,6 +886,12 @@ check DDR first.
 21. **All interactive elements must work.** If it looks interactive, it must be interactive. No fake UI.
 22. **Structured diff for every ITERATE/CRITIQUE.** Changed / Kept / New / Flagged for later.
 23. **Adjacent screens flag for CRITIQUE.** Proactively note related screens that might have same issues.
+24. **Start from a visual thesis.** No screen without a one-sentence design point of view.
+25. **Run design passes.** Hierarchy, composition, type, surface, interaction, polish.
+26. **Kill genericness on purpose.** Name the template pattern you're avoiding.
+27. **Typography must feel selected.** Neutral defaults are a choice, not a fallback.
+28. **Every screen needs a signature detail.** One craft move that is subtle but memorable.
+29. **Export full content trees.** Never ship container-only skeleton JSON to Figma.
 
 ---
 
@@ -750,6 +914,11 @@ check DDR first.
 - **Vague design system inference.** "I'll keep it consistent" without listing values.
 - **Scope creep in ITERATE.** Redesigning the whole page when user asked for one component.
 - **No diff.** ITERATE/CRITIQUE output without structured before/after.
+- **Template SaaS clone.** Safe gradient, safe cards, safe type, zero point of view.
+- **Uniform card soup.** Every section boxed, same radius, same elevation, same weight.
+- **Type without attitude.** Correct scale, no voice.
+- **Motion confetti.** Animation everywhere, meaning nowhere.
+- **No visual thesis.** A competent screen that says nothing specific.
 
 ---
 

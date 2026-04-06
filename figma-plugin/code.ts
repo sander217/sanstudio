@@ -500,6 +500,37 @@ function validateSchema(data: any): { valid: boolean; errors: string[] } {
     });
   }
 
+  if (errors.length === 0 && data.screens) {
+    const nodes = data.screens.reduce((acc: any[], screen: any) => {
+      if (Array.isArray(screen.nodes)) acc.push(...screen.nodes);
+      return acc;
+    }, []);
+    const textNodes = nodes.filter((node: any) => node?.type === 'TEXT').length;
+    const frameNodes = nodes.filter((node: any) => node?.type === 'FRAME' || node?.type === 'IMAGE').length;
+
+    data.screens.forEach((screen: any, i: number) => {
+      const screenNodes = Array.isArray(screen.nodes) ? screen.nodes : [];
+      const screenTextNodes = screenNodes.filter((node: any) => node?.type === 'TEXT').length;
+      const screenFrameNodes = screenNodes.filter((node: any) => node?.type === 'FRAME' || node?.type === 'IMAGE').length;
+
+      if (screenNodes.length >= 8 && screenTextNodes === 0) {
+        errors.push(`Screen ${i + 1} "${screen.name || 'unnamed'}" has ${screenNodes.length} nodes but no TEXT nodes`);
+      }
+
+      if (screenNodes.length >= 12 && screenTextNodes > 0 && screenTextNodes / screenNodes.length < 0.08) {
+        errors.push(`Screen ${i + 1} "${screen.name || 'unnamed'}" looks frame-heavy (${screenTextNodes}/${screenNodes.length} TEXT nodes)`);
+      }
+
+      if (screenNodes.length >= 10 && screenFrameNodes / screenNodes.length > 0.9 && screenTextNodes <= 1) {
+        errors.push(`Screen ${i + 1} "${screen.name || 'unnamed'}" is mostly container nodes`);
+      }
+    });
+
+    if (nodes.length >= 12 && textNodes === 0 && frameNodes >= 8) {
+      errors.push('Export looks incomplete: no TEXT nodes found in a frame-heavy document');
+    }
+  }
+
   return { valid: errors.length === 0, errors };
 }
 
