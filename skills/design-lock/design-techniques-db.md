@@ -111,6 +111,18 @@ Then propagate the chosen techniques into:
 
 ## Screen-Level Techniques
 
+### About Visual Execution specs
+
+Each screen-level technique includes a `Visual Execution` block. This block translates the technique's UX principles into concrete CSS-level layout constraints. When generating HTML mockups in Gate 3, treat these specs as binding layout constraints — deviate only if the design system conflicts, and flag the deviation.
+
+Format:
+- **Layout:** CSS layout pattern — grid columns, flex direction, section order
+- **Spacing:** gap between major sections / internal padding / section breaks in px
+- **Typography weight:** hierarchy — what's biggest/boldest, what's smallest, size ratios
+- **Color distribution:** % neutral vs accent, where accent appears, what triggers color
+- **Component density:** cards per row, items visible before scroll, action placement
+- **Key CSS pattern:** one concrete CSS snippet (10-15 lines) showing the core structural pattern
+
 ### 1. Activation Onboarding
 
 **Keywords:** onboarding, first-time, activation, setup, checklist, welcome, new user, empty start
