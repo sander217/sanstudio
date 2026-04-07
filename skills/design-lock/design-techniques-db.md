@@ -7,55 +7,103 @@ cluster, then adapt it to the current product, constraints, and design system.
 
 ## Retrieval Rules
 
-1. Extract keywords from:
-   - User prompt
-   - `goal`, `scope`, `constraints`, `key_insight`
-   - Screen/state names from upstream blocks
-2. Normalize into 5 buckets:
-   - Product type: `dashboard`, `checkout`, `onboarding`, `landing`, `settings`
-   - User intent: `compare`, `decide`, `scan`, `fill`, `recover`, `trust`
-   - UX risks: `drop-off`, `confusion`, `density`, `hesitation`, `error`
-   - Platform/context: `mobile`, `desktop`, `b2b`, `consumer`, `admin`
-   - Tone: `premium`, `playful`, `serious`, `fast`, `safe`
-3. Score each cluster:
-   - Exact keyword match: `+2`
-   - Strong intent match: `+2`
-   - Product/screen type match: `+2`
-   - Constraint conflict: `-2`
-   - Requires pattern the design system does not support: `-1`
-4. Select `1-3` highest-fit clusters.
-5. If two clusters conflict, prioritize:
-   - Task clarity over visual novelty
-   - Error prevention over cleverness
-   - Scanability over density
-6. If no cluster scores well, fall back to:
-   - hierarchy
-   - chunking
-   - progressive disclosure
-   - clear primary action
+### Step 1: Extract context
 
-## Required Output
+From the user prompt and upstream handoff blocks, answer these questions:
+- What is the screen's primary purpose?
+- What is the user's primary task on this screen?
+- What platform/viewport is this for?
+- What tone does the product need?
+
+### Step 2: Match screen-level technique (pick 1-2)
+
+Walk the decision tree. At each node, pick the branch that best fits the screen:
+
+```text
+Is the screen primarily about DATA CONSUMPTION (viewing, scanning, monitoring)?
+├─ Yes → Is it an overview/summary or a record-level/table view?
+│   ├─ Overview/summary → #7 Dashboard Scanability
+│   └─ Record-level/table → #8 Dense Data Clarification
+│
+└─ No → Is it primarily about DATA INPUT (forms, configuration, editing)?
+    ├─ Yes → Does the input involve money, commitment, or irreversible action?
+    │   ├─ Yes → #6 Checkout and Commitment Reassurance
+    │   └─ No → Is the configuration risky or destructive?
+    │       ├─ Yes → #10 Settings and Safety
+    │       └─ No → #5 Form Friction Reduction
+    │
+    └─ No → Is it about FINDING or BROWSING content?
+        ├─ Yes → #9 Search and Discovery
+        │
+        └─ No → Is it a FIRST-TIME or ONBOARDING experience?
+            ├─ Yes → #1 Activation Onboarding
+            │
+            └─ No → Is it a MARKETING or CONVERSION page?
+                ├─ Yes → Does it compare plans, tiers, or options?
+                │   ├─ Yes → #3 Pricing and Plan Comparison
+                │   └─ No → #2 Landing Conversion
+                │
+                └─ No → Is it MULTI-USER COORDINATION?
+                    ├─ Yes → #15 Collaborative Workflow
+                    │
+                    └─ No → Does it involve AI-GENERATED content or assistance?
+                        ├─ Yes → #16 AI Copilot and Generative Guidance
+                        │
+                        └─ No → Is the primary viewport MOBILE?
+                            ├─ Yes → #13 Mobile Focus and Thumb Flow
+                            └─ No → Use fallback (see below)
+```
+
+If two branches seem equally valid, pick both (max 2 screen-level techniques).
+
+### Step 3: Check tone modifiers (pick 0-1)
+
+- Does the user need to overcome trust, doubt, or hesitation? → Add #4 Trust and Credibility Lift
+- Does the product need premium restraint, calm, or editorial sophistication? → Add #14 Premium Calm
+- Neither? → No tone modifier.
+
+### Step 4: Check state-level patterns (pick 0-2)
+
+- Does this screen have a zero-content or first-time state? → Add #11 Empty State Guidance
+- Does this screen have error, failure, or blocked states? → Add #12 Error Recovery and Resilience
+
+### Step 5: Conflict resolution
+
+If matched techniques conflict, apply this priority:
+1. Task clarity over visual novelty
+2. Error prevention over cleverness
+3. Scanability over density
+
+### Fallback
+
+If no branch in the decision tree fits well, apply these defaults:
+- Clear visual hierarchy
+- Content chunking
+- Progressive disclosure
+- One clear primary action
+
+### Required Output
 
 After matching, emit:
 
 ```md
 🎯 TECHNIQUE MATCH
 
-Keywords:
-- ...
+Decision path: [the tree path taken, e.g. "Data consumption → Overview → #7"]
 
-Matched clusters:
-- [Cluster]: [why it fits this user request]
+Screen-level: [matched cluster name(s)]
+Tone modifier: [matched or "none"]
+State patterns: [matched or "none"]
 
 Techniques to apply:
-- ...
+- [specific techniques from the matched clusters' Apply sections]
 
 Techniques intentionally excluded:
-- ...
+- [what you're NOT using and why]
 ```
 
 Then propagate the chosen techniques into:
-- HTML mockup structure
+- HTML mockup structure (use Visual Execution specs)
 - Interaction Spec
 - DDR
 - JSON `metadata.technique_clusters`
