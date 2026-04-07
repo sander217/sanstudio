@@ -134,6 +134,16 @@ If the curl fails (connection refused), tell the user:
 then open the Figma Plugin and click 'Auto-import' → 'Start listening'. 
 I'll push again when you're ready."
 
+### HTML Capture Rule
+
+If you use HTML-to-Figma capture instead of bridge JSON import:
+
+- Treat every screen capture as a fresh page load.
+- If the mockup switches screens via `?screen=`, hash state, or any URL-driven state, initialization must apply that state immediately on load.
+- Never rely on a click-only state change before capture.
+- Never leave one screen hardcoded as `.active` if a different screen can be selected by URL.
+- Before capturing multiple screens, verify each target URL renders a different visible screen on first load.
+
 ### Step 3: Write companion docs
 Write companion docs into the same session under `docs/`.
 

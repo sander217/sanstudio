@@ -388,6 +388,20 @@ Run before export:
 - **Interactive**: ALL interactive elements functional — no non-functional UI chrome
 ```
 
+### HTML Capture Guardrail
+
+If Figma export uses HTML capture instead of JSON import, verify these before opening any
+capture URL:
+
+```
+- Screen routing state is applied on initial load, not only after user interaction
+- No screen is hardcoded as the default visible state when a query param or hash selects another screen
+- If the mockup uses `?screen=` or similar URL state, initialization must call the same screen-switching logic used by clicks
+- Capture selector targets only the intended viewport/frame, not the whole review page
+```
+
+If any of these fail, fix the HTML first. Do not start capture anyway and hope Figma gets the right screen.
+
 Report: `🔍 QA: ✅ [X] passed · ⚠️ [Y] warnings · ❌ [Z] failures`
 
 Fix failures before export. Warnings don't block.
