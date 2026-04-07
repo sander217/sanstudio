@@ -1,0 +1,1930 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Xtraspots Phase 1 Reservation Flow</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+    <style>
+      :root {
+        --seed: #093c68;
+        --seed-strong: #062b4d;
+        --seed-soft: #dceaf6;
+        --seed-mist: #eef5fb;
+        --ink: #111723;
+        --muted: #667085;
+        --muted-strong: #475467;
+        --line: #d8dee6;
+        --line-strong: #c5d0db;
+        --surface: #fffdfa;
+        --surface-soft: #f8f5ef;
+        --surface-muted: #f2eee7;
+        --success: #14755d;
+        --success-soft: #e6f5f0;
+        --warning: #bb7a25;
+        --warning-soft: #fdf1df;
+        --accent: #c6a76d;
+        --accent-soft: #f5ecdf;
+        --danger: #a33d4b;
+        --danger-soft: #f9eaed;
+        --shadow-lg: 0 30px 80px rgba(9, 60, 104, 0.14);
+        --shadow-md: 0 18px 44px rgba(17, 23, 35, 0.09);
+        --shadow-sm: 0 8px 18px rgba(17, 23, 35, 0.07);
+        --radius-2xl: 32px;
+        --radius-xl: 24px;
+        --radius-lg: 18px;
+        --radius-md: 14px;
+        --radius-sm: 10px;
+        --space-1: 4px;
+        --space-2: 8px;
+        --space-3: 12px;
+        --space-4: 16px;
+        --space-5: 20px;
+        --space-6: 24px;
+        --space-7: 28px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Manrope", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 8% 8%, rgba(9, 60, 104, 0.12), transparent 28%),
+          radial-gradient(circle at 92% 12%, rgba(198, 167, 109, 0.18), transparent 24%),
+          linear-gradient(180deg, #f8f5ef 0%, #eef2f6 46%, #f8f5ef 100%);
+      }
+
+      button,
+      input {
+        font: inherit;
+      }
+
+      button {
+        border: 0;
+        cursor: pointer;
+      }
+
+      .canvas {
+        max-width: 1380px;
+        margin: 0 auto;
+        padding: 40px 24px 64px;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.1fr) minmax(280px, 360px);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .hero-panel,
+      .meta-panel {
+        border-radius: 30px;
+        backdrop-filter: blur(18px);
+        background: rgba(255, 252, 248, 0.82);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: var(--shadow-md);
+      }
+
+      .hero-panel {
+        padding: 28px 30px;
+      }
+
+      .meta-panel {
+        padding: 24px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        color: var(--seed-strong);
+        background: var(--seed-soft);
+      }
+
+      h1 {
+        margin: 18px 0 12px;
+        font-size: clamp(38px, 5vw, 64px);
+        line-height: 0.98;
+        letter-spacing: -0.05em;
+        max-width: 12ch;
+      }
+
+      h1 span {
+        color: var(--seed);
+      }
+
+      .intro {
+        max-width: 60ch;
+        margin: 0;
+        font-size: 16px;
+        line-height: 1.7;
+        color: var(--muted-strong);
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 22px;
+      }
+
+      .hero-stat {
+        padding: 14px 16px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.72);
+        border: 1px solid rgba(9, 60, 104, 0.08);
+      }
+
+      .hero-stat strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .hero-stat span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.5;
+      }
+
+      .meta-block {
+        display: grid;
+        gap: 10px;
+      }
+
+      .meta-label {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+
+      .meta-card {
+        border-radius: 20px;
+        padding: 16px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+
+      .meta-card strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .meta-card p,
+      .meta-card li {
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: var(--muted-strong);
+        line-height: 1.6;
+      }
+
+      .meta-card ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .techniques {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .techniques span {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: var(--surface-soft);
+        border: 1px solid var(--line);
+        font-size: 12px;
+        color: var(--seed-strong);
+        font-weight: 700;
+      }
+
+      .flow-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 28px;
+      }
+
+      .flow-tab {
+        min-height: 44px;
+        padding: 10px 16px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.7);
+        color: var(--muted-strong);
+        border: 1px solid rgba(9, 60, 104, 0.08);
+        transition: 160ms ease;
+      }
+
+      .flow-tab.active {
+        background: var(--seed);
+        color: #ffffff;
+        box-shadow: 0 10px 24px rgba(9, 60, 104, 0.24);
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+        gap: 30px;
+        align-items: start;
+        margin-top: 30px;
+      }
+
+      .inspector {
+        position: sticky;
+        top: 24px;
+        border-radius: 28px;
+        padding: 24px;
+        background: rgba(255, 252, 248, 0.84);
+        border: 1px solid rgba(255, 255, 255, 0.72);
+        box-shadow: var(--shadow-md);
+        display: grid;
+        gap: 18px;
+      }
+
+      .inspector h2 {
+        margin: 0;
+        font-size: 22px;
+      }
+
+      .toggle-row {
+        display: flex;
+        gap: 10px;
+      }
+
+      .toggle-row button {
+        flex: 1;
+        min-height: 44px;
+        border-radius: 999px;
+        background: var(--surface);
+        color: var(--muted-strong);
+        border: 1px solid var(--line);
+      }
+
+      .toggle-row button.active {
+        border-color: var(--seed);
+        color: var(--seed-strong);
+        background: var(--seed-soft);
+      }
+
+      .screen-notes {
+        display: grid;
+        gap: 12px;
+      }
+
+      .note-card {
+        border-radius: 18px;
+        padding: 16px;
+        background: var(--surface);
+        border: 1px solid var(--line);
+      }
+
+      .note-card strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .note-card p {
+        margin: 8px 0 0;
+        font-size: 13px;
+        line-height: 1.6;
+        color: var(--muted-strong);
+      }
+
+      .token-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .token-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        font-size: 13px;
+      }
+
+      .swatch {
+        width: 18px;
+        height: 18px;
+        border-radius: 999px;
+        border: 1px solid rgba(17, 23, 35, 0.12);
+      }
+
+      .preview {
+        display: flex;
+        justify-content: center;
+      }
+
+      .phone-shell {
+        width: 414px;
+        max-width: 100%;
+        padding: 16px;
+        border-radius: 42px;
+        background: linear-gradient(180deg, #202734 0%, #10141d 100%);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .phone {
+        position: relative;
+        width: 100%;
+        height: 860px;
+        border-radius: 30px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #f7f4ee 0%, #f9fbfd 100%);
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        width: 144px;
+        height: 28px;
+        transform: translateX(-50%);
+        border-radius: 999px;
+        background: #0f141d;
+        z-index: 20;
+      }
+
+      .statusbar {
+        position: sticky;
+        top: 0;
+        z-index: 15;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 22px 10px;
+        font-size: 12px;
+        font-weight: 700;
+        background: linear-gradient(180deg, rgba(247, 244, 238, 0.95), rgba(247, 244, 238, 0.7));
+      }
+
+      .screen {
+        display: none;
+        height: calc(100% - 46px);
+        overflow: auto;
+        padding: 10px 18px 196px;
+      }
+
+      .screen.active {
+        display: block;
+      }
+
+      .screen::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+      }
+
+      .screen-stack {
+        display: grid;
+        gap: 16px;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-mark {
+        width: 40px;
+        height: 40px;
+        display: grid;
+        place-items: center;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--seed), #0f5e95);
+        color: #ffffff;
+        font-weight: 800;
+      }
+
+      .brand strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .brand span,
+      .helper-copy {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .hero-card,
+      .surface-card,
+      .result-card,
+      .merchant-card,
+      .summary-card,
+      .booking-card,
+      .info-card {
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.88);
+        border: 1px solid rgba(9, 60, 104, 0.08);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .hero-card {
+        padding: 22px;
+        background:
+          radial-gradient(circle at top right, rgba(198, 167, 109, 0.24), transparent 34%),
+          linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(245, 249, 253, 0.94));
+      }
+
+      .hero-card h2 {
+        margin: 10px 0 8px;
+        font-size: 34px;
+        line-height: 1.02;
+        letter-spacing: -0.05em;
+      }
+
+      .hero-card p {
+        margin: 0;
+        color: var(--muted-strong);
+        font-size: 14px;
+        line-height: 1.65;
+      }
+
+      .search-stack {
+        margin-top: 18px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .search-pill,
+      .chip,
+      .slot-btn,
+      .filter-pill,
+      .slot-chip,
+      .segmented button,
+      .ghost-btn,
+      .mini-tab {
+        min-height: 44px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--ink);
+        padding: 10px 14px;
+        transition: 160ms ease;
+      }
+
+      .search-pill,
+      .slot-chip {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        font-size: 13px;
+      }
+
+      .search-pill strong,
+      .slot-chip strong {
+        font-size: 13px;
+      }
+
+      .pill-row,
+      .filter-row,
+      .slot-grid,
+      .mini-tabs {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .chip.active,
+      .filter-pill.active,
+      .slot-btn.active,
+      .slot-chip.active,
+      .segmented button.active,
+      .mini-tab.active {
+        background: var(--seed);
+        color: #ffffff;
+        border-color: var(--seed);
+        box-shadow: 0 10px 22px rgba(9, 60, 104, 0.18);
+      }
+
+      .section-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .section-head strong {
+        font-size: 17px;
+      }
+
+      .section-head span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .module-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .surface-card,
+      .result-card,
+      .merchant-card,
+      .summary-card,
+      .booking-card,
+      .info-card {
+        padding: 18px;
+      }
+
+      .module-row {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        gap: 12px;
+        align-items: center;
+      }
+
+      .module-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        color: var(--seed-strong);
+        background: var(--seed-mist);
+        font-size: 18px;
+      }
+
+      .module-row strong,
+      .result-card strong,
+      .merchant-card strong,
+      .summary-card strong,
+      .booking-card strong {
+        display: block;
+      }
+
+      .module-row p,
+      .result-card p,
+      .merchant-card p,
+      .summary-card p,
+      .info-card p,
+      .booking-card p {
+        margin: 4px 0 0;
+        color: var(--muted-strong);
+        font-size: 13px;
+        line-height: 1.6;
+      }
+
+      .meta-badges {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 7px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 700;
+        background: var(--surface-soft);
+        color: var(--muted-strong);
+      }
+
+      .badge.success {
+        background: var(--success-soft);
+        color: var(--success);
+      }
+
+      .badge.warning {
+        background: var(--warning-soft);
+        color: var(--warning);
+      }
+
+      .cta-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .primary-btn,
+      .secondary-btn {
+        min-height: 52px;
+        border-radius: 18px;
+        padding: 0 18px;
+        font-weight: 800;
+      }
+
+      .primary-btn {
+        flex: 1;
+        background: var(--seed);
+        color: #ffffff;
+        box-shadow: 0 16px 28px rgba(9, 60, 104, 0.22);
+      }
+
+      .secondary-btn,
+      .ghost-btn {
+        background: rgba(255, 255, 255, 0.92);
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      .result-list,
+      .booking-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .result-card-head,
+      .merchant-hero,
+      .summary-row,
+      .price-row,
+      .list-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        background: var(--accent-soft);
+        color: #6a4d24;
+      }
+
+      .price-mark {
+        text-align: right;
+      }
+
+      .price-mark strong {
+        font-size: 22px;
+        color: var(--seed-strong);
+      }
+
+      .price-mark span {
+        display: block;
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .merchant-cover {
+        height: 162px;
+        border-radius: 20px;
+        background:
+          linear-gradient(180deg, rgba(9, 60, 104, 0.08), rgba(9, 60, 104, 0.22)),
+          radial-gradient(circle at top right, rgba(198, 167, 109, 0.42), transparent 28%),
+          linear-gradient(135deg, #204d73 0%, #0d2941 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .merchant-cover::after {
+        content: "";
+        position: absolute;
+        inset: auto 16px 16px auto;
+        width: 88px;
+        height: 88px;
+        border-radius: 26px;
+        background: rgba(255, 255, 255, 0.14);
+        transform: rotate(14deg);
+      }
+
+      .cover-badges {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .cover-badges span {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        backdrop-filter: blur(8px);
+      }
+
+      .detail-grid,
+      .confirm-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .why-list {
+        margin: 12px 0 0;
+        padding-left: 18px;
+        color: var(--muted-strong);
+        display: grid;
+        gap: 8px;
+        font-size: 13px;
+      }
+
+      .slot-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .slot-btn {
+        min-height: 60px;
+        display: grid;
+        place-items: center;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .slot-btn small {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        font-weight: 600;
+        color: inherit;
+      }
+
+      .field {
+        display: grid;
+        gap: 8px;
+      }
+
+      .field label {
+        font-size: 12px;
+        font-weight: 800;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+
+      .field input {
+        min-height: 52px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: rgba(255, 255, 255, 0.94);
+        padding: 0 16px;
+        color: var(--ink);
+      }
+
+      .summary-line,
+      .policy-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 0;
+      }
+
+      .summary-line + .summary-line,
+      .policy-row + .policy-row {
+        border-top: 1px solid rgba(17, 23, 35, 0.06);
+      }
+
+      .summary-line span,
+      .policy-row span {
+        font-size: 13px;
+        color: var(--muted-strong);
+      }
+
+      .summary-line strong {
+        font-size: 14px;
+      }
+
+      .inline-note {
+        border-radius: 18px;
+        padding: 14px 16px;
+        background: var(--surface-soft);
+        border: 1px solid var(--line);
+        font-size: 13px;
+        color: var(--muted-strong);
+        line-height: 1.6;
+      }
+
+      .success-stage {
+        display: grid;
+        gap: 16px;
+        text-align: center;
+        padding-top: 16px;
+      }
+
+      .success-mark {
+        width: 92px;
+        height: 92px;
+        margin: 0 auto;
+        display: grid;
+        place-items: center;
+        border-radius: 28px;
+        background:
+          radial-gradient(circle at top left, rgba(198, 167, 109, 0.24), transparent 32%),
+          linear-gradient(180deg, #ffffff 0%, #eff7f4 100%);
+        color: var(--success);
+        font-size: 34px;
+        border: 1px solid rgba(20, 117, 93, 0.16);
+        box-shadow: var(--shadow-sm);
+      }
+
+      .success-stage h3 {
+        margin: 0;
+        font-size: 30px;
+        line-height: 1.04;
+        letter-spacing: -0.04em;
+      }
+
+      .success-stage p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.7;
+        color: var(--muted-strong);
+      }
+
+      .segmented {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .booking-meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+
+      .bottom-bar {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        z-index: 16;
+        display: grid;
+        gap: 10px;
+        padding: 14px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.94);
+        border: 1px solid rgba(9, 60, 104, 0.08);
+        box-shadow: 0 18px 34px rgba(17, 23, 35, 0.12);
+        backdrop-filter: blur(16px);
+      }
+
+      .bottom-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .bottom-top span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .nav-row {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .nav-row button {
+        min-height: 44px;
+        border-radius: 16px;
+        background: var(--surface-soft);
+        border: 1px solid var(--line);
+        color: var(--muted-strong);
+      }
+
+      .nav-row button.active {
+        background: var(--seed-soft);
+        border-color: var(--seed);
+        color: var(--seed-strong);
+        font-weight: 800;
+      }
+
+      .annotation [data-note] {
+        position: relative;
+        outline: 1.5px dashed rgba(9, 60, 104, 0.34);
+        outline-offset: 4px;
+      }
+
+      .annotation [data-note]::after {
+        content: attr(data-note);
+        position: absolute;
+        top: -12px;
+        left: 10px;
+        padding: 4px 8px;
+        border-radius: 999px;
+        background: var(--seed-strong);
+        color: #ffffff;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+        z-index: 18;
+      }
+
+      @media (max-width: 1100px) {
+        .hero,
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+
+        .inspector {
+          position: static;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .canvas {
+          padding: 20px 14px 44px;
+        }
+
+        .hero-panel,
+        .meta-panel,
+        .inspector {
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 42px;
+        }
+
+        .hero-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .phone-shell {
+          padding: 12px;
+          border-radius: 34px;
+        }
+
+        .phone {
+          height: 812px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="canvas">
+      <section class="hero">
+        <div class="hero-panel">
+          <div class="eyebrow">Xtraspots Phase 1 · Local reservation app · Minimalist mobile flow</div>
+          <h1>把 <span>附近的空檔</span> 變成現在就能訂到的體驗</h1>
+          <p class="intro">
+            這版把 Uber Eats 的 search rhythm 放在首頁與結果頁，讓使用者先用地點、時間、類別快速掃描；再把 Airbnb 的 booking reassurance
+            放在 merchant detail 與 confirm，讓預約前的猶豫被價格、時段、取消政策與本地資訊一起消化掉。
+          </p>
+          <div class="hero-grid">
+            <div class="hero-stat">
+              <strong>Seed color</strong>
+              <span>#093C68 做主 CTA、信任色與深層導航</span>
+            </div>
+            <div class="hero-stat">
+              <strong>Flow scope</strong>
+              <span>Home → Results → Detail → Confirm → Success → Bookings</span>
+            </div>
+            <div class="hero-stat">
+              <strong>Local-first cue</strong>
+              <span>Chicago neighborhood copy、距離、步行時間、即時空位</span>
+            </div>
+          </div>
+          <div class="flow-nav" id="flowTabs"></div>
+        </div>
+
+        <aside class="meta-panel">
+          <div class="meta-block">
+            <span class="meta-label">Direction</span>
+            <div class="meta-card">
+              <strong>Hybrid: Search & reassure</strong>
+              <p>首頁和結果頁偏搜尋發現，詳情與確認頁偏安心成交。不是旅遊預訂，也不是外送，即時 local opening 才是核心。</p>
+            </div>
+          </div>
+          <div class="meta-block">
+            <span class="meta-label">Technique Match</span>
+            <div class="meta-card">
+              <div class="techniques">
+                <span>Search and Discovery</span>
+                <span>Checkout and Commitment Reassurance</span>
+                <span>Mobile Focus and Thumb Flow</span>
+                <span>Premium Calm</span>
+              </div>
+            </div>
+          </div>
+          <div class="meta-block">
+            <span class="meta-label">Why it fits</span>
+            <div class="meta-card">
+              <ul>
+                <li>主決策不是找哪家最酷，而是附近哪裡現在或今晚有空位。</li>
+                <li>預約承諾是時間與位置，不是付款，因此 summary 要輕，但 reassurance 不能少。</li>
+                <li>一手操作與快速跳轉很重要，所以核心 CTA 都放到底部 thumb zone。</li>
+              </ul>
+            </div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="workspace">
+        <aside class="inspector">
+          <div>
+            <h2 id="screenTitle">Home</h2>
+            <p class="helper-copy" id="screenSubtitle">本地搜尋入口。像 Uber Eats 一樣先定位置、時間、類別，再往下看 available modules。</p>
+          </div>
+
+          <div>
+            <div class="meta-label">Annotations</div>
+            <div class="toggle-row">
+              <button class="active" id="annotationOn">On</button>
+              <button id="annotationOff">Off</button>
+            </div>
+          </div>
+
+          <div class="screen-notes" id="screenNotes"></div>
+
+          <div>
+            <div class="meta-label">Design tokens</div>
+            <div class="meta-card token-list">
+              <div class="token-row"><span>Primary</span><span><span class="swatch" style="background:#093c68"></span> #093C68</span></div>
+              <div class="token-row"><span>Warm surface</span><span><span class="swatch" style="background:#fffdfa"></span> #FFFDFA</span></div>
+              <div class="token-row"><span>Soft neutral</span><span><span class="swatch" style="background:#f8f5ef"></span> #F8F5EF</span></div>
+              <div class="token-row"><span>Text</span><span><span class="swatch" style="background:#111723"></span> #111723</span></div>
+              <div class="token-row"><span>Accent</span><span><span class="swatch" style="background:#c6a76d"></span> #C6A76D</span></div>
+            </div>
+          </div>
+        </aside>
+
+        <div class="preview">
+          <div class="phone-shell" id="phoneCapture">
+            <div class="phone annotation" id="phone">
+              <div class="statusbar">
+                <span>9:41</span>
+                <span>Chicago · 5G · 100%</span>
+              </div>
+
+              <section class="screen" data-screen="home">
+                <div class="screen-stack">
+                  <div class="brand-row">
+                    <div class="brand" data-note="Brand + local anchor">
+                      <div class="brand-mark">X</div>
+                      <div>
+                        <strong>Xtraspots</strong>
+                        <span>West Loop, Chicago</span>
+                      </div>
+                    </div>
+                    <button class="icon-btn" aria-label="Notifications">⌁</button>
+                  </div>
+
+                  <div class="hero-card" data-note="Search-first hero">
+                    <div class="eyebrow">Live local openings · No upfront payment</div>
+                    <h2>Find an opening five blocks away.</h2>
+                    <p>今晚想吃飯、補美甲、做個 quick facial，都先從現在附近有沒有空位開始。</p>
+
+                    <div class="search-stack">
+                      <button class="search-pill" type="button">
+                        <span>📍 <strong id="homeLocationLabel">West Loop</strong></span>
+                        <span>2.1 mi</span>
+                      </button>
+                      <button class="search-pill" type="button">
+                        <span>🕒 <strong id="homeTimeLabel">Tonight · 7:00 PM</strong></span>
+                        <span>Flexible</span>
+                      </button>
+                      <div class="pill-row" id="homeCategoryRow">
+                        <button class="chip active" data-category="dining" type="button">Dining</button>
+                        <button class="chip" data-category="nails" type="button">Nails</button>
+                        <button class="chip" data-category="beauty" type="button">Beauty</button>
+                        <button class="chip" data-category="parking" type="button">Parking</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="surface-card" data-note="Available-now module">
+                    <div class="section-head">
+                      <strong>Available now</strong>
+                      <span>Closest fits first</span>
+                    </div>
+                    <div class="module-grid">
+                      <div class="module-row">
+                        <div class="module-icon">🍝</div>
+                        <div>
+                          <strong>Ciclo Pasta Bar</strong>
+                          <p>Next opening in 22 min · 7 min walk · save $18 on chef set menu</p>
+                        </div>
+                        <button class="secondary-btn open-detail" data-merchant="ciclo">Book</button>
+                      </div>
+                      <div class="module-row">
+                        <div class="module-icon">💅</div>
+                        <div>
+                          <strong>Canal Nail Atelier</strong>
+                          <p>6:45 PM cancellation slot · Gel express mani · save $14</p>
+                        </div>
+                        <button class="secondary-btn open-detail" data-merchant="canal">Book</button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="surface-card" data-note="Local browsing modules">
+                    <div class="section-head">
+                      <strong>Tonight's openings</strong>
+                      <span>Built for nearby plans</span>
+                    </div>
+                    <div class="meta-badges">
+                      <span class="badge success">12 within a 10 min walk</span>
+                      <span class="badge">West Loop</span>
+                      <span class="badge">River North</span>
+                      <span class="badge">Logan Square</span>
+                    </div>
+                    <div class="cta-row">
+                      <button class="primary-btn go-results">See 42 openings</button>
+                      <button class="secondary-btn" type="button">Map</button>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen" data-screen="results">
+                <div class="screen-stack">
+                  <div class="brand-row">
+                    <button class="icon-btn go-home" aria-label="Back">←</button>
+                    <div class="brand">
+                      <div>
+                        <strong>Tonight near West Loop</strong>
+                        <span>42 openings · Updated 2 min ago</span>
+                      </div>
+                    </div>
+                    <button class="icon-btn" aria-label="Filter">⚙</button>
+                  </div>
+
+                  <div class="surface-card" data-note="Uber-Eats-like filter rail">
+                    <div class="filter-row" id="resultsFilterRow">
+                      <button class="filter-pill active" data-filter="best" type="button">Best match</button>
+                      <button class="filter-pill" data-filter="closest" type="button">Closest</button>
+                      <button class="filter-pill" data-filter="dining" type="button">Dining</button>
+                      <button class="filter-pill" data-filter="beauty" type="button">Beauty</button>
+                      <button class="filter-pill" data-filter="parking" type="button">Parking</button>
+                    </div>
+                  </div>
+
+                  <div class="result-list" data-note="High-scan result cards">
+                    <article class="result-card">
+                      <div class="result-card-head">
+                        <div>
+                          <div class="kicker">Dining · 7 min walk</div>
+                          <strong>Ciclo Pasta Bar</strong>
+                          <p>Chef counter set for two. Calm room, fast seating, great for same-evening plans.</p>
+                        </div>
+                        <div class="price-mark">
+                          <strong>$44</strong>
+                          <span>Save $18</span>
+                        </div>
+                      </div>
+                      <div class="meta-badges">
+                        <span class="badge success">Next opening 7:20 PM</span>
+                        <span class="badge">4.8 · 231 reviews</span>
+                        <span class="badge">No prepayment</span>
+                      </div>
+                      <div class="cta-row">
+                        <button class="primary-btn open-detail" data-merchant="ciclo">Book now</button>
+                        <button class="secondary-btn" type="button">Why here</button>
+                      </div>
+                    </article>
+
+                    <article class="result-card">
+                      <div class="result-card-head">
+                        <div>
+                          <div class="kicker">Beauty · 9 min walk</div>
+                          <strong>Canal Nail Atelier</strong>
+                          <p>Express gel mani with cancellation slot. Premium tools, shorter service window.</p>
+                        </div>
+                        <div class="price-mark">
+                          <strong>$31</strong>
+                          <span>Save $14</span>
+                        </div>
+                      </div>
+                      <div class="meta-badges">
+                        <span class="badge success">Next opening 6:45 PM</span>
+                        <span class="badge">4.9 · 119 reviews</span>
+                        <span class="badge">45 min service</span>
+                      </div>
+                      <div class="cta-row">
+                        <button class="primary-btn open-detail" data-merchant="canal">Book now</button>
+                        <button class="secondary-btn" type="button">Why here</button>
+                      </div>
+                    </article>
+
+                    <article class="result-card">
+                      <div class="result-card-head">
+                        <div>
+                          <div class="kicker">Parking support · 4 min walk</div>
+                          <strong>Lakeview Quick Park</strong>
+                          <p>Support category only. Nearby evening parking if you need to secure the full trip.</p>
+                        </div>
+                        <div class="price-mark">
+                          <strong>$12</strong>
+                          <span>Flat evening rate</span>
+                        </div>
+                      </div>
+                      <div class="meta-badges">
+                        <span class="badge warning">Secondary category</span>
+                        <span class="badge">Until 11:30 PM</span>
+                        <span class="badge">QR entry</span>
+                      </div>
+                      <div class="cta-row">
+                        <button class="secondary-btn" type="button">Support only</button>
+                      </div>
+                    </article>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen" data-screen="detail">
+                <div class="screen-stack">
+                  <div class="brand-row">
+                    <button class="icon-btn go-results" aria-label="Back">←</button>
+                    <div class="brand">
+                      <div>
+                        <strong id="detailNeighborhood">West Loop · 7 min walk</strong>
+                        <span id="detailMetaTop">Local opening reserved without prepay</span>
+                      </div>
+                    </div>
+                    <button class="icon-btn" aria-label="Share">↗</button>
+                  </div>
+
+                  <div class="merchant-card" data-note="Merchant detail with reassurance">
+                    <div class="merchant-cover">
+                      <div class="cover-badges">
+                        <span id="detailTypeBadge">Dining</span>
+                        <span id="detailDistanceBadge">7 min walk</span>
+                        <span>No prepayment</span>
+                      </div>
+                    </div>
+                    <div class="detail-grid" style="margin-top:16px;">
+                      <div class="merchant-hero">
+                        <div>
+                          <strong id="detailName">Ciclo Pasta Bar</strong>
+                          <p id="detailDescription">Italian chef counter with same-evening cancellations and steady quality.</p>
+                        </div>
+                        <div class="price-mark">
+                          <strong id="detailPrice">$44</strong>
+                          <span id="detailSavings">Save $18</span>
+                        </div>
+                      </div>
+                      <div class="info-card">
+                        <strong>Why book here</strong>
+                        <ul class="why-list" id="detailWhyList"></ul>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="summary-card" data-note="Slot selection">
+                    <div class="section-head">
+                      <strong>Available slots</strong>
+                      <span>Only live openings shown</span>
+                    </div>
+                    <div class="slot-grid" id="slotGrid"></div>
+                  </div>
+
+                  <div class="summary-card">
+                    <div class="section-head">
+                      <strong>Price breakdown</strong>
+                      <span>Transparent before confirm</span>
+                    </div>
+                    <div class="summary-line">
+                      <span id="detailServiceLabel">Chef set menu</span>
+                      <strong id="detailOriginalPrice">$62</strong>
+                    </div>
+                    <div class="summary-line">
+                      <span>Xtraspots opening price</span>
+                      <strong id="detailDealPrice">$44</strong>
+                    </div>
+                    <div class="summary-line">
+                      <span>Booking fee</span>
+                      <strong>$0</strong>
+                    </div>
+                  </div>
+
+                  <div class="cta-row">
+                    <button class="primary-btn go-confirm" type="button">Continue with this slot</button>
+                    <button class="secondary-btn go-results" type="button">Compare more</button>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen" data-screen="confirm">
+                <div class="screen-stack">
+                  <div class="brand-row">
+                    <button class="icon-btn go-detail" aria-label="Back">←</button>
+                    <div class="brand">
+                      <div>
+                        <strong>Confirm reservation</strong>
+                        <span>One last check before we hold the slot</span>
+                      </div>
+                    </div>
+                    <button class="icon-btn" aria-label="Help">?</button>
+                  </div>
+
+                  <div class="confirm-stack">
+                    <div class="summary-card" data-note="Airbnb-like commitment summary">
+                      <strong id="confirmMerchantName">Ciclo Pasta Bar</strong>
+                      <p id="confirmMerchantMeta">West Loop · 7 min walk · Dining</p>
+                      <div class="meta-badges">
+                        <span class="badge success" id="confirmSlotBadge">7:20 PM · Tonight</span>
+                        <span class="badge" id="confirmDurationBadge">90 min</span>
+                        <span class="badge">No prepayment</span>
+                      </div>
+                    </div>
+
+                    <div class="summary-card">
+                      <div class="section-head">
+                        <strong>Price summary</strong>
+                        <span>Pay at merchant</span>
+                      </div>
+                      <div class="summary-line">
+                        <span id="confirmServiceLabel">Chef set menu</span>
+                        <strong id="confirmOriginalPrice">$62</strong>
+                      </div>
+                      <div class="summary-line">
+                        <span>Xtraspots price</span>
+                        <strong id="confirmDealPrice">$44</strong>
+                      </div>
+                      <div class="summary-line">
+                        <span>Your savings</span>
+                        <strong id="confirmSavings">$18</strong>
+                      </div>
+                    </div>
+
+                    <div class="summary-card">
+                      <div class="field">
+                        <label for="guestName">Guest name</label>
+                        <input id="guestName" type="text" value="Sander Chen" />
+                      </div>
+                      <div class="field" style="margin-top:12px;">
+                        <label for="guestPhone">Phone number</label>
+                        <input id="guestPhone" type="tel" value="(312) 555-0149" />
+                      </div>
+                    </div>
+
+                    <div class="inline-note">
+                      You are holding a local cancellation opening. We’ll send directions and a reminder, but payment happens at the merchant. Cancel up to 2 hours before to release the spot.
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen" data-screen="success">
+                <div class="screen-stack">
+                  <div class="success-stage">
+                    <div class="success-mark">✓</div>
+                    <div>
+                      <div class="eyebrow">Reservation locked</div>
+                      <h3>You're in for tonight.</h3>
+                    </div>
+                    <p id="successCopy">Ciclo Pasta Bar at 7:20 PM is now held under your name. Directions, calendar, and booking details are ready below.</p>
+                  </div>
+
+                  <div class="summary-card" data-note="Success state with next actions">
+                    <strong id="successCode">Booking code · XT-4721</strong>
+                    <p id="successMeta">West Loop · 1032 W Fulton St · 7 min walk</p>
+                    <div class="meta-badges">
+                      <span class="badge success" id="successSlot">Tonight · 7:20 PM</span>
+                      <span class="badge">Arrive 5 min early</span>
+                      <span class="badge">2-hour cancel window</span>
+                    </div>
+                  </div>
+
+                  <div class="cta-row">
+                    <button class="primary-btn go-bookings">View bookings</button>
+                    <button class="secondary-btn" type="button">Add calendar</button>
+                  </div>
+
+                  <div class="surface-card">
+                    <div class="section-head">
+                      <strong>Next actions</strong>
+                      <span>Keep it local</span>
+                    </div>
+                    <div class="module-grid">
+                      <div class="module-row">
+                        <div class="module-icon">🧭</div>
+                        <div>
+                          <strong>Directions ready</strong>
+                          <p>Open walking directions from your current location and keep the reservation card pinned.</p>
+                        </div>
+                      </div>
+                      <div class="module-row">
+                        <div class="module-icon">✨</div>
+                        <div>
+                          <strong>Find another stop nearby</strong>
+                          <p>Bundle a beauty or parking opening before or after this reservation.</p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <section class="screen" data-screen="bookings">
+                <div class="screen-stack">
+                  <div class="brand-row">
+                    <div class="brand">
+                      <div>
+                        <strong>Your bookings</strong>
+                        <span>Everything still anchored to nearby plans</span>
+                      </div>
+                    </div>
+                    <button class="icon-btn go-home" aria-label="Home">⌂</button>
+                  </div>
+
+                  <div class="segmented" id="bookingTabs" data-note="Booking management tabs">
+                    <button class="active" data-booking-tab="upcoming" type="button">Upcoming</button>
+                    <button data-booking-tab="past" type="button">Past</button>
+                    <button data-booking-tab="cancelled" type="button">Cancelled</button>
+                  </div>
+
+                  <div class="booking-list" id="bookingList"></div>
+                </div>
+              </section>
+
+              <div class="bottom-bar">
+                <div class="bottom-top">
+                  <div>
+                    <strong id="footerTitle">Local openings for tonight</strong>
+                    <span id="footerSubtitle">Fast search first. Reassurance before confirm.</span>
+                  </div>
+                  <button class="ghost-btn go-next" type="button">Next screen</button>
+                </div>
+                <div class="nav-row">
+                  <button class="nav-btn active" data-target="home" type="button">Home</button>
+                  <button class="nav-btn" data-target="results" type="button">Search</button>
+                  <button class="nav-btn" data-target="bookings" type="button">Bookings</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const merchantData = {
+        ciclo: {
+          name: "Ciclo Pasta Bar",
+          type: "Dining",
+          neighborhood: "West Loop",
+          walk: "7 min walk",
+          topMeta: "Local dinner opening · no prepayment",
+          description: "Chef counter tasting with same-evening availability and calm, premium atmosphere.",
+          why: [
+            "Real-time cancellation inventory means the listed slots are actually open now.",
+            "Price framing is simple: one opening price, no booking fee, pay at the merchant.",
+            "Location and timing are easy to trust: West Loop, walking distance, fast seating."
+          ],
+          service: "Chef set menu",
+          originalPrice: "$62",
+          dealPrice: "$44",
+          savings: "Save $18",
+          duration: "90 min",
+          address: "1032 W Fulton St",
+          slots: [
+            { time: "7:20 PM", note: "2 seats" },
+            { time: "7:45 PM", note: "bar seats" },
+            { time: "8:10 PM", note: "quiet room" },
+            { time: "8:35 PM", note: "2 seats" },
+            { time: "9:00 PM", note: "last chef set" },
+            { time: "9:25 PM", note: "walk-in hold" }
+          ]
+        },
+        canal: {
+          name: "Canal Nail Atelier",
+          type: "Beauty",
+          neighborhood: "West Loop",
+          walk: "9 min walk",
+          topMeta: "Same-evening beauty opening · no prepayment",
+          description: "Express gel mani with polished tools, soft lighting, and short service windows.",
+          why: [
+            "Beauty reservations feel safer with a short duration and a visible cancellation policy.",
+            "The nearby cue matters more than marketplace breadth here, so we keep the decision locally scoped.",
+            "Savings are visible, but secondary to confidence in timing, service length, and location."
+          ],
+          service: "Gel express mani",
+          originalPrice: "$45",
+          dealPrice: "$31",
+          savings: "Save $14",
+          duration: "45 min",
+          address: "908 W Randolph St",
+          slots: [
+            { time: "6:45 PM", note: "artist Mia" },
+            { time: "7:30 PM", note: "artist Jo" },
+            { time: "8:15 PM", note: "express set" },
+            { time: "8:50 PM", note: "quiet station" },
+            { time: "9:20 PM", note: "last slot" },
+            { time: "9:40 PM", note: "waitlist ready" }
+          ]
+        }
+      };
+
+      const screens = [
+        {
+          id: "home",
+          title: "Home",
+          subtitle: "本地搜尋入口。像 Uber Eats 一樣先定位置、時間、類別，再往下看 available modules。",
+          footerTitle: "Local openings for tonight",
+          footerSubtitle: "Fast search first. Reassurance before confirm.",
+          notes: [
+            ["Primary job", "先讓人決定『附近、現在、哪一類』，不是先進商家頁。"],
+            ["Pattern borrowed", "搜尋堆疊、橫向 chips、模組化結果入口都借的是 Uber Eats 的 search UX。"],
+            ["Local cue", "Neighborhood 直接進 hero，讓 app 感覺像城市裡的即時 inventory，而不是全域 marketplace。"]
+          ]
+        },
+        {
+          id: "results",
+          title: "Results list",
+          subtitle: "高掃描列表。每張卡只保留 booking 真正需要的資訊：下一個空位、距離、價格、節省金額與信任訊號。",
+          footerTitle: "Scan nearby options",
+          footerSubtitle: "Next opening, savings, walking distance.",
+          notes: [
+            ["Scan rhythm", "卡片層級先看 next opening，再看 savings，最後才看描述。"],
+            ["Phase 1 scope", "Parking 保留但降階成 support only，不跟 dining / beauty 競爭主視覺。"],
+            ["Minimalism", "用 whitespace 和 weight contrast 做高級感，不靠大量插圖。"]
+          ]
+        },
+        {
+          id: "detail",
+          title: "Merchant detail",
+          subtitle: "進入 detail 後轉成 Airbnb 式 reassurance：為什麼值得訂、哪些時段真實可用、價格怎麼算。",
+          footerTitle: "Choose a live slot",
+          footerSubtitle: "Transparent timing and pricing.",
+          notes: [
+            ["Booking trust", "Why book here 放在 slot 前面，先處理猶豫，再讓人點時間。"],
+            ["Availability-first", "時段 grid 直接是 live openings，而不是一般營業時間。"],
+            ["Visual direction", "圖片只做 mood，不做 heavy media carousel，保持 minimalist。"]
+          ]
+        },
+        {
+          id: "confirm",
+          title: "Confirm booking",
+          subtitle: "確認頁把承諾壓成一個清楚 summary，因為這裡沒有 in-app payment，重點是預約是否安心。",
+          footerTitle: "Hold the slot",
+          footerSubtitle: "Summary + guest info + cancel policy.",
+          notes: [
+            ["Airbnb influence", "Summary、政策、最終 CTA 用 Airbnb 的 booking reassurance 節奏。"],
+            ["No payment", "既然 Phase 1 不做支付，價格資訊必須簡單且清楚說明 pay at merchant。"],
+            ["Thumb flow", "表單只留 name / phone，讓最後一步維持短促。"]
+          ]
+        },
+        {
+          id: "success",
+          title: "Booking confirmed",
+          subtitle: "成功頁不只是慶祝，而是立刻給 directions、calendar 與回到 bookings 的下一步。",
+          footerTitle: "Reservation confirmed",
+          footerSubtitle: "Directions and next actions.",
+          notes: [
+            ["Success utility", "成功狀態下一步是實用資訊，不是情緒文案堆疊。"],
+            ["Local-first", "Directions 與 nearby add-on 能延續本地生活場景。"],
+            ["Low friction", "主要出口是 View bookings，讓 flow 收束。"]
+          ]
+        },
+        {
+          id: "bookings",
+          title: "Bookings",
+          subtitle: "管理頁維持簡潔的 segmented tabs，Upcoming / Past / Cancelled 一次看清。",
+          footerTitle: "Manage local plans",
+          footerSubtitle: "Upcoming, past, cancelled.",
+          notes: [
+            ["Retention loop", "Bookings tab 讓 Xtraspots 從一次性發現，變成 recurring local plan tool。"],
+            ["State clarity", "不同狀態用 chip 與 tab 管理，不靠顏色 alone。"],
+            ["Consistency", "所有卡片語言都沿用前面 flow 的距離、時段、節省結構。"]
+          ]
+        }
+      ];
+
+      const bookingData = {
+        upcoming: [
+          {
+            title: "Ciclo Pasta Bar",
+            meta: "Tonight · 7:20 PM · West Loop",
+            badges: ["2 seats", "7 min walk", "No prepayment"],
+            tone: "success"
+          },
+          {
+            title: "Canal Nail Atelier",
+            meta: "Tomorrow · 6:45 PM · West Loop",
+            badges: ["45 min service", "Artist Mia", "Reminder on"],
+            tone: "default"
+          }
+        ],
+        past: [
+          {
+            title: "Miro Facial Room",
+            meta: "Apr 1 · 8:10 PM · River North",
+            badges: ["Completed", "Beauty", "Rebook"],
+            tone: "default"
+          }
+        ],
+        cancelled: [
+          {
+            title: "Lakeview Quick Park",
+            meta: "Mar 29 · 7:00 PM · Lakeview",
+            badges: ["Cancelled in time", "No fee", "Support category"],
+            tone: "warning"
+          }
+        ]
+      };
+
+      const validScreenIds = ["home", "results", "detail", "confirm", "success", "bookings"];
+      const initialScreenFromUrl = (() => {
+        const params = new URLSearchParams(window.location.search);
+        const candidate = params.get("screen");
+        return validScreenIds.includes(candidate) ? candidate : "home";
+      })();
+
+      const state = {
+        screen: initialScreenFromUrl,
+        merchant: "ciclo",
+        slot: "7:20 PM",
+        bookingTab: "upcoming",
+        annotation: true
+      };
+
+      const phone = document.getElementById("phone");
+      const flowTabs = document.getElementById("flowTabs");
+      const screenTitle = document.getElementById("screenTitle");
+      const screenSubtitle = document.getElementById("screenSubtitle");
+      const screenNotes = document.getElementById("screenNotes");
+      const bookingList = document.getElementById("bookingList");
+
+      function updateDocumentTitle(id) {
+        const screen = screens.find((item) => item.id === id);
+        document.title = screen ? `Xtraspots - ${screen.title}` : "Xtraspots Phase 1 Reservation Flow";
+      }
+
+      function renderFlowTabs() {
+        flowTabs.innerHTML = screens
+          .map(
+            (screen, index) => `
+              <button class="flow-tab ${state.screen === screen.id ? "active" : ""}" data-target="${screen.id}" type="button">
+                ${index + 1}. ${screen.title}
+              </button>
+            `
+          )
+          .join("");
+      }
+
+      function renderInspector() {
+        const screen = screens.find((item) => item.id === state.screen);
+        screenTitle.textContent = screen.title;
+        screenSubtitle.textContent = screen.subtitle;
+        screenNotes.innerHTML = screen.notes
+          .map(
+            ([title, copy]) => `
+              <div class="note-card">
+                <strong>${title}</strong>
+                <p>${copy}</p>
+              </div>
+            `
+          )
+          .join("");
+        document.getElementById("footerTitle").textContent = screen.footerTitle;
+        document.getElementById("footerSubtitle").textContent = screen.footerSubtitle;
+      }
+
+      function renderMerchant() {
+        const merchant = merchantData[state.merchant];
+        document.getElementById("detailName").textContent = merchant.name;
+        document.getElementById("detailDescription").textContent = merchant.description;
+        document.getElementById("detailPrice").textContent = merchant.dealPrice;
+        document.getElementById("detailSavings").textContent = merchant.savings;
+        document.getElementById("detailNeighborhood").textContent = `${merchant.neighborhood} · ${merchant.walk}`;
+        document.getElementById("detailMetaTop").textContent = merchant.topMeta;
+        document.getElementById("detailTypeBadge").textContent = merchant.type;
+        document.getElementById("detailDistanceBadge").textContent = merchant.walk;
+        document.getElementById("detailServiceLabel").textContent = merchant.service;
+        document.getElementById("detailOriginalPrice").textContent = merchant.originalPrice;
+        document.getElementById("detailDealPrice").textContent = merchant.dealPrice;
+        document.getElementById("detailWhyList").innerHTML = merchant.why.map((item) => `<li>${item}</li>`).join("");
+
+        document.getElementById("confirmMerchantName").textContent = merchant.name;
+        document.getElementById("confirmMerchantMeta").textContent = `${merchant.neighborhood} · ${merchant.walk} · ${merchant.type}`;
+        document.getElementById("confirmDurationBadge").textContent = merchant.duration;
+        document.getElementById("confirmServiceLabel").textContent = merchant.service;
+        document.getElementById("confirmOriginalPrice").textContent = merchant.originalPrice;
+        document.getElementById("confirmDealPrice").textContent = merchant.dealPrice;
+        document.getElementById("confirmSavings").textContent = merchant.savings.replace("Save ", "$");
+
+        document.getElementById("successCopy").textContent = `${merchant.name} at ${state.slot} is now held under your name. Directions, calendar, and booking details are ready below.`;
+        document.getElementById("successMeta").textContent = `${merchant.neighborhood} · ${merchant.address} · ${merchant.walk}`;
+
+        renderSlots();
+        syncSlotLabels();
+      }
+
+      function renderSlots() {
+        const merchant = merchantData[state.merchant];
+        const slotGrid = document.getElementById("slotGrid");
+        slotGrid.innerHTML = merchant.slots
+          .map(
+            (slot) => `
+              <button class="slot-btn ${state.slot === slot.time ? "active" : ""}" data-slot="${slot.time}" type="button">
+                <span>${slot.time}</span>
+                <small>${slot.note}</small>
+              </button>
+            `
+          )
+          .join("");
+      }
+
+      function syncSlotLabels() {
+        const merchant = merchantData[state.merchant];
+        document.getElementById("confirmSlotBadge").textContent = `${state.slot} · Tonight`;
+        document.getElementById("successSlot").textContent = `Tonight · ${state.slot}`;
+        document.getElementById("successCode").textContent = `Booking code · ${state.merchant === "ciclo" ? "XT-4721" : "XT-5938"}`;
+      }
+
+      function renderBookings() {
+        bookingList.innerHTML = bookingData[state.bookingTab]
+          .map(
+            (item) => `
+              <article class="booking-card">
+                <strong>${item.title}</strong>
+                <p>${item.meta}</p>
+                <div class="booking-meta">
+                  ${item.badges
+                    .map((badge) => `<span class="badge ${item.tone === "success" ? "success" : item.tone === "warning" ? "warning" : ""}">${badge}</span>`)
+                    .join("")}
+                </div>
+              </article>
+            `
+          )
+          .join("");
+      }
+
+      function setScreen(id) {
+        state.screen = id;
+        const url = new URL(window.location.href);
+        url.searchParams.set("screen", id);
+        window.history.replaceState({}, "", url.toString());
+        updateDocumentTitle(id);
+        document.querySelectorAll(".screen").forEach((screen) => {
+          screen.classList.toggle("active", screen.dataset.screen === id);
+        });
+        document.querySelectorAll(".flow-tab").forEach((tab) => {
+          tab.classList.toggle("active", tab.dataset.target === id);
+        });
+        document.querySelectorAll(".nav-btn").forEach((button) => {
+          const normalizedTarget = button.dataset.target === "results" ? "results" : button.dataset.target;
+          const isActive = id === normalizedTarget || (id === "detail" && normalizedTarget === "results") || (id === "confirm" && normalizedTarget === "results");
+          button.classList.toggle("active", isActive);
+        });
+        renderFlowTabs();
+        renderInspector();
+      }
+
+      function nextScreen() {
+        const currentIndex = screens.findIndex((screen) => screen.id === state.screen);
+        const next = screens[(currentIndex + 1) % screens.length];
+        setScreen(next.id);
+      }
+
+      function bindEvents() {
+        document.addEventListener("click", (event) => {
+          const flowTab = event.target.closest(".flow-tab");
+          if (flowTab) {
+            setScreen(flowTab.dataset.target);
+          }
+
+          if (event.target.closest(".go-home")) setScreen("home");
+          if (event.target.closest(".go-results")) setScreen("results");
+          if (event.target.closest(".go-detail")) setScreen("detail");
+          if (event.target.closest(".go-confirm")) setScreen("confirm");
+          if (event.target.closest(".go-bookings")) setScreen("bookings");
+
+          if (event.target.closest(".go-next")) nextScreen();
+
+          const navButton = event.target.closest(".nav-btn");
+          if (navButton) {
+            const target = navButton.dataset.target === "search" ? "results" : navButton.dataset.target;
+            setScreen(target);
+          }
+
+          const merchantButton = event.target.closest(".open-detail");
+          if (merchantButton) {
+            state.merchant = merchantButton.dataset.merchant;
+            state.slot = merchantData[state.merchant].slots[0].time;
+            renderMerchant();
+            setScreen("detail");
+          }
+
+          const slotButton = event.target.closest(".slot-btn");
+          if (slotButton) {
+            state.slot = slotButton.dataset.slot;
+            renderMerchant();
+          }
+
+          const categoryButton = event.target.closest("#homeCategoryRow .chip");
+          if (categoryButton) {
+            document.querySelectorAll("#homeCategoryRow .chip").forEach((chip) => chip.classList.remove("active"));
+            categoryButton.classList.add("active");
+          }
+
+          const filterButton = event.target.closest("#resultsFilterRow .filter-pill");
+          if (filterButton) {
+            document.querySelectorAll("#resultsFilterRow .filter-pill").forEach((pill) => pill.classList.remove("active"));
+            filterButton.classList.add("active");
+          }
+
+          const bookingTab = event.target.closest("#bookingTabs button");
+          if (bookingTab) {
+            state.bookingTab = bookingTab.dataset.bookingTab;
+            document.querySelectorAll("#bookingTabs button").forEach((button) => {
+              button.classList.toggle("active", button.dataset.bookingTab === state.bookingTab);
+            });
+            renderBookings();
+          }
+        });
+
+        document.getElementById("annotationOn").addEventListener("click", () => {
+          state.annotation = true;
+          phone.classList.add("annotation");
+          document.getElementById("annotationOn").classList.add("active");
+          document.getElementById("annotationOff").classList.remove("active");
+        });
+
+        document.getElementById("annotationOff").addEventListener("click", () => {
+          state.annotation = false;
+          phone.classList.remove("annotation");
+          document.getElementById("annotationOff").classList.add("active");
+          document.getElementById("annotationOn").classList.remove("active");
+        });
+
+      }
+
+      function installConfirmAction() {
+        const confirmButton = document.createElement("button");
+        confirmButton.className = "primary-btn";
+        confirmButton.type = "button";
+        confirmButton.textContent = "Confirm reservation";
+        confirmButton.addEventListener("click", () => {
+          syncSlotLabels();
+          setScreen("success");
+        });
+
+        const secondaryButton = document.createElement("button");
+        secondaryButton.className = "secondary-btn go-detail";
+        secondaryButton.type = "button";
+        secondaryButton.textContent = "Back";
+        secondaryButton.addEventListener("click", () => setScreen("detail"));
+
+        const row = document.createElement("div");
+        row.className = "cta-row";
+        row.appendChild(confirmButton);
+        row.appendChild(secondaryButton);
+        document.querySelector('[data-screen="confirm"] .confirm-stack').appendChild(row);
+      }
+
+      renderMerchant();
+      renderBookings();
+      installConfirmAction();
+      bindEvents();
+      setScreen(state.screen);
+    </script>
+  </body>
+</html>
