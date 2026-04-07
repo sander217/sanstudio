@@ -224,6 +224,78 @@ Format:
   .feature-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--neutral-100); font-size: 14px; }
   ```
 
+#### Reference Snippet
+
+```html
+<style>
+  :root {
+    --primary: #2563eb;
+    --neutral-50: #f8fafc;
+    --neutral-100: #e2e8f0;
+    --neutral-200: #cbd5e1;
+    --neutral-500: #64748b;
+    --neutral-900: #0f172a;
+    --success: #16a34a;
+  }
+  .pricing-demo { max-width: 1100px; margin: 0 auto; padding: 40px 24px; font-family: Inter, sans-serif; color: var(--neutral-900); }
+  .pricing-demo h2 { margin: 0 0 12px; font-size: 36px; }
+  .pricing-demo p { margin: 0 0 40px; color: var(--neutral-500); font-size: 16px; }
+  .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .plan-card { border: 1px solid var(--neutral-200); border-radius: 16px; padding: 28px 24px; background: white; }
+  .plan-card.recommended { border-top: 4px solid var(--primary); background: color-mix(in srgb, var(--primary) 5%, white); transform: scale(1.02); }
+  .badge { display: inline-block; margin-bottom: 16px; padding: 6px 10px; border-radius: 999px; background: color-mix(in srgb, var(--primary) 12%, white); color: var(--primary); font-size: 12px; font-weight: 600; }
+  .plan-name { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+  .plan-price { font-size: 44px; font-weight: 700; margin-bottom: 4px; }
+  .plan-period { color: var(--neutral-500); font-size: 14px; margin-bottom: 24px; }
+  .feature-row { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--neutral-100); font-size: 14px; }
+  .feature-status { color: var(--success); font-weight: 600; }
+  .cta { width: 100%; margin-top: 24px; padding: 14px; border: 0; border-radius: 10px; background: var(--primary); color: white; font-weight: 600; }
+</style>
+
+<section class="pricing-demo">
+  <!-- component: pricing-header -->
+  <h2>Choose the workspace that fits your team</h2>
+  <p>Start free, upgrade when collaboration and reporting need more structure.</p>
+
+  <!-- component: pricing-grid -->
+  <div class="pricing-grid">
+    <!-- component: pricing-plan -->
+    <article class="plan-card">
+      <div class="plan-name">Starter</div>
+      <div class="plan-price">$0</div>
+      <div class="plan-period">per editor / month</div>
+      <div class="feature-row"><span>3 active projects</span><span class="feature-status">Included</span></div>
+      <div class="feature-row"><span>Basic client review</span><span class="feature-status">Included</span></div>
+      <div class="feature-row"><span>Export watermark</span><span>Yes</span></div>
+      <button class="cta">Start free</button>
+    </article>
+
+    <!-- component: pricing-plan -->
+    <article class="plan-card recommended">
+      <div class="badge">Recommended</div>
+      <div class="plan-name">Studio</div>
+      <div class="plan-price">$29</div>
+      <div class="plan-period">per editor / month</div>
+      <div class="feature-row"><span>Unlimited projects</span><span class="feature-status">Included</span></div>
+      <div class="feature-row"><span>Approval workflows</span><span class="feature-status">Included</span></div>
+      <div class="feature-row"><span>Weekly performance digest</span><span class="feature-status">Included</span></div>
+      <button class="cta">Upgrade to Studio</button>
+    </article>
+
+    <!-- component: pricing-plan -->
+    <article class="plan-card">
+      <div class="plan-name">Enterprise</div>
+      <div class="plan-price">Custom</div>
+      <div class="plan-period">annual contract</div>
+      <div class="feature-row"><span>SSO and SCIM</span><span class="feature-status">Included</span></div>
+      <div class="feature-row"><span>Audit logs</span><span class="feature-status">Included</span></div>
+      <div class="feature-row"><span>Dedicated onboarding</span><span class="feature-status">Included</span></div>
+      <button class="cta">Talk to sales</button>
+    </article>
+  </div>
+</section>
+```
+
 ### 5. Form Friction Reduction
 
 **Keywords:** form, signup, application, input, fields, completion, friction, autofill
@@ -294,6 +366,86 @@ Format:
   @media (max-width: 768px) { .checkout { grid-template-columns: 1fr; } }
   ```
 
+#### Reference Snippet
+
+```html
+<style>
+  :root {
+    --primary: #0f766e;
+    --neutral-50: #f8fafc;
+    --neutral-100: #e2e8f0;
+    --neutral-200: #cbd5e1;
+    --neutral-500: #64748b;
+    --neutral-900: #0f172a;
+  }
+  .summary-demo { max-width: 420px; margin: 0 auto; padding: 40px 24px; font-family: Inter, sans-serif; color: var(--neutral-900); }
+  .order-summary { position: sticky; top: 24px; border: 1px solid var(--neutral-200); border-radius: 16px; background: var(--neutral-50); padding: 24px; }
+  .summary-title { margin: 0 0 20px; font-size: 18px; font-weight: 600; }
+  .summary-item { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px; }
+  .summary-item small { display: block; margin-top: 4px; color: var(--neutral-500); font-size: 12px; }
+  .summary-divider { margin: 16px 0; border-top: 1px solid var(--neutral-200); }
+  .summary-total { display: flex; justify-content: space-between; align-items: baseline; padding-top: 8px; }
+  .summary-total .label { font-size: 16px; font-weight: 600; }
+  .summary-total .price { font-size: 28px; font-weight: 700; }
+  .cta { width: 100%; margin-top: 20px; padding: 14px; border: 0; border-radius: 12px; background: var(--primary); color: white; font-size: 16px; font-weight: 600; }
+  .trust-badges { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 16px; color: var(--neutral-500); font-size: 12px; }
+  .trust-badge { display: inline-flex; align-items: center; gap: 6px; }
+</style>
+
+<aside class="summary-demo">
+  <!-- component: order-summary -->
+  <section class="order-summary">
+    <h3 class="summary-title">Order summary</h3>
+
+    <!-- component: summary-line-item -->
+    <div class="summary-item">
+      <div>
+        Pro annual workspace
+        <small>12 editors, billed yearly</small>
+      </div>
+      <strong>$2,880</strong>
+    </div>
+
+    <!-- component: summary-line-item -->
+    <div class="summary-item">
+      <div>
+        Priority migration
+        <small>One-time setup support</small>
+      </div>
+      <strong>$400</strong>
+    </div>
+
+    <!-- component: summary-line-item -->
+    <div class="summary-item">
+      <span>Subtotal</span>
+      <strong>$3,280</strong>
+    </div>
+    <div class="summary-item">
+      <span>Tax</span>
+      <strong>$262.40</strong>
+    </div>
+
+    <div class="summary-divider"></div>
+
+    <!-- component: summary-total -->
+    <div class="summary-total">
+      <span class="label">Total due today</span>
+      <span class="price">$3,542.40</span>
+    </div>
+
+    <!-- component: primary-cta -->
+    <button class="cta">Pay and activate workspace</button>
+
+    <!-- component: trust-badges -->
+    <div class="trust-badges">
+      <span class="trust-badge">Lock PCI-secured payment</span>
+      <span class="trust-badge">Refund 30-day refund policy</span>
+      <span class="trust-badge">Invoice delivered instantly</span>
+    </div>
+  </section>
+</aside>
+```
+
 ### 7. Dashboard Scanability
 
 **Keywords:** dashboard, analytics, KPI, overview, workspace, monitor, reporting
@@ -329,6 +481,74 @@ Format:
   .chart-panel { grid-column: span 6; background: white; border: 1px solid var(--neutral-200); border-radius: 12px; padding: 20px; }
   .data-table { grid-column: 1 / -1; }
   ```
+
+#### Reference Snippet
+
+```html
+<style>
+  :root {
+    --primary: #2563eb;
+    --neutral-0: #ffffff;
+    --neutral-100: #e2e8f0;
+    --neutral-200: #cbd5e1;
+    --neutral-500: #64748b;
+    --neutral-900: #0f172a;
+    --green-600: #16a34a;
+    --red-600: #dc2626;
+  }
+  .dashboard-demo { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; max-width: 1200px; margin: 0 auto; padding: 32px 24px; font-family: Inter, sans-serif; color: var(--neutral-900); background: #f8fafc; }
+  .kpi-card { grid-column: span 3; background: var(--neutral-0); border: 1px solid var(--neutral-200); border-radius: 16px; padding: 20px; }
+  .kpi-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--neutral-500); margin-bottom: 8px; }
+  .kpi-value { font-size: 30px; font-weight: 600; margin-bottom: 6px; }
+  .kpi-delta { font-size: 13px; font-weight: 500; }
+  .up { color: var(--green-600); }
+  .down { color: var(--red-600); }
+  .chart-panel { grid-column: span 6; background: var(--neutral-0); border: 1px solid var(--neutral-200); border-radius: 16px; padding: 20px; }
+  .chart-title { margin: 0 0 18px; font-size: 14px; font-weight: 600; }
+  .chart-bars { display: flex; align-items: end; gap: 14px; height: 180px; }
+  .bar { flex: 1; border-radius: 10px 10px 0 0; background: color-mix(in srgb, var(--primary) 18%, white); position: relative; }
+  .bar.active { background: var(--primary); }
+  .bar span { position: absolute; bottom: -28px; left: 50%; transform: translateX(-50%); font-size: 12px; color: var(--neutral-500); }
+</style>
+
+<section class="dashboard-demo">
+  <!-- component: kpi-card-row -->
+  <article class="kpi-card">
+    <div class="kpi-label">Weekly revenue</div>
+    <div class="kpi-value">$184K</div>
+    <div class="kpi-delta up">+12.4% vs last week</div>
+  </article>
+  <article class="kpi-card">
+    <div class="kpi-label">Active trials</div>
+    <div class="kpi-value">1,248</div>
+    <div class="kpi-delta up">+86 net new</div>
+  </article>
+  <article class="kpi-card">
+    <div class="kpi-label">Churn risk</div>
+    <div class="kpi-value">4.8%</div>
+    <div class="kpi-delta down">-0.6 pts improved</div>
+  </article>
+  <article class="kpi-card">
+    <div class="kpi-label">Avg. approval time</div>
+    <div class="kpi-value">9.2h</div>
+    <div class="kpi-delta up">32% faster</div>
+  </article>
+
+  <!-- component: chart-panel -->
+  <section class="chart-panel">
+    <h3 class="chart-title">Conversion trend</h3>
+    <div class="chart-bars">
+      <div class="bar" style="height: 48%;"><span>Mon</span></div>
+      <div class="bar" style="height: 56%;"><span>Tue</span></div>
+      <div class="bar" style="height: 52%;"><span>Wed</span></div>
+      <div class="bar active" style="height: 74%;"><span>Thu</span></div>
+      <div class="bar" style="height: 61%;"><span>Fri</span></div>
+      <div class="bar" style="height: 44%;"><span>Sat</span></div>
+      <div class="bar" style="height: 58%;"><span>Sun</span></div>
+    </div>
+  </section>
+</section>
+```
 
 ### 8. Dense Data Clarification
 
