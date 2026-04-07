@@ -61,7 +61,7 @@ Then propagate the chosen techniques into:
 - JSON `metadata.technique_clusters`
 - JSON `metadata.decisions_applied`
 
-## Technique Clusters
+## Screen-Level Techniques
 
 ### 1. Activation Onboarding
 
@@ -110,22 +110,6 @@ Then propagate the chosen techniques into:
 **Avoid when:** there is only one real plan and comparison UI creates fake complexity.
 
 **Steal the mechanism, not the skin:** decision scaffolding, not a cloned 3-card layout.
-
-### 4. Trust and Credibility Lift
-
-**Keywords:** trust, credibility, security, testimonial, social proof, compliance, proof, brand risk
-
-**Use when:** hesitation comes from doubt rather than task complexity.
-
-**Apply:**
-- Put trust signals near the risky action
-- Use concrete evidence: numbers, logos, guarantees, process transparency
-- Reduce vague marketing claims; increase verifiable detail
-- Let the UI feel stable and intentional, not flashy
-
-**Avoid when:** the real issue is poor task clarity. Trust badges cannot rescue confusion.
-
-**Steal the mechanism, not the skin:** evidence placement, not logo-wall decoration.
 
 ### 5. Form Friction Reduction
 
@@ -223,38 +207,6 @@ Then propagate the chosen techniques into:
 
 **Steal the mechanism, not the skin:** risk containment, not generic sidebar settings pages.
 
-### 11. Empty State Guidance
-
-**Keywords:** empty, no data, first project, no results, blank slate, nothing here
-
-**Use when:** users hit a zero-content state that should still move them forward.
-
-**Apply:**
-- Explain what is missing and what they can do next
-- Offer one strong primary action
-- Use example structure if it reduces setup anxiety
-- Match tone to the product, but keep the next step concrete
-
-**Avoid when:** the state is transient loading mistaken for empty.
-
-**Steal the mechanism, not the skin:** forward momentum, not cute illustrations by default.
-
-### 12. Error Recovery and Resilience
-
-**Keywords:** error, failure, retry, blocked, permission denied, timeout, invalid
-
-**Use when:** something has gone wrong and the user needs a path forward.
-
-**Apply:**
-- Name the problem plainly
-- Offer the best next action, not just the diagnosis
-- Distinguish recoverable vs. unrecoverable states
-- Preserve user work whenever possible
-
-**Avoid when:** the issue is not an error but a missing prerequisite that should be prevented upstream.
-
-**Steal the mechanism, not the skin:** recovery guidance, not dramatic red banners.
-
 ### 13. Mobile Focus and Thumb Flow
 
 **Keywords:** mobile, app, handheld, one-hand, thumb, bottom action, compact
@@ -270,22 +222,6 @@ Then propagate the chosen techniques into:
 **Avoid when:** desktop is the real primary work surface.
 
 **Steal the mechanism, not the skin:** reachability and task pacing, not app-store visual clichés.
-
-### 14. Premium Calm
-
-**Keywords:** premium, luxury, calm, minimalist, editorial, refined, quiet confidence
-
-**Use when:** the product needs trust and sophistication without feeling cold.
-
-**Apply:**
-- Use restraint: fewer accents, stronger typography, cleaner spacing
-- Let one material or visual gesture carry character
-- Increase whitespace before adding decoration
-- Use motion sparingly and precisely
-
-**Avoid when:** users need high-density operational speed.
-
-**Steal the mechanism, not the skin:** restraint and confidence, not beige minimalism by default.
 
 ### 15. Collaborative Workflow
 
@@ -318,3 +254,71 @@ Then propagate the chosen techniques into:
 **Avoid when:** deterministic controls are faster and more trustworthy than AI mediation.
 
 **Steal the mechanism, not the skin:** controllable assistance, not chatbot theater everywhere.
+
+## Tone Modifiers
+
+### 4. Trust and Credibility Lift
+
+**Keywords:** trust, credibility, security, testimonial, social proof, compliance, proof, brand risk
+
+**Use when:** hesitation comes from doubt rather than task complexity.
+
+**Apply:**
+- Put trust signals near the risky action
+- Use concrete evidence: numbers, logos, guarantees, process transparency
+- Reduce vague marketing claims; increase verifiable detail
+- Let the UI feel stable and intentional, not flashy
+
+**Avoid when:** the real issue is poor task clarity. Trust badges cannot rescue confusion.
+
+**Steal the mechanism, not the skin:** evidence placement, not logo-wall decoration.
+
+### 14. Premium Calm
+
+**Keywords:** premium, luxury, calm, minimalist, editorial, refined, quiet confidence
+
+**Use when:** the product needs trust and sophistication without feeling cold.
+
+**Apply:**
+- Use restraint: fewer accents, stronger typography, cleaner spacing
+- Let one material or visual gesture carry character
+- Increase whitespace before adding decoration
+- Use motion sparingly and precisely
+
+**Avoid when:** users need high-density operational speed.
+
+**Steal the mechanism, not the skin:** restraint and confidence, not beige minimalism by default.
+
+## State-Level Patterns
+
+### 11. Empty State Guidance
+
+**Keywords:** empty, no data, first project, no results, blank slate, nothing here
+
+**Use when:** users hit a zero-content state that should still move them forward.
+
+**Apply:**
+- Explain what is missing and what they can do next
+- Offer one strong primary action
+- Use example structure if it reduces setup anxiety
+- Match tone to the product, but keep the next step concrete
+
+**Avoid when:** the state is transient loading mistaken for empty.
+
+**Steal the mechanism, not the skin:** forward momentum, not cute illustrations by default.
+
+### 12. Error Recovery and Resilience
+
+**Keywords:** error, failure, retry, blocked, permission denied, timeout, invalid
+
+**Use when:** something has gone wrong and the user needs a path forward.
+
+**Apply:**
+- Name the problem plainly
+- Offer the best next action, not just the diagnosis
+- Distinguish recoverable vs. unrecoverable states
+- Preserve user work whenever possible
+
+**Avoid when:** the issue is not an error but a missing prerequisite that should be prevented upstream.
+
+**Steal the mechanism, not the skin:** recovery guidance, not dramatic red banners.
