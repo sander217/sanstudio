@@ -351,6 +351,10 @@ Tag every element with a component type during generation. This maps to JSON exp
 - Fonts from Google Fonts / Bunny Fonts
 - Confirmed color palette, spacing, typography, radius scales
 - Must look like a real product
+- Apply the Visual Execution spec from matched technique clusters as layout constraints.
+  The spec's Layout, Spacing, Typography weight, Color distribution, Component density,
+  and Key CSS pattern are binding defaults — deviate only when the user's design system
+  explicitly conflicts, and flag any deviation in the DS CHECK.
 - Must feel like production UI, not a wireframe with polished styling
 - Text blocks need intentional internal padding and breathing room; do not let copy visually collide with adjacent modules
 - Interactive: tab switching, accordion, state toggles, hover states
