@@ -556,6 +556,16 @@ Format:
 
 **Steal the mechanism, not the skin:** evidence placement, not logo-wall decoration.
 
+#### Visual Overlay
+
+Apply these adjustments ON TOP of the matched screen-level technique:
+
+- **Trust signal placement:** Within 8-16px of the primary CTA — above or below, never more than one scroll away. Use small text (12-13px) + inline icon (lock/shield, 16px).
+- **Testimonials:** Blockquote style with avatar (32px circle) + name + role. Max 2 per section. Don't stack more.
+- **Tone shift:** Reduce playful elements. Increase whitespace slightly. Use neutral-600+ for body text (darker = more serious).
+- **Evidence style:** Concrete numbers ("10,000+ teams"), recognizable logos (row, grayscale, 24px height), explicit guarantees ("30-day money back").
+- **Don't:** Add trust badges to every section. Don't use alert/warning colors for trust signals. Don't use generic stock-photo humans.
+
 ### 14. Premium Calm
 
 **Keywords:** premium, luxury, calm, minimalist, editorial, refined, quiet confidence
@@ -571,6 +581,17 @@ Format:
 **Avoid when:** users need high-density operational speed.
 
 **Steal the mechanism, not the skin:** restraint and confidence, not beige minimalism by default.
+
+#### Visual Overlay
+
+Apply these adjustments ON TOP of the matched screen-level technique:
+
+- **Spacing multiplier:** Increase all spacing values from the base technique by 1.3-1.5x. More whitespace = more calm.
+- **Typography:** If the base technique uses a sans-serif, switch to a light weight (300-400) or consider a serif for headings. Add `letter-spacing: 0.01-0.02em` on headings.
+- **Color restraint:** Reduce accent color usage to < 10% of visible area. No gradients. No saturated backgrounds. Shadow: `0 1px 3px rgba(0,0,0,0.08)` max.
+- **Borders:** 1px hairline in neutral-200 or neutral-300. No heavy borders. No colored borders except primary for focus states.
+- **Motion:** If the mockup includes transitions, duration 300-500ms with ease. No bouncy spring animations. No attention-grabbing motion.
+- **Don't:** Strip all personality. Calm != boring. One distinctive gesture (a unique font, a single accent color, a subtle texture) is fine. Remove two or more and it's generic.
 
 ## State-Level Patterns
 
