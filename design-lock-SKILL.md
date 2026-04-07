@@ -1,6 +1,6 @@
 ---
 name: design-lock
-version: 1.2.0
+version: 1.4.0
 description: |
   Gate 3 of Design Agent Studio. The final gate before Figma export.
   Receives context from Gate 1 (full pipeline, ITERATE direct, or COMPARE/CRITIQUE 
@@ -51,7 +51,8 @@ Read both handoff blocks:
 - `---DIRECTION-LOCK---` (Gate 2: direction, decisions, constraints)
 
 Parse: chosen direction, core decisions, feasibility, flow structure, 
-wireframe contract, design system impact, open questions, stakeholder pitch.
+wireframe contract, design system impact, open questions, stakeholder pitch,
+`product_surface`, and any `reference_realism_contract`.
 
 ### From Gate 1 evaluated (COMPARE/CRITIQUE → G3)
 
@@ -72,6 +73,44 @@ The user has an existing design and wants changes.
 ### Direct invocation (no upstream gates)
 
 Assess available context, flag gaps, proceed with assumptions noted.
+
+### Reference Realism Calibration (MANDATORY when screenshots / mockups / refs exist)
+
+If upstream context or the current turn includes screenshots, existing product UI, or
+competitor references, extract and honor a realism contract before styling:
+
+```md
+📏 REALISM CONTRACT
+- Density: copy-light / balanced / copy-heavy
+- Visual dominance: image-led / type-led / utility-led
+- Headline budget: [max words]
+- Body copy budget: none / minimal / normal
+- Compression patterns: chips / badges / fact rows / bullets / paragraphs
+- Above-the-fold action count: [N]
+- Surface model: website / landing page / app / dashboard / mixed
+- Hero treatment: full-bleed / banded / split-layout / boxed card
+- Typography signal: sans-first / serif-allowed / editorial / utilitarian
+```
+
+Treat this as a hard constraint unless the user explicitly asks to break from it.
+Do not reduce the reference to "tone" or "look". Match the information density and
+content compression strategy too.
+
+### Surface-Fit Check (MANDATORY)
+
+Before styling, say what you're designing:
+- Marketing website / landing page
+- Product website
+- Mobile app
+- Desktop app / dashboard
+
+Then enforce fit:
+- Marketing website / landing page: do not default to phone shells, bottom nav,
+  app-home composition, or boxed app cards unless explicitly requested
+- App: do not default to website hero sections or editorial banding unless explicitly requested
+- "Mobile-first" affects responsiveness and CTA strategy, not the product surface type
+
+If the surface fit is ambiguous, ask before generating hi-fi.
 
 **Acknowledge the transition naturally.** Don't re-ask answered questions.
 
@@ -113,6 +152,17 @@ specific values you're working with.
 
 Propose a minimal framework (1-2 fonts, 5-7 colors, spacing base, radius, shadow).
 Confirm before proceeding.
+
+### Typography Default Rules
+
+When the user says `minimal`, `clean`, `modern`, `Apple`, `simple`, or equivalent:
+- Default to sans-serif
+- Prefer neutral, contemporary sans families
+- Avoid serif unless the user explicitly asks for editorial, classic, literary,
+  luxury-magazine, or heritage cues
+
+Do not introduce serif just to make the design feel "premium". Premium calm can be
+achieved with spacing, restraint, contrast, and imagery.
 
 ### Technique Database Retrieval (MANDATORY)
 
@@ -233,6 +283,51 @@ For ITERATE: proactively generate obvious state variations (e.g., on-track / beh
 Realistic content, not Lorem Ipsum. Generate domain-appropriate placeholders.
 Flag [draft] markers. Use real content if provided.
 
+UI copy must read like a shipped product, not a design review pasted into the screen.
+Default to compressed product language:
+
+- Prefer labels, chips, badges, fact rows, and short benefit bullets over paragraphs
+- Put rationale in annotations / DDR, not in the primary UI
+- Use one clear promise per surface, not stacked explanations
+- Let imagery, spacing, and hierarchy carry meaning before adding more words
+
+### Screen Realism and Copy Budget
+
+Unless the product genuinely requires dense explanation (legal, medical, finance,
+enterprise admin), use these defaults for consumer-style hi-fi, especially on mobile:
+
+- One primary headline per screen or card, usually 2-6 words, hard max 8
+- At most one support line above the fold, max 12 words
+- No paragraph blocks in list cards or hero cards
+- Use 2-4 compressed info units before introducing a sentence:
+  chips, badges, meta rows, icons with labels, short bullets
+- One dominant CTA, one secondary action at most
+- If a section feels empty, fix it with imagery, grouping, or contrast first, not extra copy
+
+When a reference example is copy-light, stay at or below its text density. Do not
+"helpfully" explain more than the reference unless the user explicitly asks for a
+more editorial or content-heavy treatment.
+
+### Website Hero and Branding Rules
+
+For marketing websites and landing pages:
+- Default to a page-level hero, split-layout hero, or full-bleed/banded hero background
+- Do NOT wrap the entire hero in a single oversized card unless the user explicitly wants a boxed concept
+- If the user asks for image-led storytelling, let the image own real visual area; do not reduce it to a thumbnail or card filler
+- Add a provisional logo / wordmark in the header even if the user didn't explicitly request one
+- If no brand asset exists, create a restrained placeholder mark that matches the visual direction
+
+### Headline Rhythm and Chinese Typography
+
+If a Chinese headline feels too heavy, dense, or "stuck together":
+- Increase line-height before increasing size
+- Reduce how many bold glyphs collide on one line
+- Split the headline into intentional lines
+- Add spacing around the headline block so it has breathing room
+- If needed, change the layout rather than forcing the same stacked lockup
+
+Do not leave a headline as a dense black block just because the words technically fit.
+
 ### Component Decomposition
 
 Tag every element with a component type during generation. This maps to JSON export.
@@ -244,6 +339,8 @@ Tag every element with a component type during generation. This maps to JSON exp
 - Fonts from Google Fonts / Bunny Fonts
 - Confirmed color palette, spacing, typography, radius scales
 - Must look like a real product
+- Must feel like production UI, not a wireframe with polished styling
+- Text blocks need intentional internal padding and breathing room; do not let copy visually collide with adjacent modules
 - Interactive: tab switching, accordion, state toggles, hover states
 - ALL interactive elements must be functional. If there's a toggle, it toggles.
   If there's a slider, it slides. If there's a tab, it switches. Non-functional 
@@ -553,16 +650,22 @@ check DDR first.
 2. **Component thinking.** Every element maps to a component type.
 3. **States are designs.** Empty, error, and loading need real treatment.
 4. **Realistic content.** No Lorem Ipsum in hi-fi.
-5. **One screen at a time.** Show, iterate, then move on.
-6. **JSON is a starting point.** Export structure, not final craft polish.
-7. **Companion docs are first-class.** DDR and Interaction Spec explain the work.
-8. **Version tracking.** "Go back to v2" must work.
-9. **Don't hold the design hostage.** User says good enough -> export.
-10. **Partial export supported.** Don't block because one screen is unfinished.
-11. **Track decisions across gates.** Use LOCKED/OPEN/REJECTED/OVERRIDDEN consistently.
-12. **All interactive elements must work.** If it looks interactive, it behaves that way.
-13. **Technique retrieval is mandatory.** Match 1-3 clusters before hi-fi.
-14. **Borrow patterns, not skins.** Import logic and structure, never surface-copy another product.
+5. **Hi-fi is not a document.** Keep production UI copy compressed; move explanation to annotations and docs.
+6. **Respect the surface type.** Landing page, website, app, and dashboard should not collapse into the same composition.
+7. **Minimal / Apple / modern defaults to sans-serif.** Use serif only with an explicit reason.
+8. **Website heroes are page-level structures.** Don't box the whole hero by habit.
+9. **Branding is part of the mockup.** Add a provisional logo / wordmark for websites unless the user says not to.
+10. **Headline rhythm matters.** If a heading feels cramped, reflow it or change the layout.
+11. **One screen at a time.** Show, iterate, then move on.
+12. **JSON is a starting point.** Export structure, not final craft polish.
+13. **Companion docs are first-class.** DDR and Interaction Spec explain the work.
+14. **Version tracking.** "Go back to v2" must work.
+15. **Don't hold the design hostage.** User says good enough -> export.
+16. **Partial export supported.** Don't block because one screen is unfinished.
+17. **Track decisions across gates.** Use LOCKED/OPEN/REJECTED/OVERRIDDEN consistently.
+18. **All interactive elements must work.** If it looks interactive, it behaves that way.
+19. **Technique retrieval is mandatory.** Match 1-3 clusters before hi-fi.
+20. **Borrow patterns, not skins.** Import logic and structure, never surface-copy another product.
 
 ---
 
@@ -570,4 +673,10 @@ check DDR first.
 
 - **Big reveal mockup.** Visual direction never confirmed.
 - **Lorem Ipsum in hi-fi.** Credibility destroyer.
+- **Polished wireframe copy.** Long explanatory paragraphs dressed up as hi-fi UI.
+- **Design rationale inside the interface.** If the sentence explains the design decision, it belongs in annotations or docs, not on the screen.
+- **Surface mismatch.** A marketing site rendered like an app, or an app rendered like a landing page.
+- **Boxed hero by habit.** Wrapping the whole hero in a giant card when the page should breathe.
+- **Accidental serif premium.** Adding serif to minimal / Apple / modern work without explicit intent.
+- **Dense CJK headline block.** Heavy Chinese headlines crammed together with no breathing room.
 - **Non-functional mockup elements.** Toggle that doesn't toggle.
