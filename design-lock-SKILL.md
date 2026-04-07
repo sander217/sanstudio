@@ -167,15 +167,27 @@ achieved with spacing, restraint, contrast, and imagery.
 ### Technique Database Retrieval (MANDATORY)
 
 Before defining visual language, read `skills/design-lock/design-techniques-db.md`.
-Extract keywords from the user's request and upstream blocks: product type, user intent, 
-UX risks, platform, and tone. Match 1-3 technique clusters, then emit:
+
+1. Walk the decision tree in the Retrieval Rules to identify 1-2 screen-level techniques.
+2. Check tone modifier applicability (0-1).
+3. Check state-level pattern needs (0-2, informed by Step 6 State Matrix).
+4. Emit the `🎯 TECHNIQUE MATCH` block with the decision path taken.
+5. Read the Visual Execution specs from matched techniques. These are binding layout constraints for Step 7 HTML generation.
 
 ```md
 🎯 TECHNIQUE MATCH
-Keywords: [list]
-Matched clusters: [name]: [why it fits]
-Techniques to apply: [list]
-Techniques excluded: [what you're NOT using and why]
+
+Decision path: [e.g. "Data consumption → Overview → #7 Dashboard Scanability"]
+
+Screen-level: [cluster name(s)]
+Tone modifier: [name or "none"]
+State patterns: [name(s) or "none"]
+
+Techniques to apply:
+- [from matched clusters' Apply + Visual Execution sections]
+
+Techniques intentionally excluded:
+- [what and why]
 ```
 
 Adapt mechanism, not brand surface. For ITERATE, use this as a decision lens, not 
