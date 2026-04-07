@@ -139,6 +139,24 @@ Format:
 
 **Steal the mechanism, not the skin:** guided sequencing, not mascot-heavy onboarding.
 
+#### Visual Execution
+
+- **Layout:** Single column, centered, `max-width: 600px`. Progress indicator top. Steps stacked vertically, one visible at a time or as a scrollable checklist.
+- **Spacing:** 32px between steps. 24px internal padding per step card. 48px from progress bar to first step.
+- **Typography weight:** Step title 600/20px. Step description 400/15px. Progress label 500/13px uppercase tracking 0.05em.
+- **Color distribution:** 95% neutral. Primary accent only on: current step indicator, primary CTA, completed checkmarks.
+- **Component density:** One step dominates viewport. Secondary actions (skip, learn more) are text links below primary CTA.
+- **Key CSS pattern:**
+  ```css
+  .onboarding { max-width: 600px; margin: 0 auto; padding: 48px 24px; }
+  .progress { display: flex; gap: 8px; margin-bottom: 48px; }
+  .progress-step { flex: 1; height: 4px; border-radius: 2px; background: var(--neutral-200); }
+  .progress-step.done { background: var(--primary); }
+  .step-card { padding: 24px; margin-bottom: 32px; }
+  .step-title { font-weight: 600; font-size: 20px; margin-bottom: 8px; }
+  .step-cta { width: 100%; padding: 14px; font-weight: 600; margin-top: 24px; }
+  ```
+
 ### 2. Landing Conversion
 
 **Keywords:** landing, hero, CTA, conversion, campaign, marketing, homepage, sign up
@@ -154,6 +172,24 @@ Format:
 **Avoid when:** the page is primarily navigational or documentation-driven.
 
 **Steal the mechanism, not the skin:** narrative sequencing, not somebody else's gradients and illustration style.
+
+#### Visual Execution
+
+- **Layout:** Full-width sections stacked vertically. Hero section `min-height: 70vh` with centered content. Sections alternate between full-bleed and `max-width: 1200px` contained.
+- **Spacing:** 80-120px between major sections. 24px between heading and subheading. 16px between subheading and CTA. Social proof within 24px of CTA.
+- **Typography weight:** Hero H1 700/48-64px. Subheading 400/20-24px. Section headers 600/32-40px. Body 400/16-18px. Extreme contrast ratio between H1 and body (3:1 minimum size ratio).
+- **Color distribution:** Hero uses strong contrast (dark bg + light text or light bg + bold accent CTA). Section backgrounds alternate subtle neutrals. Accent color reserved for CTA buttons only.
+- **Component density:** One CTA dominates hero. Max 2 CTAs visible at any time (primary + secondary ghost). Feature sections: 3-4 items per row on desktop, stacked on mobile.
+- **Key CSS pattern:**
+  ```css
+  .hero { min-height: 70vh; display: flex; align-items: center; justify-content: center; text-align: center; }
+  .hero h1 { font-size: clamp(36px, 5vw, 64px); font-weight: 700; margin-bottom: 24px; }
+  .hero .subtitle { font-size: 20px; opacity: 0.8; margin-bottom: 16px; max-width: 600px; }
+  .hero .cta-primary { padding: 16px 48px; font-size: 18px; font-weight: 600; }
+  .social-proof { margin-top: 24px; display: flex; align-items: center; gap: 12px; justify-content: center; }
+  section { padding: 80px 24px; }
+  .section-inner { max-width: 1200px; margin: 0 auto; }
+  ```
 
 ### 3. Pricing and Plan Comparison
 
@@ -171,6 +207,23 @@ Format:
 
 **Steal the mechanism, not the skin:** decision scaffolding, not a cloned 3-card layout.
 
+#### Visual Execution
+
+- **Layout:** CSS Grid, equal-width columns (2-4 based on plan count). Recommended plan visually elevated. Feature comparison rows aligned strictly.
+- **Spacing:** 24px gap between plan columns. 0 gap between feature rows (use border separation). 48px between pricing header and feature grid. 32px between feature grid and FAQ.
+- **Typography weight:** Plan name 600/18px. Price 700/36-48px. Price period 400/14px. Feature text 400/14px. Category headers in feature grid 600/13px uppercase.
+- **Color distribution:** Recommended plan: primary border-top 4px + subtle primary bg tint (opacity 0.05) + "Recommended" badge in primary color. Other plans: neutral border. Feature checkmarks in green, missing in neutral-300.
+- **Component density:** All plans visible without scroll on desktop. Feature rows compact (40px height). Expand/collapse for long feature lists. CTA per plan at bottom of each column, sticky on scroll if columns are tall.
+- **Key CSS pattern:**
+  ```css
+  .pricing-grid { display: grid; grid-template-columns: repeat(var(--plan-count, 3), 1fr); gap: 24px; max-width: 1100px; margin: 0 auto; }
+  .plan-card { border: 1px solid var(--neutral-200); border-radius: 12px; padding: 32px 24px; position: relative; }
+  .plan-card.recommended { border-color: var(--primary); border-top-width: 4px; background: color-mix(in srgb, var(--primary) 5%, white); transform: scale(1.03); }
+  .plan-price { font-size: 42px; font-weight: 700; }
+  .plan-price span { font-size: 14px; font-weight: 400; color: var(--neutral-500); }
+  .feature-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--neutral-100); font-size: 14px; }
+  ```
+
 ### 5. Form Friction Reduction
 
 **Keywords:** form, signup, application, input, fields, completion, friction, autofill
@@ -186,6 +239,25 @@ Format:
 **Avoid when:** users need simultaneous visibility across many related fields.
 
 **Steal the mechanism, not the skin:** lower perceived effort, not fancy input styling.
+
+#### Visual Execution
+
+- **Layout:** Single column, `max-width: 480px`, centered. Fields grouped in fieldsets with group labels. Progress indicator at top if multi-step.
+- **Spacing:** 16px between fields within a group. 32px between field groups. 24px padding inside fieldset. 48px from last group to submit button.
+- **Typography weight:** Group label 600/16px. Field label 500/14px. Input text 400/16px. Helper text 400/13px in neutral-500. Error text 500/13px in red.
+- **Color distribution:** 98% neutral. Primary color only on: focused field border, submit button, progress indicator. Red for errors only. Green for success validation only. No decorative color.
+- **Component density:** Max 5-6 visible fields before scroll. Optional fields hidden behind "Show more" or in a later step. Submit button full-width, 48px height minimum.
+- **Key CSS pattern:**
+  ```css
+  .form-container { max-width: 480px; margin: 0 auto; padding: 32px 24px; }
+  .field-group { margin-bottom: 32px; }
+  .field-group-label { font-weight: 600; font-size: 16px; margin-bottom: 16px; padding-bottom: 8px; border-bottom: 1px solid var(--neutral-200); }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 6px; }
+  .field input { width: 100%; padding: 12px; border: 1px solid var(--neutral-300); border-radius: 8px; font-size: 16px; }
+  .field input:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent); }
+  .submit-btn { width: 100%; padding: 14px; font-weight: 600; margin-top: 48px; }
+  ```
 
 ### 6. Checkout and Commitment Reassurance
 
@@ -203,6 +275,25 @@ Format:
 
 **Steal the mechanism, not the skin:** anxiety reduction, not generic ecommerce chrome.
 
+#### Visual Execution
+
+- **Layout:** Two-column on desktop: form area 60% left, order summary 40% right sticky. Single-column stacked on mobile with summary collapsible at top.
+- **Spacing:** 32px gap between columns. 24px between form sections. 16px between summary line items. 24px padding inside summary panel. Divider line before total.
+- **Typography weight:** Section headers 600/18px. Field labels 500/14px. Summary item names 400/14px. Summary item prices 500/14px right-aligned. Total label 600/16px. Total price 700/24px.
+- **Color distribution:** Summary panel uses subtle bg (neutral-50 or neutral-100) + 1px border. Primary accent only on submit/pay button. Trust badges in neutral-500 with small icons. No alert colors unless error.
+- **Component density:** Summary always visible on desktop. Line items compact (no cards). Fees/tax/shipping shown before total, never hidden. Trust badges (security, refund policy) inline within 24px of submit button.
+- **Key CSS pattern:**
+  ```css
+  .checkout { display: grid; grid-template-columns: 1fr 400px; gap: 32px; max-width: 1100px; margin: 0 auto; }
+  .checkout-form section { margin-bottom: 24px; }
+  .order-summary { position: sticky; top: 24px; background: var(--neutral-50); border: 1px solid var(--neutral-200); border-radius: 12px; padding: 24px; align-self: start; }
+  .summary-item { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+  .summary-total { display: flex; justify-content: space-between; padding-top: 16px; margin-top: 16px; border-top: 2px solid var(--neutral-300); }
+  .summary-total .price { font-size: 24px; font-weight: 700; }
+  .trust-badges { display: flex; gap: 16px; margin-top: 16px; font-size: 12px; color: var(--neutral-500); }
+  @media (max-width: 768px) { .checkout { grid-template-columns: 1fr; } }
+  ```
+
 ### 7. Dashboard Scanability
 
 **Keywords:** dashboard, analytics, KPI, overview, workspace, monitor, reporting
@@ -218,6 +309,26 @@ Format:
 **Avoid when:** the real task is deep record editing, not overview scanning.
 
 **Steal the mechanism, not the skin:** scan-first layout, not trendy glass cards.
+
+#### Visual Execution
+
+- **Layout:** CSS Grid 12-column. KPI summary cards top row (span 3 each, 4 cards). Chart area middle row (span 6 each, 2 charts). Data table full-width bottom row. Optional filter bar above charts.
+- **Spacing:** 24px grid gap. 20px internal padding per card. 32px between major sections (KPI row -> charts -> table). 16px between filter bar and content.
+- **Typography weight:** KPI number 600/28-32px. KPI label 400/12px uppercase tracking 0.05em. KPI delta 500/13px. Chart title 600/14px. Table header 600/12px uppercase. Table body 400/13px.
+- **Color distribution:** 90% neutral (grays, white cards). Accent color ONLY on: positive/negative delta indicators (green/red), chart data series, selected filter state. No decorative accent on cards or section backgrounds.
+- **Component density:** 4 KPI cards visible without scroll. Charts show max 2 side by side. Table shows 8-10 rows before scroll. Filter bar uses pills/chips, not dropdowns.
+- **Key CSS pattern:**
+  ```css
+  .dashboard { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; padding: 24px; }
+  .kpi-card { grid-column: span 3; background: white; border: 1px solid var(--neutral-200); border-radius: 12px; padding: 20px; }
+  .kpi-value { font-size: 30px; font-weight: 600; }
+  .kpi-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--neutral-500); margin-bottom: 4px; }
+  .kpi-delta { font-size: 13px; font-weight: 500; }
+  .kpi-delta.up { color: var(--green-600); }
+  .kpi-delta.down { color: var(--red-600); }
+  .chart-panel { grid-column: span 6; background: white; border: 1px solid var(--neutral-200); border-radius: 12px; padding: 20px; }
+  .data-table { grid-column: 1 / -1; }
+  ```
 
 ### 8. Dense Data Clarification
 
@@ -235,6 +346,24 @@ Format:
 
 **Steal the mechanism, not the skin:** operational clarity, not spreadsheet cosplay.
 
+#### Visual Execution
+
+- **Layout:** Full-width table with `table-layout: fixed`. Optional sidebar filters on desktop (240px). Toolbar above table with search + bulk actions. Bulk action bar appears at bottom only when rows are selected.
+- **Spacing:** Table rows 44px height. Cell padding 12px horizontal, 0 vertical (vertically centered). 16px gap between toolbar and table. 0 gap between rows (use borders).
+- **Typography weight:** Column header 600/12px uppercase tracking 0.04em. Cell text 400/13px. Selected row count in bulk bar 600/13px. Action buttons 500/13px.
+- **Color distribution:** Alternating row backgrounds with 0.03 opacity tint. Selected rows with primary tint (opacity 0.08). Header row neutral-50 bg. Destructive actions in red, separated from regular actions. No decorative color.
+- **Component density:** Show 15-20 rows before scroll. Columns: prioritize 5-7 visible, rest in horizontal scroll or column toggle. Actions column right-aligned, icon-only for space.
+- **Key CSS pattern:**
+  ```css
+  .data-table { width: 100%; table-layout: fixed; border-collapse: collapse; font-size: 13px; }
+  .data-table th { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; padding: 12px; background: var(--neutral-50); border-bottom: 2px solid var(--neutral-200); text-align: left; position: sticky; top: 0; }
+  .data-table td { padding: 12px; border-bottom: 1px solid var(--neutral-100); height: 44px; vertical-align: middle; }
+  .data-table tr:nth-child(even) { background: rgba(0,0,0,0.015); }
+  .data-table tr.selected { background: color-mix(in srgb, var(--primary) 8%, white); }
+  .bulk-bar { position: sticky; bottom: 0; background: var(--neutral-900); color: white; padding: 12px 24px; display: none; }
+  .bulk-bar.active { display: flex; align-items: center; justify-content: space-between; }
+  ```
+
 ### 9. Search and Discovery
 
 **Keywords:** search, discover, browse, filter, find, results, catalog, listing
@@ -250,6 +379,26 @@ Format:
 **Avoid when:** there are too few items to justify heavy search UI.
 
 **Steal the mechanism, not the skin:** findability, not overbuilt filter panels.
+
+#### Visual Execution
+
+- **Layout:** Search bar prominent top center (`min-height: 48px`, `max-width: 720px`). Desktop: filter sidebar 240px fixed left + results area right. Mobile: filters in bottom sheet/modal. Results as list or grid (toggleable).
+- **Spacing:** 24px between search bar and results area. 16px between filter groups in sidebar. 16px gap between result items. 12px internal padding per result card.
+- **Typography weight:** Search input 400/16px. Active filter count badge 600/12px. Result title 600/15px. Result meta 400/13px neutral-500. Filter group label 600/13px uppercase.
+- **Color distribution:** Active filters use primary pill bg (opacity 0.1) + primary text. Result cards neutral with hover border or shadow lift. Zero-result state uses neutral-400 illustration + primary CTA.
+- **Component density:** Result count + active filter pills shown above results. 10-12 results visible before scroll (list) or 8-12 (grid). Filter sidebar scrolls independently.
+- **Key CSS pattern:**
+  ```css
+  .search-bar { max-width: 720px; margin: 0 auto 24px; position: relative; }
+  .search-bar input { width: 100%; padding: 14px 48px 14px 16px; font-size: 16px; border: 2px solid var(--neutral-200); border-radius: 12px; }
+  .search-bar input:focus { border-color: var(--primary); }
+  .search-layout { display: grid; grid-template-columns: 240px 1fr; gap: 24px; }
+  .filter-sidebar { position: sticky; top: 24px; align-self: start; }
+  .filter-group { margin-bottom: 16px; }
+  .filter-group-label { font-size: 13px; font-weight: 600; text-transform: uppercase; margin-bottom: 8px; }
+  .result-card { padding: 12px; border: 1px solid var(--neutral-200); border-radius: 8px; transition: box-shadow 0.15s; }
+  .result-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  ```
 
 ### 10. Settings and Safety
 
@@ -267,6 +416,27 @@ Format:
 
 **Steal the mechanism, not the skin:** risk containment, not generic sidebar settings pages.
 
+#### Visual Execution
+
+- **Layout:** Left nav 200-240px + right content area `max-width: 720px`. Each settings section is a card or bordered group. Destructive actions in a separate section at page bottom, visually separated.
+- **Spacing:** 24px between setting rows. 48px between settings sections. 16px between label and control within a row. 64px before the destructive/danger section.
+- **Typography weight:** Section header 600/18px. Setting label 500/15px. Setting description 400/13px neutral-500. Danger section header 600/16px in red-700.
+- **Color distribution:** 98% neutral. Red accent only in danger zone (border-left 3px red, red text header, red outline destructive button). Primary accent only on save/toggle active states. No decorative color.
+- **Component density:** Each setting is a single row: label + description left, control right. Max 6-8 settings visible per section before scroll. Toggle switches preferred over checkboxes. Dangerous actions require typed confirmation.
+- **Key CSS pattern:**
+  ```css
+  .settings-layout { display: grid; grid-template-columns: 220px 1fr; gap: 0; min-height: 100vh; }
+  .settings-nav { border-right: 1px solid var(--neutral-200); padding: 24px 0; position: sticky; top: 0; align-self: start; }
+  .settings-content { max-width: 720px; padding: 32px 48px; }
+  .settings-section { margin-bottom: 48px; }
+  .setting-row { display: flex; justify-content: space-between; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid var(--neutral-100); }
+  .setting-info { flex: 1; margin-right: 24px; }
+  .setting-label { font-weight: 500; font-size: 15px; }
+  .setting-desc { font-size: 13px; color: var(--neutral-500); margin-top: 4px; }
+  .danger-zone { margin-top: 64px; padding-top: 32px; border-top: 2px solid var(--red-200); }
+  .danger-zone h3 { color: var(--red-700); }
+  ```
+
 ### 13. Mobile Focus and Thumb Flow
 
 **Keywords:** mobile, app, handheld, one-hand, thumb, bottom action, compact
@@ -282,6 +452,23 @@ Format:
 **Avoid when:** desktop is the real primary work surface.
 
 **Steal the mechanism, not the skin:** reachability and task pacing, not app-store visual clichés.
+
+#### Visual Execution
+
+- **Layout:** Single column, `max-width: 375px` viewport. Bottom action bar fixed with safe area padding. Content stacks vertically. Horizontal scroll only for carousels/galleries.
+- **Spacing:** 24px section gap. 16px horizontal padding (screen edges). 12px between list items. Bottom bar height 56px + safe area.
+- **Typography weight:** Screen title 600/20px. Body 400/15px (min). List item title 500/16px. List item meta 400/13px. Tab bar labels 500/10px.
+- **Color distribution:** Bottom bar uses neutral bg or white + top border. Active tab in primary color. Content area white bg. Cards use subtle border, not shadow (saves visual weight on small screens).
+- **Component density:** Touch targets minimum 44x44px. Max 3-4 actions in bottom bar. Cards show 2-3 per screen height. Pull-to-refresh, not reload button. Swipe actions where appropriate.
+- **Key CSS pattern:**
+  ```css
+  .mobile-app { max-width: 375px; min-height: 100vh; display: flex; flex-direction: column; }
+  .mobile-content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 72px; }
+  .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; padding-bottom: env(safe-area-inset-bottom); background: white; border-top: 1px solid var(--neutral-200); display: flex; justify-content: space-around; align-items: center; }
+  .bottom-bar button { min-width: 44px; min-height: 44px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
+  .bottom-bar .label { font-size: 10px; font-weight: 500; }
+  .list-item { padding: 12px 0; border-bottom: 1px solid var(--neutral-100); display: flex; align-items: center; gap: 12px; min-height: 44px; }
+  ```
 
 ### 15. Collaborative Workflow
 
@@ -299,6 +486,24 @@ Format:
 
 **Steal the mechanism, not the skin:** coordination clarity, not copied project-management visuals.
 
+#### Visual Execution
+
+- **Layout:** Desktop: left panel (list/kanban 55-60%) + right detail panel (40-45%), separated by 1px border. Mobile: list view -> tap opens detail as full-screen push.
+- **Spacing:** 16px between list items/cards. 24px internal padding in detail panel. 12px between metadata fields in detail. 32px between detail sections (description, comments, activity).
+- **Typography weight:** Item title 600/15px. Status label 500/12px uppercase. Assignee name 400/13px. Timestamp 400/12px neutral-400. Detail section header 600/14px.
+- **Color distribution:** Status indicators use semantic colors (dot 8px + label): blue=in progress, green=done, yellow=blocked, neutral=todo. Avatar circles with initials or images. Accent color only on active/selected item in list.
+- **Component density:** List shows 8-12 items before scroll. Kanban shows 3-4 columns. Detail panel has: header (title + status + assignee), body (description), footer (comments/activity). Comments chronological, newest bottom.
+- **Key CSS pattern:**
+  ```css
+  .collab-layout { display: grid; grid-template-columns: 1fr 400px; height: 100vh; }
+  .item-list { overflow-y: auto; border-right: 1px solid var(--neutral-200); }
+  .item-card { padding: 12px 16px; border-bottom: 1px solid var(--neutral-100); cursor: pointer; display: flex; align-items: center; gap: 12px; }
+  .item-card.selected { background: color-mix(in srgb, var(--primary) 6%, white); border-left: 3px solid var(--primary); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .detail-panel { padding: 24px; overflow-y: auto; }
+  .avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--neutral-300); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
+  ```
+
 ### 16. AI Copilot and Generative Guidance
 
 **Keywords:** AI, copilot, assistant, prompt, generate, suggest, automation, draft
@@ -314,6 +519,24 @@ Format:
 **Avoid when:** deterministic controls are faster and more trustworthy than AI mediation.
 
 **Steal the mechanism, not the skin:** controllable assistance, not chatbot theater everywhere.
+
+#### Visual Execution
+
+- **Layout:** Prompt input area fixed bottom (like chat input). Output/response area scrollable above. Controls (regenerate, edit, accept) inline with output. If side-by-side: original content left, AI output right with distinct bg.
+- **Spacing:** 16px between messages/outputs. 12px internal padding per output block. 48px from last output to input bar. Input bar 56px height + padding.
+- **Typography weight:** User prompt 400/15px. AI output 400/15px with subtle bg distinction. Action labels 500/13px. Confidence/source labels 400/12px neutral-500.
+- **Color distribution:** AI output uses subtle brand tint bg (primary at 3-5% opacity) or neutral-50 to distinguish from user content. Inline actions (edit, accept, reject) use neutral ghost buttons. Loading state uses skeleton + streaming text animation.
+- **Component density:** Each output block is self-contained with its own action bar (accept/edit/regenerate). Max 1 prompt input visible. Loading indicator replaces output area, not overlays. Confidence badge small and inline, not a separate component.
+- **Key CSS pattern:**
+  ```css
+  .copilot-layout { display: flex; flex-direction: column; height: 100vh; }
+  .output-area { flex: 1; overflow-y: auto; padding: 24px; }
+  .ai-output { background: color-mix(in srgb, var(--primary) 4%, white); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  .ai-output .actions { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--neutral-200); }
+  .ai-output .actions button { font-size: 13px; font-weight: 500; padding: 6px 12px; border-radius: 6px; }
+  .prompt-bar { position: sticky; bottom: 0; padding: 16px; background: white; border-top: 1px solid var(--neutral-200); }
+  .prompt-bar textarea { width: 100%; min-height: 44px; padding: 12px; border: 1px solid var(--neutral-300); border-radius: 12px; font-size: 15px; resize: none; }
+  ```
 
 ## Tone Modifiers
 
