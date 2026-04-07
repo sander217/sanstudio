@@ -60,6 +60,16 @@ User request
         /design-lock (Gate 3) directly
 ```
 
+### Skill loading rule
+
+Read ONLY the current gate's skill file. Do NOT pre-read downstream gates.
+
+- Entering Gate 1 → read `context-lock-SKILL.md` only
+- Transitioning to Gate 2 → read `direction-lock-SKILL.md` only
+- Transitioning to Gate 3 → read `design-lock-SKILL.md` only
+
+The previous gate's skill file is already in conversation history. Do not re-read it.
+
 ### Automatic transitions
 
 When a gate completes and the user confirms, read the skill file for the next gate and follow its instructions. The handoff block produced by the completing gate contains all context the next gate needs.
@@ -123,6 +133,16 @@ If the curl fails (connection refused), tell the user:
 "Bridge server isn't running. Start it with `node figma-plugin/server.js`, 
 then open the Figma Plugin and click 'Auto-import' → 'Start listening'. 
 I'll push again when you're ready."
+
+### HTML Capture Rule
+
+If you use HTML-to-Figma capture instead of bridge JSON import:
+
+- Treat every screen capture as a fresh page load.
+- If the mockup switches screens via `?screen=`, hash state, or any URL-driven state, initialization must apply that state immediately on load.
+- Never rely on a click-only state change before capture.
+- Never leave one screen hardcoded as `.active` if a different screen can be selected by URL.
+- Before capturing multiple screens, verify each target URL renders a different visible screen on first load.
 
 ### Step 3: Write companion docs
 Write companion docs into the same session under `docs/`.
@@ -195,4 +215,5 @@ If the user provides a design system (tokens, style guide, component library), G
 - **Match the user's language.** Traditional Chinese if they write in Chinese, English if English. Design terminology stays in English with Chinese annotation when needed.
 - **Match the user's energy.** ITERATE users want speed. BLANK users want exploration. Don't lecture an ITERATE user or rush a BLANK user.
 - **Every visual artifact is an HTML file.** Flow diagrams, wireframes, and hi-fi mockups are all generated as self-contained HTML. Gate 2 uses grayscale system fonts. Gate 3 uses the confirmed visual language.
+- **HTML artifacts are files, not inline content.** When generating HTML (wireframes, mockups, flow diagrams), write the HTML to a file and provide: (1) the file path, (2) a 3-sentence summary describing what the artifact shows, (3) key design decisions embedded in the artifact. Never paste raw HTML source code into the conversation.
 - **The insight is the product.** Generic observations ("improve usability") are failures. Every insight must be specific, contextual, and actionable.

@@ -116,47 +116,21 @@ Confirm before proceeding.
 
 ### Technique Database Retrieval (MANDATORY)
 
-Before defining the visual language or generating hi-fi, read:
-- `skills/design-lock/design-techniques-db.md`
+Before defining visual language, read `skills/design-lock/design-techniques-db.md`.
+Extract keywords from the user's request and upstream blocks: product type, user intent, 
+UX risks, platform, and tone. Match 1-3 technique clusters, then emit:
 
-This is Gate 3's reusable technique database. It exists to import proven design
-patterns from high-performing products without blindly copying their visual skin.
+```md
+🎯 TECHNIQUE MATCH
+Keywords: [list]
+Matched clusters: [name]: [why it fits]
+Techniques to apply: [list]
+Techniques excluded: [what you're NOT using and why]
+```
 
-1. **Extract keywords** from the user's request and upstream blocks:
-   - product type
-   - screen type
-   - user intent
-   - UX risk words
-   - platform/context
-   - tone/brand words
-2. **Match against the database** and score fit.
-3. **Select 1-3 technique clusters max.** More than that usually creates a mushy design.
-4. **Explain the match before designing:**
-   ```md
-   🎯 TECHNIQUE MATCH
-   Keywords:
-   - [keyword]
-
-   Matched clusters:
-   - [Cluster Name]: [why it fits]
-
-   Techniques to apply:
-   - [technique]
-
-   Techniques intentionally excluded:
-   - [pattern you are NOT using and why]
-   ```
-5. **Adapt, don't clone.** Borrow mechanism, not brand surface.
-   - OK: hierarchy model, comparison structure, reassurance pattern
-   - Not OK: copying somebody else's exact type ramp, palette, or composition
-6. **Propagate the chosen techniques into all outputs:**
-   - HTML mockup structure
-   - Interaction Spec
-   - DDR
-   - JSON `metadata.technique_clusters`
-   - JSON `metadata.decisions_applied`
-7. **ITERATE exception:** if the user wants a tight fidelity tweak, use the database
-   as a decision lens, not permission to redesign the structure.
+Adapt mechanism, not brand surface. For ITERATE, use this as a decision lens, not 
+permission to redesign structure. Propagate chosen techniques into HTML, Interaction 
+Spec, DDR, and JSON metadata.
 
 ---
 
@@ -187,49 +161,30 @@ If design system has dark tokens or product needs dark mode:
 
 ## Step 3: Baseline Acknowledgment (ITERATE / CRITIQUE)
 
-**For ITERATE and CRITIQUE entries that come with an existing design:**
-
-Before making any changes, explicitly state what you're keeping and what 
-you're changing. The existing design is the baseline — not a Gate 2 wireframe.
+Before any changes, state scope:
 
 ```
 📌 BASELINE ACKNOWLEDGMENT
 
-Keeping (will not change):
-- [Element/pattern]: [why it works or is out of scope]
-- [Element/pattern]: [why]
-
-Changing:
-- [Element/pattern]: [what's wrong and what I'll do differently]
-- [Element/pattern]: [what's wrong and what I'll do differently]
-
-Out of scope (flagged for later):
-- [Element/pattern]: [why it might also need attention but isn't in this round]
+Keeping: [element]: [why it works or is out of scope]
+Changing: [element]: [what's wrong -> what I'll do]
+Out of scope: [element]: [why flagged for later]
 ```
 
-**Ask:** "This is the change scope. Anything I should keep that I'm planning 
-to change, or change that I'm planning to keep?"
-
-**Wait for confirmation before proceeding to hi-fi.**
+Confirm with user before proceeding to hi-fi.
 
 ### Change Magnitude Confirmation (ITERATE only)
 
-If the planned changes go beyond what the user literally asked for (e.g., user 
-asked "make the progress indicator clearer" and you want to change it from a 
-circle to a bar — that's a structural change, not a tweak):
+If planned changes exceed the literal request, state magnitude before proceeding:
 
-"You asked for [literal request]. I want to go a bit further and [bigger change] 
-because [reason]. This is a [minor tweak / moderate redesign / significant rethink] 
-of the component. OK to go this far, or should I stay closer to the original?"
+| Magnitude | Scope | Example |
+|-----------|-------|---------|
+| **Tweak** | Values within existing structure | Color, size, spacing |
+| **Moderate** | Different approach, same component type | New layout, add/remove elements |
+| **Significant** | New component type or interaction model | Circle -> bar, modal -> inline |
 
-**Three magnitude levels:**
-- **Tweak:** Adjusting values within the existing structure (color, size, spacing)
-- **Moderate:** Changing the approach within the same component type (different layout, 
-  different information hierarchy, adding/removing elements)
-- **Significant:** Changing the component type or interaction model entirely (circle → bar, 
-  modal → inline, multi-page → single-page)
-
-State the magnitude before proceeding. Let the user scope it.
+"You asked for [X]. I want to go further and [Y] because [reason]. This is a 
+[tweak/moderate/significant] change. OK, or stay closer to original?"
 
 ---
 
@@ -246,19 +201,9 @@ If no wireframe (ITERATE, CRITIQUE, or simple direction), skip this step.
 
 ## Step 5: Viewport Declaration (MANDATORY)
 
-**Before generating ANY hi-fi mockup, declare the viewport:**
-
-"I'll design [mobile 375px / desktop 1440px / both] first. 
-[One-line reasoning — e.g., 'Your traffic is 65% mobile' or 'This is a 
-dashboard, desktop primary' or 'This is a mobile app']. OK?"
-
-**Rules:**
-- If the user previously stated traffic split or platform → use that
-- If it's clearly a mobile app → declare mobile, don't ask
-- If it's clearly a desktop tool → declare desktop, don't ask
-- If ambiguous → ask before generating anything
-
-**Never generate a mockup without first declaring which viewport.**
+Declare before ANY mockup: mobile (375px) / desktop (1440px) / both.
+Mobile app -> mobile. Desktop tool -> desktop. Ambiguous -> ask.
+State reasoning in one line. If user stated traffic split or platform, use that.
 
 ---
 
@@ -277,14 +222,7 @@ SECONDARY STATES (document in spec):
 - [States that matter but don't need hi-fi]
 ```
 
-**For ITERATE:** Be more aggressive with states. If the redesigned component 
-has obvious state variations (e.g., a progress indicator has "on track," "behind," 
-"completed"), proactively generate the most important variations without asking. 
-ITERATE users want to see results fast, not answer more questions about which 
-states to show. Still list what you're generating so they can cut if it's too much.
-
-Ask the user about promoting secondary states only for full-pipeline entries 
-(BLANK, GENERATE, CONSTRAINED) where the scope is wider.
+For ITERATE: proactively generate obvious state variations (e.g., on-track / behind / completed) without asking. List what you're generating so the user can cut if needed.
 
 ---
 
@@ -343,30 +281,16 @@ If no design system, skip this check.
 
 ## Step 8: Structured Before/After Diff (ITERATE / CRITIQUE)
 
-For ITERATE and CRITIQUE entries, after generating the mockup, produce a 
-structured diff showing exactly what changed and what didn't:
+After generating mockup, produce:
 
 ```
 📝 DESIGN CHANGES
 
-Changed:
-● [Component/element]: [old] → [new] — [why]
-● [Component/element]: [old] → [new] — [why]
-● [Component/element]: [old] → [new] — [why]
-
-Kept:
-○ [Component/element]: [unchanged — why it works]
-○ [Component/element]: [unchanged — out of scope]
-
-New:
-◆ [Component/element]: [added — why it's needed]
-
-Flagged for later:
-◇ [Component/element]: [might need attention but not in this round]
+● [Changed]: [old] → [new] — [why]
+○ [Kept]: [unchanged — reason]
+◆ [New]: [added — why needed]
+◇ [Flagged for later]: [why not in this round]
 ```
-
-This diff is the primary communication tool for ITERATE/CRITIQUE — the user 
-needs to see at a glance what's different. It also feeds into the DDR.
 
 ### Adjacent Screens Note (CRITIQUE)
 
@@ -451,59 +375,36 @@ Override: [if OVERRIDDEN — original, new, reason]
 
 ## Step 12: Design QA — Pre-Export Checklist
 
-Before exporting, run full self-check:
+Run before export:
 
 ```
-✅ DESIGN QA
-
-Spacing & Layout:
-□ All spacing uses defined scale
-□ Alignment consistent
-□ Content respects max-width
-
-Typography:
-□ All text uses defined families
-□ Sizes follow scale
-□ Line heights consistent
-
-Color & Contrast:
-□ All colors from palette
-□ WCAG AA contrast (4.5:1 body, 3:1 large)
-□ Interactive elements distinguishable without color
-
-Components:
-□ Same type identical across screens
-□ Button hierarchy clear
-□ Focus states defined
-
-States:
-□ All primary states have hi-fi
-□ Secondary states in Interaction Spec
-□ Empty states have helpful content
-□ Error states have recovery actions
-
-Flow:
-□ Navigation consistent
-□ User always knows location
-□ Back/escape defined
-□ Flow matches Gate 2 diagram
-
-Wireframe Contract:
-□ LOCKED decisions respected or explicitly OVERRIDDEN
-
-Interactive Mockup:
-□ ALL interactive elements functional (toggles toggle, sliders slide, 
-  tabs switch). No non-functional UI chrome.
+- **Spacing/Layout**: All values from defined scale, consistent alignment, max-width respected
+- **Typography**: Defined families/sizes only, consistent line heights
+- **Color/Contrast**: Palette-only, WCAG AA (4.5:1 body, 3:1 large), no color-only indicators
+- **Components**: Identical across screens, clear button hierarchy, focus states defined
+- **States**: All primary states hi-fi'd, secondary in spec, empty/error have recovery
+- **Flow**: Consistent nav, clear location, back/escape defined, matches G2 diagram
+- **Wireframe Contract**: LOCKED decisions respected or explicitly OVERRIDDEN
+- **Interactive**: ALL interactive elements functional — no non-functional UI chrome
 ```
 
-### Findings
+### HTML Capture Guardrail
+
+If Figma export uses HTML capture instead of JSON import, verify these before opening any
+capture URL:
 
 ```
-🔍 QA: ✅ [X] passed · ⚠️ [Y] warnings · ❌ [Z] failures
-[List failures and warnings]
+- Screen routing state is applied on initial load, not only after user interaction
+- No screen is hardcoded as the default visible state when a query param or hash selects another screen
+- If the mockup uses `?screen=` or similar URL state, initialization must call the same screen-switching logic used by clicks
+- Capture selector targets only the intended viewport/frame, not the whole review page
 ```
 
-Fix failures before export. Warnings noted but don't block.
+If any of these fail, fix the HTML first. Do not start capture anyway and hope Figma gets the right screen.
+
+Report: `🔍 QA: ✅ [X] passed · ⚠️ [Y] warnings · ❌ [Z] failures`
+
+Fix failures before export. Warnings don't block.
 
 ---
 
@@ -516,126 +417,12 @@ Fix failures before export. Warnings noted but don't block.
 - **Key screens:** User selects
 - **Partial:** Export confirmed screens, continue iterating others
 
-### JSON Schema (v0.2)
+### JSON Schema
 
-Flow-level design system (defined once), per-screen nodes:
-
-```jsonc
-{
-  "schema_version": "0.2.0",
-  "source": "design-agent-studio",
-  "flow_name": "[name]",
-  "flow_structure": "[linear|branching|state-based|multi-entry]",
-  "viewport": "[mobile|desktop|both]",
-  "export_scope": "[full|partial]",
-  "partial_note": "[pending screens, if partial]",
-  
-  "design_system": {
-    "name": "[name or ad-hoc]",
-    "colors": {
-      "primary": "#...",
-      "secondary": "#...",
-      "neutrals": ["#..."],
-      "semantic": { "success": "#...", "warning": "#...", "error": "#...", "info": "#..." }
-    },
-    "typography": {
-      "display": { "family": "...", "weight": 700, "size": 32, "lineHeight": 40 },
-      "heading": { "family": "...", "weight": 600, "size": 24, "lineHeight": 32 },
-      "body": { "family": "...", "weight": 400, "size": 16, "lineHeight": 24 },
-      "caption": { "family": "...", "weight": 400, "size": 12, "lineHeight": 16 }
-    },
-    "spacing_base": 8,
-    "radius": { "sm": 4, "md": 8, "lg": 12, "full": 9999 },
-    "shadows": {
-      "sm": "0 1px 2px rgba(0,0,0,0.05)",
-      "md": "0 4px 6px rgba(0,0,0,0.07)",
-      "lg": "0 10px 15px rgba(0,0,0,0.1)"
-    }
-  },
-
-  "screens": [
-    {
-      "name": "[ScreenName]",
-      "description": "[one-line]",
-      "state": "[default|empty|error|loading]",
-      "theme": "[light|dark]",
-      "canvas": { "width": 375, "height": 812 },
-      "nodes": [
-        {
-          "id": "node-id",
-          "type": "FRAME|TEXT|RECTANGLE|ELLIPSE|IMAGE",
-          "parentId": "parent-id or null",
-          "name": "[FigmaLayerName]",
-          "component_role": "[screen|header|card|button-primary|etc.]",
-          "props": {
-            "layoutSizingHorizontal": "FIXED|FILL|HUG",
-            "layoutSizingVertical": "FIXED|FILL|HUG",
-            "width": 200,
-            "height": 44,
-            "layoutMode": "HORIZONTAL|VERTICAL",
-            "primaryAxisAlignItems": "MIN|CENTER|MAX|SPACE_BETWEEN",
-            "counterAxisAlignItems": "MIN|CENTER|MAX",
-            "paddingTop": 0, "paddingBottom": 0,
-            "paddingLeft": 0, "paddingRight": 0,
-            "itemSpacing": 0,
-            "fills": [{ "type": "SOLID", "color": "#FFFFFF" }],
-            "strokes": [{ "type": "SOLID", "color": "#E5E7EB" }],
-            "strokeWeight": 1,
-            "strokeAlign": "INSIDE|OUTSIDE|CENTER|BOTTOM",
-            "cornerRadius": 8,
-            "characters": "Text content",
-            "fontSize": 16,
-            "fontWeight": 400,
-            "fontFamily": "Inter",
-            "textAlignHorizontal": "LEFT|CENTER|RIGHT",
-            "lineHeight": { "value": 24, "unit": "PIXELS" }
-          }
-        }
-      ],
-      "metadata": {
-        "direction_name": "[from Gate 2 or evaluation]",
-        "direction_type": "[MVP|IDEAL|CREATIVE|HYBRID|ITERATE|CRITIQUE_FIX]",
-        "version": "v5",
-        "technique_clusters": [
-          {
-            "name": "[cluster name from design-techniques-db]",
-            "keywords": ["[matched keyword]"],
-            "reason": "[why selected for this screen]"
-          }
-        ],
-        "decisions_applied": [
-          { "decision": "[what]", "gate": "G2", "status": "LOCKED" }
-        ],
-        "overrides": [
-          { "original": "[locked decision]", "new": "[change]", "reason": "[why]" }
-        ]
-      }
-    }
-  ],
-
-  "transitions": [
-    {
-      "from_screen": "[name]",
-      "to_screen": "[name]",
-      "trigger": "[action or event]",
-      "animation": "[slide-left|fade|modal-rise|instant]",
-      "duration_ms": 300,
-      "data_carried": "[state transfers]"
-    }
-  ]
-}
-```
-
-### Sizing Values
-
-```
-"layoutSizingHorizontal": "FIXED" | "FILL" | "HUG"
-"layoutSizingVertical": "FIXED" | "FILL" | "HUG"
-
-FIXED: explicit pixel value in width/height
-FILL: stretch to fill parent container
-HUG: shrink to fit contents
-```
+Read `skills/design-lock/figma-schema-v0.2.md` for the full schema.
+Key structure: flow-level `design_system` (defined once), per-screen `nodes` array
+with `component_role`, `transitions` array for screen connections.
+Schema version: 0.2.0.
 
 ---
 
@@ -652,14 +439,13 @@ Gates: [G1 → G2 → G3 | G1 → G3 | G1(eval) → G3]
 Retreats: [none | G3 → G2 because X]
 
 ## Context
-[2-3 sentences from Gate 1]
+[2-3 sentences]
 
 ## Technique Clusters Applied
 ### [Cluster Name]
 Matched keywords: [list]
 Why it fit: [one short paragraph]
-Applied through:
-- [specific layout / hierarchy / interaction decision]
+Applied through: [specific layout / hierarchy / interaction decision]
 
 ## Key Decisions
 ### 1. [Decision]
@@ -669,7 +455,7 @@ Override: [if applicable]
 Revisit when: [condition]
 
 ## Design Changes (for ITERATE/CRITIQUE)
-[Structured diff from Step 8]
+[Structured diff]
 
 ## Design Debt (if MVP)
 [From Gate 2]
@@ -763,31 +549,20 @@ check DDR first.
 
 ## Important Rules
 
-1. **Progressive refinement.** Mood → style tile → hi-fi. No big reveals.
+1. **Progressive refinement.** Mood -> style tile -> hi-fi, with no big reveals.
 2. **Component thinking.** Every element maps to a component type.
-3. **States are designs.** Empty, error, loading deserve real thought.
-4. **Interaction spec before prototype.** Document logic first.
-5. **Design system compliance is a feature.** Check after EACH mockup, not just at QA.
-6. **Realistic content.** No Lorem Ipsum in hi-fi.
-7. **One screen at a time.** Show, iterate, next.
-8. **QA checklist is mandatory.** Before export.
-9. **JSON is a starting point.** 95% structure, designer does 5%.
-10. **Companion docs are first-class.** DDR and Interaction Spec prevent "pretty but unexplainable."
-11. **Version tracking.** "Go back to v2" must work.
-12. **Don't hold the design hostage.** User says "good enough" → export.
-13. **Respect wireframe contract.** Override only with explicit reason.
-14. **Retreat is legitimate.** Wrong direction → go back. Cheaper than forcing.
-15. **Partial export supported.** Don't make user wait for everything.
-16. **Track decisions across gates.** LOCKED/OPEN/REJECTED/OVERRIDDEN with gate origin.
-17. **Declare viewport before generating.** MANDATORY. Never assume.
-18. **List inferred values.** If inferring design system from screenshot, list exact values for confirmation.
-19. **Baseline acknowledgment for ITERATE/CRITIQUE.** State keep/change scope before touching anything.
-20. **Change magnitude for ITERATE.** If going beyond what user asked, state the magnitude and confirm.
-21. **All interactive elements must work.** If it looks interactive, it must be interactive. No fake UI.
-22. **Structured diff for every ITERATE/CRITIQUE.** Changed / Kept / New / Flagged for later.
-23. **Adjacent screens flag for CRITIQUE.** Proactively note related screens that might have same issues.
-24. **Technique retrieval is mandatory.** Match 1-3 clusters from the design database before hi-fi.
-25. **Borrow patterns, not skins.** Import interaction logic and information structure, never clone another product's surface style.
+3. **States are designs.** Empty, error, and loading need real treatment.
+4. **Realistic content.** No Lorem Ipsum in hi-fi.
+5. **One screen at a time.** Show, iterate, then move on.
+6. **JSON is a starting point.** Export structure, not final craft polish.
+7. **Companion docs are first-class.** DDR and Interaction Spec explain the work.
+8. **Version tracking.** "Go back to v2" must work.
+9. **Don't hold the design hostage.** User says good enough -> export.
+10. **Partial export supported.** Don't block because one screen is unfinished.
+11. **Track decisions across gates.** Use LOCKED/OPEN/REJECTED/OVERRIDDEN consistently.
+12. **All interactive elements must work.** If it looks interactive, it behaves that way.
+13. **Technique retrieval is mandatory.** Match 1-3 clusters before hi-fi.
+14. **Borrow patterns, not skins.** Import logic and structure, never surface-copy another product.
 
 ---
 
@@ -795,35 +570,4 @@ check DDR first.
 
 - **Big reveal mockup.** Visual direction never confirmed.
 - **Lorem Ipsum in hi-fi.** Credibility destroyer.
-- **Flat image thinking.** Can't decompose to JSON = designed wrong.
-- **State amnesia.** Only the happy path.
-- **Over-polishing before confirmation.** Rough-right > polished-wrong.
-- **Ignoring design system.** Off-system without approval.
-- **Spec-less interactions.** "It animates in" is not a spec.
-- **Export without QA.** Inconsistencies survive.
-- **No companion docs.** Beautiful frames, zero context.
-- **Losing versions.** Can't describe v3 vs v5.
-- **Silent skeleton drift.** Changing locked decisions without flagging.
-- **Refusing to retreat.** Forcing broken direction through 10 rounds.
-- **All-or-nothing export.** Blocking because one screen isn't done.
 - **Non-functional mockup elements.** Toggle that doesn't toggle.
-- **Vague design system inference.** "I'll keep it consistent" without listing values.
-- **Scope creep in ITERATE.** Redesigning the whole page when user asked for one component.
-- **No diff.** ITERATE/CRITIQUE output without structured before/after.
-
----
-
-## Future TODOs (Phase 2)
-
-### i18n Testing
-Mockups with longest-language content. CJK, RTL, string-length testing.
-
-### Rich Image Placeholders
-Image search for domain-appropriate stock photos in visually-driven products.
-
-### Re-Entry from Figma
-Accept DESIGN-LOCK or JSON from prior session. Parse, reconstruct, modify.
-
-### Reverse Schema
-Figma Plugin exports existing designs as JSON → Agent reads structured data 
-instead of screenshots → higher quality ITERATE and CRITIQUE.
