@@ -777,12 +777,14 @@ check DDR first.
 12. **JSON is a starting point.** Export structure, not final craft polish.
 13. **Companion docs are first-class.** DDR and Interaction Spec explain the work.
 14. **Version tracking.** "Go back to v2" must work.
-15. **Don't hold the design hostage.** User says good enough -> export.
-16. **Partial export supported.** Don't block because one screen is unfinished.
-17. **Track decisions across gates.** Use LOCKED/OPEN/REJECTED/OVERRIDDEN consistently.
-18. **All interactive elements must work.** If it looks interactive, it behaves that way.
-19. **Technique retrieval is mandatory.** Match 1-3 clusters before hi-fi.
-20. **Borrow patterns, not skins.** Import logic and structure, never surface-copy another product.
+15. **Anti-bento is mandatory.** Before generating any HTML, re-read the Anti-Bento Layout Rules. After generating, check: are annotations hidden? Is the hero clean? Does the page scroll with rhythm? If any fail, fix before presenting.
+16. **Asymmetry is confidence.** Equal-weight layouts signal indecision. Every screen must have a clear visual winner — one element that is obviously the most important.
+17. **Don't hold the design hostage.** User says good enough -> export.
+18. **Partial export supported.** Don't block because one screen is unfinished.
+19. **Track decisions across gates.** Use LOCKED/OPEN/REJECTED/OVERRIDDEN consistently.
+20. **All interactive elements must work.** If it looks interactive, it behaves that way.
+21. **Technique retrieval is mandatory.** Match 1-3 clusters before hi-fi.
+22. **Borrow patterns, not skins.** Import logic and structure, never surface-copy another product.
 
 ---
 
