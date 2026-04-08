@@ -971,6 +971,12 @@ check DDR first.
 20. **All interactive elements must work.** If it looks interactive, it behaves that way.
 21. **Technique retrieval is mandatory.** Match 1-3 clusters before hi-fi.
 22. **Borrow patterns, not skins.** Import logic and structure, never surface-copy another product.
+23. **Visual-led, not text-led.** Every screen must have at least one non-text
+    visual element (SVG illustration, atmospheric background, data visualization,
+    or meaningful animation). If a screen is only text + buttons + white
+    background, it's not hi-fi — it's a wireframe with colors.
+24. **SVG over placeholder.** Never use a gray rectangle where a visual should
+    be. Generate a contextual inline SVG using patterns from svg-patterns.md.
 
 ---
 
