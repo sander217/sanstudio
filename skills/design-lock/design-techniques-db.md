@@ -159,16 +159,17 @@ Format:
 
 #### Visual Assets
 
-- **Per-step SVG illustration:** Each onboarding step gets a small (200x150)
-  SVG spot illustration showing what the step accomplishes. E.g., step 1
-  "Create profile" → silhouette + card; step 2 "Connect account" → two
-  nodes linked; step 3 "First action" → checkmark + sparkle.
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Step imagery:** If a step benefits from a visual, use contextual
+  photography or device/product mockups tied to the step outcome. Route C
+  fallback: icon + headline + progress, no scene illustration.
 - **Entrance animation:** Steps fade-up with stagger (0.1s delay per step).
   Completed steps slide left as next appears.
 - **Progress animation:** Progress bar fills with eased transition (0.3s)
   on each step completion.
-- **Avoid:** Atmospheric backgrounds, decorative accents. Keep focus on the
-  task. Onboarding is functional, not decorative.
+- **Avoid:** Atmospheric backgrounds, decorative accents, and generic lifestyle
+  photos. Keep focus on the task. Onboarding is functional, not decorative.
 
 ### 2. Landing Conversion
 
@@ -184,7 +185,7 @@ Format:
 
 **Avoid when:** the page is primarily navigational or documentation-driven.
 
-**Steal the mechanism, not the skin:** narrative sequencing, not somebody else's gradients and illustration style.
+**Steal the mechanism, not the skin:** narrative sequencing, not somebody else's gradients and art direction.
 
 #### Visual Execution
 
@@ -206,14 +207,12 @@ Format:
 
 #### Visual Assets
 
-- **Hero SVG scene:** Full-width contextual illustration (400x300 or larger)
-  showing the product's value in action. Not an abstract shape — a
-  recognizable scene relevant to the industry. This is the single most
-  important visual on the page.
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Hero photography:** Full-width contextual photo showing the product's
+  value in action. This is the single most important visual on the page.
 - **Atmospheric background:** Hero section uses a subtle gradient or radial
   glow matching the brand palette. Transition to neutral for content sections.
-- **Decorative accents:** 3-5 floating shapes (circles, blobs) in hero area
-  with breathe animation. Opacity 10-20%.
 - **Social proof:** Logo row as inline SVG (simplified, monochrome versions
   of recognizable shapes — not text, not image placeholders).
 - **Entrance animations:** Hero content fades up on load (H1 first, subtitle
@@ -221,8 +220,10 @@ Format:
   IntersectionObserver.
 - **Number count-up:** If showing stats ("10,000+ users"), animate from 0 on
   scroll-into-view.
-- **Go all in.** This is the ONE screen type where maximum visual investment
-  pays off. Every section should have at least one visual element.
+- **Go all in.** Every major section should have either contextual photography
+  (Route A/B) or a strong typographic + atmospheric treatment (Route C).
+- **Avoid:** Generic "happy people" stock and abstract vector scenes that do
+  not match the page claim.
 
 ### 3. Pricing and Plan Comparison
 
@@ -259,14 +260,19 @@ Format:
 
 #### Visual Assets
 
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Pricing stays clarity-first:** The comparison grid should usually remain
+  Route C. If supporting imagery is needed, keep it outside the comparison
+  columns as a narrow contextual photo, never inside the pricing cards.
 - **Column entrance:** Plans stagger in from bottom (0.1s delay each).
   Recommended plan enters last with a slight scale-up (1.0 → 1.03).
 - **CTA pulse:** Primary CTA on recommended plan gets a subtle pulse glow
   animation. Other plans' CTAs are static.
 - **Toggle animation:** Monthly/annual toggle slides with smooth transition.
   Price numbers animate between values (count-up/down).
-- **Avoid:** Hero illustrations, atmospheric backgrounds, decorative accents.
-  Pricing pages are about clarity. Visual noise undermines comparison.
+- **Avoid:** Hero photography in the grid, illustration scenes, and decorative
+  accents. Pricing pages are about clarity. Visual noise undermines comparison.
 
 #### Reference Snippet
 
@@ -377,15 +383,19 @@ Format:
 
 #### Visual Assets
 
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Form intro visual:** If the surrounding page needs imagery, keep it
+  outside the form area as a contextual photo or product shot. Route C
+  fallback: typography + progress only.
 - **Field entrance:** Fields in each group fade up with stagger as the user
   reaches that group (scroll-triggered) or when a multi-step form advances.
 - **Validation animation:** Success checkmark scales in (0 → 1) with spring
   ease. Error shake uses `translateX(-4px, 4px, 0)` over 0.3s.
 - **Progress indicator:** Top progress bar or step dots animate fill/color
   on advancement.
-- **Avoid:** SVG illustrations in the form area (distracts from input),
-  atmospheric backgrounds (reduces form readability), decorative accents
-  (adds visual noise to an already cognitive task). The form IS the design.
+- **Avoid:** Photography in the form body, atmospheric backgrounds that reduce
+  readability, and decorative accents. The form is the design.
 
 ### 6. Checkout and Commitment Reassurance
 
@@ -424,6 +434,11 @@ Format:
 
 #### Visual Assets
 
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Commitment summary image:** If the order references a physical product,
+  service location, or booking context, use a small thumbnail that matches the
+  actual item or context. Otherwise omit imagery.
 - **Trust badge SVGs:** Lock icon, shield icon, guarantee badge as small
   (24x24) inline SVGs near the submit button. Simple line-art style, same
   stroke weight, using neutral-500 color.
@@ -431,7 +446,7 @@ Format:
   Duration 0.3s, ease-out.
 - **Submit button glow:** Subtle pulse on the pay/submit button ONLY after
   all required fields are valid. Draws attention to the ready state.
-- **Avoid:** Hero illustrations, decorative accents, atmospheric backgrounds.
+- **Avoid:** Hero photography, decorative accents, and atmospheric backgrounds.
   Checkout is the highest-trust moment — visual restraint IS the trust signal.
 
 #### Reference Snippet
@@ -552,6 +567,10 @@ Format:
 
 #### Visual Assets
 
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Data stays primary:** Use product UI, charts, and metrics as the visual.
+  If surrounding marketing chrome needs imagery, keep it outside the data canvas.
 - **SVG sparklines:** Each KPI card gets a tiny (100x30) inline SVG sparkline
   showing trend. Use `<polyline>` with 10-15 data points. Stroke color matches
   the delta direction (green for up, red for down, neutral for flat).
@@ -561,9 +580,8 @@ Format:
   (24px spacing, 1px dots at neutral-300).
 - **Chart animations:** If charts are included, bars grow from 0 height,
   lines draw from left to right using SVG stroke-dashoffset animation.
-- **Avoid:** Hero illustrations, floating accents, atmospheric gradients.
-  Dashboards are information displays, not marketing pages. Let data be
-  the visual.
+- **Avoid:** Hero photos, lifestyle photography, floating accents, and
+  atmospheric gradients. Dashboards are information displays, not marketing pages.
 
 #### Reference Snippet
 
@@ -669,13 +687,15 @@ Format:
 
 #### Visual Assets
 
-- **Minimal.** Dense data screens are already visually complex. Adding
-  illustrations or animations increases cognitive load.
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Minimal.** Dense data screens are already visually complex. Route C is the
+  default. Use only data cues, icons, and essential state transitions.
 - **Allowed:** Row selection highlight transition (0.15s bg-color change),
   bulk action bar slide-up entrance, sort indicator rotation.
-- **Avoid everything else.** No SVG illustrations, no atmospheric backgrounds,
-  no decorative accents, no entrance animations on data rows (they load
-  instantly — users need to scan, not wait).
+- **Avoid everything else.** No photography, no atmospheric backgrounds,
+  no decorative accents, and no entrance animations on data rows. They load
+  instantly — users need to scan, not wait.
 
 ### 9. Search and Discovery
 
@@ -698,7 +718,7 @@ Format:
 - **Layout:** Search bar prominent top center (`min-height: 48px`, `max-width: 720px`). Desktop: filter sidebar 240px fixed left + results area right. Mobile: filters in bottom sheet/modal. Results as list or grid (toggleable).
 - **Spacing:** 24px between search bar and results area. 16px between filter groups in sidebar. 16px gap between result items. 12px internal padding per result card.
 - **Typography weight:** Search input 400/16px. Active filter count badge 600/12px. Result title 600/15px. Result meta 400/13px neutral-500. Filter group label 600/13px uppercase.
-- **Color distribution:** Active filters use primary pill bg (opacity 0.1) + primary text. Result cards neutral with hover border or shadow lift. Zero-result state uses neutral-400 illustration + primary CTA.
+- **Color distribution:** Active filters use primary pill bg (opacity 0.1) + primary text. Result cards neutral with hover border or shadow lift. Zero-result state uses neutral-400 icon treatment + primary CTA.
 - **Component density:** Result count + active filter pills shown above results. 10-12 results visible before scroll (list) or 8-12 (grid). Filter sidebar scrolls independently.
 - **Key CSS pattern:**
   ```css
@@ -715,15 +735,17 @@ Format:
 
 #### Visual Assets
 
-- **Empty state SVG:** When search returns 0 results, show a contextual SVG
-  illustration (magnifying glass + question mark, or relevant domain object
-  with "not found" visual).
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Result imagery:** If results are catalog-like, use real thumbnails or
+  contextual photos on the cards. Zero-result states fall back to a small icon
+  plus guidance text, not a scene illustration.
 - **Result entrance:** Results fade up with stagger (0.05s per item, fast)
   after search executes.
 - **Filter interaction:** Active filter pills animate in with scale
   (0 → 1, 0.15s). Remove animates out with scale (1 → 0).
-- **Avoid:** Atmospheric backgrounds on the results area (reduces scan speed),
-  heavy illustrations in the results list (competes with content).
+- **Avoid:** Atmospheric backgrounds on the results area, heavy photography
+  density in the results list, and decorative scenes that compete with content.
 
 ### 10. Settings and Safety
 
@@ -764,15 +786,16 @@ Format:
 
 #### Visual Assets
 
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
 - **Section icon SVGs:** Each settings section gets a small (20x20) inline
   SVG icon next to its header. Simple line-art style, single color
   (neutral-500).
 - **Toggle animation:** Setting toggles animate smoothly (0.2s, ease).
 - **Danger zone animation:** Destructive action confirmation modal enters
   with a subtle scale-up (0.95 → 1) to convey weight.
-- **Avoid:** Illustrations, atmospheric backgrounds, decorative accents,
-  entrance animations. Settings pages need trust through stability, not
-  visual flair.
+- **Avoid:** Photography, atmospheric backgrounds, decorative accents, and
+  entrance animations. Settings pages need trust through stability, not flair.
 
 ### 13. Mobile Focus and Thumb Flow
 
@@ -809,16 +832,17 @@ Format:
 
 #### Visual Assets
 
-- **Simplified SVGs:** If illustrations are needed (empty states, onboarding),
-  keep SVGs under 40 lines and under 200x150 viewBox. Mobile renders are
-  smaller and complex SVGs lose legibility.
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Mobile imagery:** Only use photography when it materially supports the
+  screen and stays lightweight. Route C icon-first layouts are often the
+  default on mobile.
 - **Entrance animations:** Screen transitions use slide-left/right (0.3s).
   List items stagger fade-up on first load only (not on every scroll).
 - **Bottom bar interaction:** Active tab icon animates (subtle scale or
   color fill transition, 0.15s).
-- **Avoid:** Heavy SVG scenes (performance risk on mobile), noise textures
-  (rendering cost), float/breathe animations (battery drain on loop).
-  Keep it tight.
+- **Avoid:** Heavy photography, noise textures, and looped float/breathe
+  animations. Keep it tight.
 
 ### 15. Collaborative Workflow
 
@@ -856,14 +880,20 @@ Format:
 
 #### Visual Assets
 
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **Workspace visuals:** Collaboration screens are content-first. Use avatars,
+  status dots, and real shared-object thumbnails; staged photography should
+  stay outside the primary workspace.
 - **Online presence pulse:** Avatar dots for "online" status use a subtle
   green pulse animation (2s loop, low intensity).
 - **Status transitions:** When an item's status changes, the status dot
   and label animate color (0.3s crossfade).
 - **Activity feed entrance:** New activity items slide in from top with
   fade (0.2s).
-- **Avoid:** Illustrations, atmospheric backgrounds. Collaboration tools
-  are workspaces — visual flair distracts from the work content.
+- **Avoid:** Photography-led hero treatments, atmospheric backgrounds, and
+  decorative scenes. Collaboration tools are workspaces — flair distracts
+  from the work content.
 
 ### 16. AI Copilot and Generative Guidance
 
@@ -901,6 +931,11 @@ Format:
 
 #### Visual Assets
 
+- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
+  Route B (stock) as fallback, Route C (css-only) as last resort.
+- **AI surfaces:** The AI output is usually the visual. Use screenshots,
+  previews, or user-content thumbnails only when they clarify the result;
+  otherwise stay Route C.
 - **Streaming text animation:** AI output appears with a typewriter/streaming
   effect. Characters reveal left-to-right or line-by-line.
 - **Skeleton loading:** While AI processes, show skeleton placeholder with
@@ -910,8 +945,8 @@ Format:
 - **Output distinction glow:** AI-generated content block has a subtle
   left-border animation that fades from primary color to transparent
   on appearance.
-- **Avoid:** Static placeholder images, heavy SVG illustrations. The AI's
-  output IS the visual content — frame it, don't compete with it.
+- **Avoid:** Static placeholder images, staged photography, and illustration
+  scenes. The AI's output is the visual content — frame it, don't compete with it.
 
 ## Tone Modifiers
 
@@ -984,7 +1019,7 @@ Apply these adjustments ON TOP of the matched screen-level technique:
 
 **Avoid when:** the state is transient loading mistaken for empty.
 
-**Steal the mechanism, not the skin:** forward momentum, not cute illustrations by default.
+**Steal the mechanism, not the skin:** forward momentum, not cute decorative visuals by default.
 
 ### 12. Error Recovery and Resilience
 

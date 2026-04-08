@@ -114,6 +114,69 @@ If the surface fit is ambiguous, ask before generating hi-fi.
 
 **Acknowledge the transition naturally.** Don't re-ask answered questions.
 
+## Step 0.5: Image Capability Detection (MANDATORY)
+
+Before any visual work, detect what image generation capabilities are
+available in the current runtime environment. This determines how section
+visuals will be sourced.
+
+### Detection Logic
+
+Check the following capabilities in order. Use the FIRST one that is available:
+
+```text
+CAPABILITY CHECK:
+
+1. Native image generation?
+   → Can this model generate raster images directly (e.g., Gemini + Imagen,
+   GPT + DALL-E, or any model with built-in text-to-image)?
+   If YES → image_source = "native"
+
+2. MCP image generation tools connected?
+   → Are external image generation tools available via MCP (e.g., Hugging Face
+   FLUX, Krea, Stable Diffusion)?
+   If YES → image_source = "mcp"
+
+3. Shell / API access to image generation?
+   → Can this agent run shell commands or API calls to generate images
+   (e.g., Codex with bash access to FLUX API, or any agent with network
+   access to an image generation endpoint)?
+   If YES → image_source = "api"
+
+4. Web search for stock photography?
+   → Can this agent search the web and retrieve image URLs from stock
+   photography sites (Unsplash, Pexels, etc.)?
+   If YES → image_source = "stock"
+
+5. None of the above?
+   → image_source = "css-only"
+```
+
+### Declare the result
+
+After detection, emit:
+
+```text
+🖼️ IMAGE CAPABILITY: [native | mcp | api | stock | css-only]
+Method: [brief description of what will be used]
+```
+
+Example outputs:
+- `🖼️ IMAGE CAPABILITY: native` / `Method: Gemini Imagen — direct text-to-image generation`
+- `🖼️ IMAGE CAPABILITY: mcp` / `Method: Hugging Face FLUX via MCP connector`
+- `🖼️ IMAGE CAPABILITY: api` / `Method: FLUX API via shell (Codex bash)`
+- `🖼️ IMAGE CAPABILITY: stock` / `Method: Web search for Unsplash/Pexels URLs`
+- `🖼️ IMAGE CAPABILITY: css-only` / `Method: CSS gradients + typography (no raster images)`
+
+This capability declaration carries through the entire Gate 3 session.
+All downstream steps reference `image_source` to determine visual strategy.
+
+### Do NOT ask the user about capabilities
+
+Detect silently based on available tools. The user should not need to know
+or care about the detection mechanism. If uncertain, test by attempting the
+highest-priority method first and falling back.
+
 ---
 
 ## Step 1: Design System Ingestion
@@ -298,173 +361,64 @@ For ITERATE: proactively generate obvious state variations (e.g., on-track / beh
 ## Step 6.5: Section Visual Brief (MANDATORY)
 
 Before generating any HTML, scan every section/screen's content and produce a
-visual brief. This step ensures every section gets a purposeful visual element
-driven by its own content — not generic decoration.
+section image plan. This step ensures every visual slot is intentional and
+routed through the `image_source` detected in Step 0.5.
 
-### How It Works
+### Content → Image Mapping Rules
 
-For each section in the mockup, extract the **core subject** from its heading
-and body text, then assign a visual treatment:
+For each section, extract the **most concrete noun or scenario** from the
+heading and body text. That determines the image subject.
 
-```
-🎨 SECTION VISUAL BRIEF
+| Content mentions... | → Image to generate/source |
+|---------------------|---------------------------|
+| Person or human interaction (consulting, treating, teaching) | Photo of that interaction in professional context |
+| Physical place (clinic, office, store, campus) | Photo of that environment, interior or exterior |
+| Physical product (goods, food, equipment, vehicle) | Product photography: studio shot or in-context |
+| Device or software (app, dashboard, tool) | Device mockup: laptop/phone showing representative UI |
+| Problem or pain point (waiting, confusion, crowding) | Photo depicting the problem situation, not the emotion |
+| Benefit or outcome (speed, savings, quality, happiness) | Photo depicting the achieved outcome |
+| Data or metrics (growth, comparison, trend) | SVG data viz (sparkline, chart), not a photo |
+| Abstract concept (trust, innovation, quality) | Environmental photo that evokes the concept |
 
-Section: [section name or heading text]
-Subject: [the specific thing this section talks about — extract from content]
-Visual type: [SVG illustration | atmospheric bg | data viz | animation | none]
-Scene description: [one line — what the SVG/visual depicts]
-Composition: [which SVG patterns to combine, or CSS technique to use]
-Placement: [where in the section — left of text, right of text, behind text, above text, full-width below heading]
-```
+**Route selection per `image_source`:**
+- `native / mcp / api` → Generate the photo with a prompt (Route A)
+- `stock` → Search for the closest stock photo (Route B)
+- `css-only` → Design without image, use typography + gradient (Route C)
 
-Repeat for every section. Skip "none" entries in the output.
+### Section Types → Image Treatment
 
-### Content → Visual Mapping Rules
-
-Read the section's heading and body text. Extract the **most concrete noun or
-scenario** mentioned. That noun/scenario IS the illustration subject.
-
-**Mapping logic:**
-
-| Content mentions... | → Generate SVG of... |
-|---------------------|---------------------|
-| A physical problem (parking, traffic, crowding, queuing) | The problem scene: cars in tight lot, traffic jam, crowd, queue line |
-| A person doing an action (booking, consulting, browsing) | Person + action context: person at screen, person talking to professional, person on phone |
-| A place (clinic, office, store, restaurant, school) | The place exterior or interior: building facade, reception desk, storefront, classroom |
-| A device or tool (app, dashboard, scanner, camera) | The device in use: phone with UI hint, laptop with chart, device with indicator |
-| Data or metrics (growth, decline, comparison, trend) | Data visualization: trend line up/down, bar comparison, pie breakdown |
-| An emotion or state (trust, anxiety, relief, confusion) | Abstract representation: shield for trust, tangled line for confusion, checkmark for relief, question marks for anxiety |
-| A process (workflow, pipeline, funnel, journey) | Flow visualization: connected nodes, funnel shape, timeline with stages |
-| A benefit or outcome (save time, reduce cost, improve quality) | Before/after or outcome scene: clock with less time, wallet with arrow up, star/sparkle |
-
-**If the content mentions multiple things**, pick the ONE most specific and
-concrete noun. "Our platform helps clinics manage parking for patients" →
-subject is "parking at a clinic", not "platform" or "clinics" or "management".
-
-**Examples are conditional, not defaults.** Do NOT reuse example subjects
-like parking, clinic buildings, queues, calendars, or cars unless the current
-section text explicitly supports them. Every project must derive visuals from
-its own copy, not from the examples in this skill file.
-
-**If the content is abstract with no concrete noun** (e.g., "We believe in
-excellence"), use atmospheric background or decorative accents instead of a
-forced illustration. Not every section needs a scene — but every section needs
-SOMETHING visual (even if just a gradient bg or spacing-based rhythm).
-
-### SVG Scene Generation Rules
-
-When the visual type is "SVG illustration":
-
-1. **Extract the scene from content.** Don't invent — illustrate what the
-   text literally says.
-   - Text says "patients waiting in lobby" → SVG shows: person silhouettes +
-     chairs + reception desk outline
-   - Text says "parking problem at the clinic" → SVG shows: car shapes packed
-     tight + building outline + frustrated indicator (exclamation)
-   - Text says "doctor reviewing X-ray results" → SVG shows: person +
-     monitor with bone/tooth shape on screen
-   - Text says "easy online booking" → SVG shows: phone outline + calendar
-   grid + checkmark
-
-   These are examples of the mapping rule, not recurring motifs to reuse
-   across unrelated projects.
-
-2. **Use the SVG pattern library** (`skills/design-lock/svg-patterns.md`).
-   Combine building blocks: person + environment object + domain object +
-   accent shapes. Don't build from scratch when a pattern exists.
-
-3. **Scene complexity scales with section importance:**
-   - Hero section: full composed scene (4-6 elements, 60-80 SVG lines)
-   - Feature/value prop section: medium scene (3-4 elements, 40-60 lines)
-   - Supporting section: spot illustration (1-2 elements, 20-40 lines)
-   - CTA/footer section: no illustration, use atmospheric bg or animation
-
-4. **Color mapping:** All SVG fills use CSS custom properties from the
-   confirmed design system. Primary shapes at 10-20% opacity (fill, not
-   stroke). Accent details at 15-30% opacity. White fills for "paper" or
-   "screen" objects. Neutral strokes for outlines.
-
-5. **One illustration per section.** Never two SVG scenes in the same
-   section. If a section covers multiple sub-points, illustrate the
-   umbrella concept, not each sub-point.
-
-### Automotive Situations / 環境類場景 SVG 構建指引
-
-For sections describing physical-world scenarios (common in medical, retail,
-logistics, real estate, hospitality):
-
-```
-Vehicle (car top-view or side-view):
-- Side view: rounded rect (80x35) + two circles (wheels) + windshield trapezoid
-- Top view: rounded rect (40x70) + two small rects (mirrors)
-
-Building:
-- Simple facade: rect with smaller rects (windows) + triangle or flat roof
-- Interior: floor line + furniture outlines (desk, chair, counter)
-
-People in environment:
-- Standing: circle (head) + rect (body) — use the Person pattern
-- Sitting: circle + shorter rect + horizontal rect (seat)
-- Queue/crowd: 3-5 person patterns at decreasing opacity, overlapping slightly
-
-Problem indicators:
-- Exclamation: circle bg + "!" text element
-- Crowding: overlapping shapes with reduced spacing
-- Waiting/time: clock circle + hands as lines
-- Frustration: zigzag line above person head
-
-Solution indicators:
-- Checkmark: polyline in accent color
-- Arrow pointing right/up: path element
-- Sparkle: 4-point star shape
-- Expansion: dashed outline larger than solid shape (showing growth)
-```
-
-### Section Types That ALWAYS Get Illustrations
-
-These section types must always have an SVG illustration — never skip:
-
-| Section type | Illustration subject |
-|-------------|---------------------|
-| Hero / above-the-fold | Primary value proposition scene |
-| Problem statement ("The challenge", "Why this matters", "Pain point") | The problem depicted visually |
-| Solution / how-it-works | The solution in action |
-| Feature highlight (individual feature section) | Feature in use context |
-| Testimonial / case study | Client's industry scene or outcome |
-| Empty state (no data, first time) | Friendly guiding illustration |
-| Error state | Recovery-oriented illustration |
-
-### Section Types That Get Atmosphere, Not Illustrations
-
-| Section type | Visual treatment |
-|-------------|-----------------|
-| Pricing / comparison | Column entrance animation, no illustration |
-| Form / input | Validation animation, progress indicator |
-| Data table | Data IS the visual — sparklines if needed |
-| Final CTA / footer | Atmospheric gradient bg, mirror hero energy |
-| Navigation / header | Logo only, no illustration |
-| FAQ / accordion | None or subtle section icon SVGs |
+| Section type | Image treatment | Route C alternative |
+|-------------|-----------------|---------------------|
+| Hero | Full-width, strongest image, min 500px height | Large typography + gradient bg |
+| Problem statement | Smaller (300-400px), shows problem scenario | Bold problem statement text + accent border |
+| Solution | Medium, shows product/service in action | Step-by-step text layout with icons |
+| Feature highlight | Small photo or SVG icon per feature | SVG icons (24px) + descriptive text |
+| Testimonial | Client headshot (circle crop) or industry scene | Quotation mark + text + name/role |
+| Social proof | Company logos as SVG (grayscale, row) | Text: "Trusted by X+ companies" |
+| CTA / Footer | No image. Gradient bg. CTA text dominates. | Same |
+| Empty state | Small SVG icon + guidance text | Same |
+| Error state | Small SVG warning icon + recovery text | Same |
 
 ### Output Format
 
-Produce the brief as a table for quick scanning. The user can cut any row
-before you start generating HTML:
+Before generating HTML, plan every visual slot:
 
+```text
+📸 SECTION IMAGE PLAN
+Image capability: [native | mcp | api | stock | css-only]
+
+| Section | Image Subject | Route | Prompt / Query |
+|---------|---------------|-------|----------------|
+| Hero | [specific scene] | A/B/C | [prompt or query] |
+| Problem | [specific scene] | A/B/C | [prompt or query] |
+| Solution | [specific scene] | A/B/C | [prompt or query] |
+| Features | [icons or per-feature photos] | A/B + SVG icons | [prompt or query] |
+| Testimonial | [headshot or industry scene] | A/B/C | [prompt or query] |
+| CTA | [atmospheric bg] | C | CSS gradient |
 ```
-🎨 SECTION VISUAL BRIEF
 
-| Section | Subject | Visual Type | Scene | Placement |
-|---------|---------|-------------|-------|-----------|
-| Hero | [extracted] | SVG illustration | [description] | right of headline |
-| Problem | [extracted] | SVG illustration | [description] | left of text |
-| Solution | [extracted] | SVG illustration | [description] | above text, centered |
-| Features | [extracted] | SVG per feature card | [description] | top of each card |
-| Social proof | logos + stats | SVG logo row + count-up | [description] | below testimonial |
-| CTA | — | atmospheric gradient | — | full-width bg |
-```
-
-After presenting, ask: "這是每個 section 的視覺配置。要調整哪些？"
-Proceed to Step 7 only after confirmation or silence (silence = approved).
+Present to user: "這是每個 section 的圖片計劃。要調整嗎？"
+Proceed after confirmation or silence.
 
 ---
 
@@ -475,15 +429,15 @@ Proceed to Step 7 only after confirmation or silence (silence = approved).
 Realistic content, not Lorem Ipsum. Generate domain-appropriate placeholders.
 Flag [draft] markers. Use real content if provided.
 
-**Content-Visual Pairing:** When writing section text, simultaneously generate
-the paired SVG from the Section Visual Brief (Step 6.5). The text and SVG must
-reference the same scenario — if the heading says "Stop Wasting Time on
-Parking", the adjacent SVG must show a parking-related scene, not a generic
-abstract shape.
+**Content-Visual Pairing:** When writing section text, simultaneously generate,
+source, or intentionally omit the paired visual from the Section Image Plan
+(Step 6.5). If the heading says "Stop Wasting Time on Parking", the adjacent
+image must show a parking-related scenario; if Route C is in effect, the
+layout and typography must carry that same meaning without a fake placeholder.
 
-Write the section text first, then generate the SVG that illustrates it. If
-the text changes during iteration, update the SVG to match. Text and visual
-must never drift apart.
+Write the section text first, then generate/source the matching image or
+Route C treatment. If the text changes during iteration, update the prompt,
+query, or typographic treatment to match. Text and visual must never drift apart.
 
 UI copy must read like a shipped product, not a design review pasted into the screen.
 Default to compressed product language:
@@ -551,187 +505,183 @@ Tag every element with a component type during generation. This maps to JSON exp
 - ALL interactive elements must be functional. If there's a toggle, it toggles.
   If there's a slider, it slides. If there's a tab, it switches. Non-functional 
   interactive elements are misleading — either make them work or make them static.
+- Final review HTML must remain self-contained. Raster images used in the mockup
+  must be embedded as data URLs in the HTML. Do not ship final review files that
+  depend on remote image URLs.
+- All raster images need descriptive alt text that matches section content.
 - Annotations layer (toggleable): design decisions, spacing values, component labels
 - Dark mode toggle if applicable
 ```
 
 ### Visual Asset Strategy (MANDATORY for hi-fi)
 
-Hi-fi mockups must look like real products. Real products don't have gray
-placeholder rectangles — they have images, illustrations, animations, and
-atmosphere. Claude cannot call image generation APIs, but it CAN generate
-visual assets as code. Use these techniques:
+Hi-fi mockups must look like real products. Real products use professional
+photography, not gray rectangles or geometric SVG illustrations.
 
-#### Asset Type 1: Inline SVG Illustrations
+The visual strategy adapts based on `image_source` detected in Step 0.5.
 
-Generate contextual SVG scenes directly in the HTML. These are flat-style
-vector illustrations that match the product's color palette and tone.
+#### Route A: Generated Photography (`image_source = native | mcp | api`)
 
-**When to use:** Hero sections, feature explanations, empty states, onboarding
-steps, about/team sections, error states.
+When the runtime can generate images, produce contextual photography for each
+visual slot. For every image needed, write an Image Generation Prompt:
 
-**How to generate:**
-- Keep SVG under 80 lines. Use simple geometric shapes (rect, circle, ellipse,
-  path) composed into recognizable scenes.
-- Use the confirmed color palette — map primary/secondary/accent/neutral to
-  SVG fills.
-- Style: flat illustration, not realistic. Think: Dropbox-style spot
-  illustrations, not photo-realistic renders.
-- Common scenes by industry:
-  - **Medical/health:** stethoscope + clipboard, doctor-patient silhouette,
-    tooth/bone outline, monitor with chart
-  - **SaaS/tech:** laptop + floating UI elements, dashboard preview, connected
-    nodes, gear + checkmark
-  - **E-commerce:** shopping bag + floating products, package delivery, cart
-    with sparkle
-  - **Education:** book + lightbulb, graduation cap, pencil + notepad
-  - **Finance:** chart trending up, shield + lock, wallet + coins
-- If industry isn't listed, compose from: person silhouette + domain-relevant
-  object + abstract accent shape.
+```text
+📸 IMAGE PROMPT: [section name]
 
-**Example structure (medical clinic hero):**
-```svg
-<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background shape -->
-  <ellipse cx="200" cy="280" rx="180" ry="30" fill="var(--neutral-100)" />
-  <!-- Person silhouette -->
-  <circle cx="160" cy="100" r="30" fill="var(--primary)" opacity="0.15" />
-  <rect x="140" y="135" width="40" height="60" rx="8" fill="var(--primary)" opacity="0.15" />
-  <!-- Domain object: monitor with dental X-ray -->
-  <rect x="220" y="60" width="120" height="90" rx="6" fill="white" stroke="var(--neutral-300)" />
-  <rect x="230" y="70" width="100" height="60" rx="2" fill="var(--neutral-50)" />
-  <rect x="270" y="155" width="20" height="20" fill="var(--neutral-300)" />
-  <!-- Accent shapes -->
-  <circle cx="340" cy="50" r="12" fill="var(--accent)" opacity="0.2" />
-  <circle cx="120" cy="60" r="8" fill="var(--secondary)" opacity="0.3" />
-</svg>
+Subject: [specific, concrete description of what the image shows]
+Style: [photography style — professional, editorial, lifestyle, product,
+clinical, candid, aerial, close-up, etc.]
+Mood: [warm/cool/neutral, bright/moody, professional/casual]
+Composition: [wide shot, portrait, overhead, 3/4 angle, detail crop]
+Color tone: [match the design system palette]
+Background: [clean/white/contextual/blurred environment]
+Aspect ratio: [16:9 landscape | 3:4 portrait | 1:1 square — based on layout]
+Negative: [exclude: text, logos, watermarks, unrealistic elements]
+
+Full prompt:
+"[Complete prompt optimized for the detected tool — adjust language for
+FLUX vs Imagen vs DALL-E as needed]"
 ```
 
-#### Asset Type 2: CSS Animations and Micro-Interactions
+**How to call the generation tool:**
 
-Add life to static layouts through purposeful CSS animation.
+| image_source | How to generate |
+|-------------|-----------------|
+| `native` | Use the model's built-in image generation capability directly |
+| `mcp` | Call the connected MCP image generation tool with the full prompt |
+| `api` | Execute a shell command or API call against the available image generation endpoint |
 
-**When to use:** Page load entrance, hero section atmosphere, hover states,
-scroll reveals, loading/transition states, trust-building number counters.
+### Embedding rule for final HTML
 
-**Animation Catalog:**
+The final review HTML must stay self-contained.
 
-| Animation | CSS Pattern | Use For |
-|-----------|------------|---------|
-| **Fade-up entrance** | `@keyframes fadeUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }` | Section reveals on scroll, card entrances |
-| **Stagger children** | `.parent > * { animation: fadeUp 0.5s ease both; } .parent > *:nth-child(2) { animation-delay: 0.1s }` | Feature grids, card rows, pricing columns |
-| **Float/breathe** | `@keyframes float { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-10px) } }` | Hero decorative elements, accent shapes |
-| **Gradient shift** | `@keyframes gradientShift { 0% { background-position:0% 50% } 100% { background-position:100% 50% } } background-size: 200% 200%` | Hero backgrounds, section atmospheres |
-| **Number count-up** | JS: `requestAnimationFrame` loop incrementing textContent | Trust numbers, KPI values, social proof stats |
-| **Pulse glow** | `@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(primary,0.3) } 50% { box-shadow: 0 0 0 12px rgba(primary,0) } }` | Primary CTA buttons, notification dots |
-| **Typewriter** | `overflow:hidden; white-space:nowrap; border-right:2px solid; animation: typing 3s steps(N), blink 0.5s infinite` | Hero headlines, terminal-style text |
+- If the tool returns binary or base64 data, embed it directly as a data URL.
+- If the tool returns an external URL, fetch it and convert it to a data URL
+  before finalizing the HTML.
+- If the runtime cannot fetch and inline the image bytes, do not leave a remote
+  URL in the final artifact. Fall back to Route C for that visual slot.
 
-**Rules:**
-- Max 3 distinct animations per screen. More = circus.
-- Entrance animations fire once. Loop animations only for decorative accents.
-- Duration: entrances 0.4-0.7s, loops 3-6s, hovers 0.15-0.25s.
-- Use `prefers-reduced-motion` media query to disable all motion animations.
-- CTA pulse: use sparingly. Only on the ONE primary CTA, never on secondary.
+### Preferred embed pattern
 
-#### Asset Type 3: Atmospheric Backgrounds
+For content-bearing imagery, default to semantic `<img>` or `<figure>` markup.
+This is the default because it supports alt text and exports more reliably.
 
-Replace flat white section backgrounds with CSS gradients and subtle textures.
-
-**When to use:** Hero sections, alternating sections on landing pages, feature
-highlight areas, testimonial sections.
-
-**Patterns:**
-
-```css
-/* Subtle gradient (premium, calm) */
-.hero { background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #f0fdf4 100%); }
-
-/* Radial glow (focus, attention) */
-.highlight { background: radial-gradient(ellipse at 30% 50%, rgba(var(--primary-rgb), 0.06) 0%, transparent 70%); }
-
-/* Noise texture overlay (editorial, premium) — CSS-only */
-.textured::after {
-  content: ''; position: absolute; inset: 0; opacity: 0.03;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-}
-
-/* Dot grid (tech, dashboard) */
-.dotgrid {
-  background-image: radial-gradient(circle, var(--neutral-300) 1px, transparent 1px);
-  background-size: 24px 24px;
-}
+```html
+<figure class="section-image">
+  <img
+    src="[data-url]"
+    alt="[descriptive alt text matching section content]"
+    loading="lazy"
+    style="width: 100%; height: [appropriate]px; object-fit: cover; border-radius: var(--card-radius);" />
+</figure>
 ```
 
-**Rules:**
-- Max 2 atmospheric backgrounds per page. Rest stays solid (white/neutral-50).
-- Gradients use brand palette at 3-8% opacity, never full saturation.
-- Noise/texture overlay always under 5% opacity.
-- Hero gets the strongest atmosphere. Other sections taper down.
+Only use CSS `background-image` for decorative, non-semantic backgrounds.
+If a background image is purely decorative, mark the container `aria-hidden="true"`
+and do not rely on it to communicate core content.
 
-#### Asset Type 4: SVG Data Visualizations
+**Prompt templates by industry:**
 
-For dashboards, reports, pricing comparisons, or any data-centric section.
+| Product type | Image direction | Example prompt |
+|-------------|-----------------|----------------|
+| Medical / dental | Clinical environment + warm human interaction | "Professional dental clinic interior, modern equipment, warm lighting, smiling patient with dentist in white coat, shallow depth of field, editorial photography" |
+| E-commerce | Product photography, clean background | "Product photograph of [item], white background, soft studio lighting, high detail, commercial photography, sharp focus" |
+| SaaS / tech | People using devices, modern workspace | "Developer at modern desk with dual monitors showing dashboards, natural window light, shallow depth of field, lifestyle tech photography" |
+| Restaurant / food | Food photography + ambiance | "Overhead shot of beautifully plated [dish], dark surface, professional food photography, natural light, editorial style" |
+| Real estate | Architecture + interiors | "Modern living room with large windows and city view, bright natural light, architectural photography, wide angle, magazine style" |
+| Education | Students + learning | "Students collaborating around laptop in modern library, candid educational photography, warm natural light" |
+| Finance / legal | Professional settings | "Financial advisor office with city skyline, clean desk with laptop, professional business photography, warm corporate lighting" |
+| Health / wellness | Lifestyle, calm environment | "Person in yoga pose in bright minimalist studio, soft natural light, wellness lifestyle photography, calm and serene" |
+| Automotive / mobility | Vehicles in context | "Modern electric car parked at clean urban charging station, golden hour, automotive photography, cinematic" |
 
-**When to use:** KPI trends, comparison charts, progress indicators, timeline
-visualizations, feature comparison infographics.
+If the product's industry isn't listed, compose a prompt from:
+`[specific subject] + [environment] + [lighting/mood] + [photography style] + [composition]`.
 
-**Build with:**
-- Inline SVG `<line>`, `<polyline>`, `<rect>` for charts.
-- CSS `conic-gradient` for pie/donut charts.
-- `<path>` with hand-tuned `d` attribute for simple sparklines.
-- Use the product's color palette, not generic chart colors.
+#### Route B: Stock Photography (`image_source = stock`)
 
-#### Asset Type 5: Decorative SVG Accents
+When the runtime can search the web but cannot generate images:
 
-Small floating shapes that add visual texture without carrying meaning.
+1. For each visual slot, construct a specific search query from the section content.
+2. Use web search to find high-quality images on Unsplash, Pexels, or similar.
+3. Fetch the chosen image and convert it to a data URL before embedding it in
+   the final HTML mockup.
 
-**When to use:** Landing page sections (near headings or in whitespace areas),
-hero backgrounds, card corners.
+```html
+<!-- Stock: [description] — source recorded in annotations/docs -->
+<img src="[data-url]" alt="[descriptive alt text]"
+     loading="lazy" style="width: 100%; height: [appropriate]px; object-fit: cover;" />
+```
 
-**Rules:**
-- Max 3-5 accents per screen. They must feel incidental, not designed.
-- Use brand palette at 10-30% opacity. Never full-color.
-- Common shapes: circles, rounded rectangles, dots, soft blobs, thin rings.
-- Position with `position: absolute` offset from section corners/edges.
-- Apply the float/breathe animation (Asset Type 2) for subtle life.
-- NEVER use accents in dense UI (tables, forms, dashboards). Only in
-  spacious marketing/hero sections.
+Record the source site and original URL in annotations or companion docs, but
+do not leave the remote URL as the final `src` in the review HTML.
 
----
+**Search query rules:**
+- Use the same subject/style/mood from the Image Prompt template, but as
+  a search query: shorter and keyword-focused.
+- Example: subject "smiling patient in dental clinic" → query
+  `"dental patient smiling clinic modern"`.
+- Prefer landscape orientation for hero/section images and portrait for testimonials.
 
-### Visual Asset Selection Logic
+#### Route C: CSS-Only (`image_source = css-only`)
 
-Before generating each screen, determine which asset types are appropriate.
-Cross-reference with the matched technique cluster:
+When no image capability is available:
 
-| Technique Cluster | Recommended Assets | Avoid |
-|-------------------|-------------------|-------|
-| #1 Onboarding | SVG step illustrations, stagger entrance | Heavy atmosphere |
-| #2 Landing | SVG hero scene, atmospheric bg, float accents, stagger entrance | None — go all in |
-| #3 Pricing | Stagger columns entrance, pulse CTA | SVG illustrations (distract from comparison) |
-| #5 Form | Subtle progress animation, fade-up fields | SVG scenes, heavy atmosphere (distract from input) |
-| #6 Checkout | Trust badge SVGs, count-up total animation | Decorative accents (reduce noise near payment) |
-| #7 Dashboard | SVG sparkline charts, number count-up, subtle dot grid bg | Float animations, heavy illustrations |
-| #8 Dense Data | None or minimal. Let the data be the visual. | Everything — density IS the design |
-| #9 Search | Empty-state SVG illustration, fade-up results | Atmospheric bg on results area |
-| #10 Settings | Minimal. Maybe section icon SVGs. | Animations, atmosphere, accents |
-| #13 Mobile | Simplified SVG (fewer shapes), entrance animations | Heavy SVG scenes (performance), noise textures |
-| #15 Collaborative | Status dot animations, avatar pulse for online | Heavy illustrations |
-| #16 AI Copilot | Skeleton loading animation, typing indicator, subtle glow | Static placeholder images |
+- **Hero:** Atmospheric gradient background plus bold typography. Let the text
+  be the visual.
+- **Feature sections:** SVG icons (16-24px) plus text. No illustration scenes.
+- **Trust / social proof:** Text-based stats with count-up animation. Logo marks
+  as simple SVG shapes.
+- **All sections:** Increase spacing and typography contrast to compensate for
+  lack of images. The layout must feel intentional and premium, not unfinished.
 
-If a technique cluster says "Avoid" for an asset type, do NOT include it even
-if it seems visually appealing. Function over decoration.
+```html
+<section class="hero" style="
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, color-mix(in srgb, var(--primary) 8%, white) 100%);
+  min-height: 80vh; display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: var(--section-padding);">
+  <div style="max-width: var(--content-max-width);">
+    <h1 style="font-size: var(--heading-size-hero); font-weight: var(--heading-weight);
+        letter-spacing: var(--heading-tracking);">
+      [Strong headline]
+    </h1>
+    <p style="font-size: var(--body-size); margin-top: 24px; opacity: 0.7;">
+      [Subtitle]
+    </p>
+    <a href="#" class="cta-primary" style="margin-top: 32px; display: inline-block;">
+      [CTA text]
+    </a>
+  </div>
+</section>
+```
 
-### SVG Pattern Library
+Never use a gray placeholder rectangle. If you can't get a real image,
+design the section to work without one. A gray box communicates unfinished;
+a strong typographic layout communicates intentional.
 
-When generating inline SVG illustrations, read `skills/design-lock/svg-patterns.md`
-for reusable building blocks. Compose scenes by combining patterns (person +
-domain object + accents + ground shadow). Adapt colors to match the confirmed
-design system palette by using CSS custom properties.
+#### SVG Usage — Icons and Logos ONLY
 
-Do NOT copy patterns verbatim — adapt proportions, positions, and composition
-to fit the specific section size and context. The patterns are starting points,
-not templates.
+Regardless of `image_source`, SVG is limited to:
+- **Icons** (16-24px): UI icons, feature icons, navigation icons, trust badges
+- **Logos**: Simplified brand marks in header, footer, social proof
+- **Data visualizations**: Sparklines, progress bars, inline charts
+
+SVG is never used for:
+- Hero visuals or section scene compositions
+- People, environments, or product depictions
+- Decorative illustrations or abstract art
+- Anything that should be a photograph
+
+#### CSS Animations
+
+CSS animations complement images, not replace them:
+- Fade-up entrance on scroll
+- Stagger children (grids, columns)
+- Hover transitions
+- Number count-up (stats, KPIs)
+- Loading skeleton states
+
+Rules: max 3 animation types per screen, `prefers-reduced-motion` respected,
+durations follow the project's motion specs.
 
 ### Anti-Bento Layout Rules (MANDATORY)
 
@@ -968,7 +918,7 @@ Run before export:
 - **Wireframe Contract**: LOCKED decisions respected or explicitly OVERRIDDEN
 - **Interactive**: ALL interactive elements functional — no non-functional UI chrome
 - **Anti-Bento**: Annotations hidden by default, hero has ≤5 elements, no equal-weight grids without justification, section gaps ≥64px on scroll pages, no 50/50 hero splits
-- **Visual Assets**: No gray placeholder rectangles visible, hero has contextual SVG or atmospheric bg (not flat white), animations use prefers-reduced-motion, max 3 animation types per screen, SVGs use CSS custom properties not hardcoded colors, every content section has a paired visual per Step 6.5 brief, SVG scenes match section text content (no generic shapes)
+- **Visual Assets**: Image capability detected and declared (Step 0.5), no gray placeholder rectangles, hero has contextual photo or strong typographic treatment (Route C), SVG used only for icons (<=32px) and data viz, all images have descriptive alt text, image style matches the chosen photography approach, Route C sections feel intentional rather than incomplete
 ```
 
 ### HTML Capture Guardrail
@@ -1154,16 +1104,10 @@ check DDR first.
 20. **All interactive elements must work.** If it looks interactive, it behaves that way.
 21. **Technique retrieval is mandatory.** Match 1-3 clusters before hi-fi.
 22. **Borrow patterns, not skins.** Import logic and structure, never surface-copy another product.
-23. **Visual-led, not text-led.** Every screen must have at least one non-text
-    visual element (SVG illustration, atmospheric background, data visualization,
-    or meaningful animation). If a screen is only text + buttons + white
-    background, it's not hi-fi — it's a wireframe with colors.
-24. **SVG over placeholder.** Never use a gray rectangle where a visual should
-    be. Generate a contextual inline SVG using patterns from svg-patterns.md.
-25. **Content drives visuals.** Every section's illustration is derived from
-    its text content. Extract the most concrete noun or scenario from the
-    copy and illustrate THAT — not a tangentially related concept, not a
-    generic icon.
+23. **Detect before generating.** Run Step 0.5 to determine image capability. Never assume a specific tool is available.
+24. **Photography over illustration.** Section visuals use generated or stock photography. SVG is for icons (<=32px) and data viz only.
+25. **No image is better than a fake image.** If Route A and B both fail, design the section without an image (Route C). A gray rectangle is never acceptable.
+26. **Image matches content.** Every photo must depict what the section text describes. Generate or search for the specific scenario, not a generic concept.
 
 ---
 
@@ -1193,17 +1137,18 @@ check DDR first.
   panels + badges all in the hero area. Pick ONE visual treatment.
 - **Uniform section padding.** Every section has the same top/bottom padding.
   This kills scroll rhythm. Alternate spacious and dense.
-- **Gray placeholder rectangles.** Using `background: #ccc` where an image
-  should be. Generate an inline SVG illustration instead.
 - **Animation circus.** More than 3 animation types on one screen. Pick the
   ones that serve the hierarchy and cut the rest.
-- **Decorative SVG in data-heavy screens.** Adding illustrations to tables,
-  forms, or dashboards. Dense UI needs information density, not decoration.
-- **Stock photo energy.** Generic, context-free illustrations that could
-  belong to any product. Every SVG should reference the specific industry
-  or use case.
-- **Generic SVG that ignores content.** Section text talks about parking
-  problems but the SVG shows a generic abstract shape. The illustration
-  MUST depict what the text describes. If the text changes, the SVG changes.
-- **Missing visual brief.** Jumping to HTML without running Step 6.5. Every
-  section needs a visual decision BEFORE generation, not after.
+- **SVG illustration as hero.** Geometric vector scenes as section visuals.
+  Use photography (Route A/B) or strong typography (Route C). SVG is for
+  icons and data viz only.
+- **Gray placeholder rectangle.** Never. Route C exists — design without an
+  image rather than with a fake one.
+- **Generic stock photo.** A "happy people" photo when the section discusses
+  dental procedures. The image must depict what the text describes.
+- **Photography in data screens.** Adding photos to dashboards or tables.
+  Data density is the visual.
+- **Skipping capability detection.** Jumping to HTML without running Step 0.5.
+  The image route must be declared before generation.
+- **Hardcoding a specific tool.** Writing "use FLUX" when the runtime has
+  native generation. Always use the detected capability, not a hardcoded tool name.
