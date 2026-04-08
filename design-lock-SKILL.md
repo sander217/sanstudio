@@ -341,6 +341,11 @@ scenario** mentioned. That noun/scenario IS the illustration subject.
 concrete noun. "Our platform helps clinics manage parking for patients" →
 subject is "parking at a clinic", not "platform" or "clinics" or "management".
 
+**Examples are conditional, not defaults.** Do NOT reuse example subjects
+like parking, clinic buildings, queues, calendars, or cars unless the current
+section text explicitly supports them. Every project must derive visuals from
+its own copy, not from the examples in this skill file.
+
 **If the content is abstract with no concrete noun** (e.g., "We believe in
 excellence"), use atmospheric background or decorative accents instead of a
 forced illustration. Not every section needs a scene — but every section needs
@@ -359,7 +364,10 @@ When the visual type is "SVG illustration":
    - Text says "doctor reviewing X-ray results" → SVG shows: person +
      monitor with bone/tooth shape on screen
    - Text says "easy online booking" → SVG shows: phone outline + calendar
-     grid + checkmark
+   grid + checkmark
+
+   These are examples of the mapping rule, not recurring motifs to reuse
+   across unrelated projects.
 
 2. **Use the SVG pattern library** (`skills/design-lock/svg-patterns.md`).
    Combine building blocks: person + environment object + domain object +

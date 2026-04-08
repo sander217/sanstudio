@@ -4,6 +4,10 @@ Reusable building blocks for inline SVG illustrations in Gate 3 mockups.
 These are starting points — adapt colors, proportions, and composition
 to match the product's palette and tone.
 
+The examples in this file are not default scene choices. Only use a pattern
+when the current section's text calls for that subject. Do not carry over
+parking, clinic, vehicle, booking, or other example motifs into unrelated work.
+
 All patterns use CSS custom properties so they automatically match the
 mockup's design system:
 - `var(--primary)` — brand primary color
