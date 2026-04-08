@@ -5,10 +5,16 @@ A 3-gate design thinking system that takes designers from fuzzy requirements to 
 ## Skills
 
 ```
+context-lock-SKILL.md          # Gate 1: understand the problem
+direction-lock-SKILL.md        # Gate 2: explore and validate directions
+design-lock-SKILL.md           # Gate 3: design, iterate, export
 skills/
-├── context-lock/SKILL.md      # Gate 1: understand the problem
-├── direction-lock/SKILL.md    # Gate 2: explore and validate directions
-└── design-lock/SKILL.md       # Gate 3: design, iterate, export
+├── context-lock/SKILL.md      → symlink to ../../context-lock-SKILL.md
+├── direction-lock/SKILL.md    → symlink to ../../direction-lock-SKILL.md
+└── design-lock/
+    ├── SKILL.md               → symlink to ../../design-lock-SKILL.md
+    ├── design-techniques-db.md
+    └── figma-schema-v0.2.md
 ```
 
 ## Routing

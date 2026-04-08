@@ -1,6 +1,6 @@
 ---
 name: context-lock
-version: 1.2.0
+version: 1.3.0
 description: |
   Gate 1 of Design Agent Studio. The strategic entry point for all design work.
   Loads user context, processes multi-modal inputs (images, links, docs, text),
@@ -63,6 +63,18 @@ different processing:
    production screenshot, or competitor reference.
 2. Note the top 2-3 issues unprompted, then flag ambiguities you can't verify from a 
    static image: interaction states, responsiveness, edge cases, animation, or scroll.
+3. Extract a **reference realism contract** when the user wants output "closer to this":
+   - Copy density: copy-light / balanced / copy-heavy
+   - Text budget cues: headline length, body-copy presence, lines per card
+   - Visual dominance: image-led / typography-led / utility-led
+   - Information compression: chips, badges, metrics, bullets, or paragraphs
+   - Action density: number of visible CTAs / filters / controls above the fold
+   - Surface model: website / landing page / app / dashboard / mixed
+   - Hero treatment: full-bleed / banded / split-layout / boxed card
+   - Typography signal: sans-first / serif-allowed / editorial / utilitarian
+4. Treat these cues as downstream constraints, not loose inspiration. A hi-fi reference
+   is not only about "style" — it also defines how much the screen should explain vs.
+   how much it should imply through hierarchy.
 
 ### Figma Links
 
@@ -98,6 +110,18 @@ is MEDIUM at best, so flag which criteria you can assess (flow logic, IA) vs. ca
 ### Text-Only Requirements
 
 The simplest case. Infer what you can from the description, then use Step 1 to fill gaps.
+
+### Surface-Type Guardrail
+
+Before routing, explicitly infer the product surface:
+- Marketing site / landing page
+- Product website
+- Mobile app
+- Desktop app / dashboard
+- Mixed ecosystem
+
+Do not collapse "mobile-first" into "app". A marketing website can be mobile-first
+without using app-shell composition. Record the surface type and pass it downstream.
 
 **After processing inputs, proceed to Step 1.**
 
@@ -352,6 +376,8 @@ inputs: comma-separated list — image, figma_link, prd, url, design_system, tex
 language: zh-TW|en|mixed
 routed_to: G2|G3
 design_system_digest: {"colors":{"primary":"#...","secondary":"#...","neutrals_count":N},"fonts":["family1","family2"],"spacing_base":N,"radius":{"sm":N,"md":N,"lg":N},"components_available":["btn","card","input"],"components_missing":["stepper","modal"]} | none
+product_surface: marketing-site|landing-page|product-website|mobile-app|desktop-app|dashboard|mixed
+reference_realism_contract: {"density":"copy-light|balanced|copy-heavy","visual_dominance":"image-led|type-led|utility-led","headline_max_words":N,"body_copy":"none|minimal|normal","compression_patterns":["chips","badges","fact_rows","bullets"],"above_fold_ctas":N,"surface_model":"website|landing-page|app|dashboard|mixed","hero_treatment":"full-bleed|banded|split-layout|boxed-card","typography_signal":"sans-first|serif-allowed|editorial|utilitarian"} | none
 ---END-CONTEXT-LOCK---
 ```
 
