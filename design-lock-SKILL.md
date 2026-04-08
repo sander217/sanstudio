@@ -796,3 +796,18 @@ check DDR first.
 - **Accidental serif premium.** Adding serif to minimal / Apple / modern work without explicit intent.
 - **Dense CJK headline block.** Heavy Chinese headlines crammed together with no breathing room.
 - **Non-functional mockup elements.** Toggle that doesn't toggle.
+- **Bento box layout.** Every element in an equal-weight grid cell, no hierarchy,
+  no dominant element. If the mockup looks like a Japanese lunch box, the layout
+  has no opinion about what matters most.
+- **Annotation contamination.** Design rationale cards, technique labels, or
+  spacing callouts rendered as visible UI in the mockup. The user asked for a
+  product mockup, not a design education poster.
+- **Viewport stuffing.** Cramming all content above the fold because "the user
+  might not scroll." Real products scroll. Design the scroll.
+- **50/50 split hero.** Left text, right image, exactly equal width. This is
+  the most common AI layout default and it always looks generic. Use asymmetric
+  ratios or full-bleed treatments.
+- **Collage hero.** Full-bleed image + overlay text + floating cards + info
+  panels + badges all in the hero area. Pick ONE visual treatment.
+- **Uniform section padding.** Every section has the same top/bottom padding.
+  This kills scroll rhythm. Alternate spacious and dense.
