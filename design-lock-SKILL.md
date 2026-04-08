@@ -1152,6 +1152,10 @@ check DDR first.
     background, it's not hi-fi — it's a wireframe with colors.
 24. **SVG over placeholder.** Never use a gray rectangle where a visual should
     be. Generate a contextual inline SVG using patterns from svg-patterns.md.
+25. **Content drives visuals.** Every section's illustration is derived from
+    its text content. Extract the most concrete noun or scenario from the
+    copy and illustrate THAT — not a tangentially related concept, not a
+    generic icon.
 
 ---
 
