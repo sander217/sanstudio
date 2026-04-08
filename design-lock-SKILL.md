@@ -539,6 +539,17 @@ Cross-reference with the matched technique cluster:
 If a technique cluster says "Avoid" for an asset type, do NOT include it even
 if it seems visually appealing. Function over decoration.
 
+### SVG Pattern Library
+
+When generating inline SVG illustrations, read `skills/design-lock/svg-patterns.md`
+for reusable building blocks. Compose scenes by combining patterns (person +
+domain object + accents + ground shadow). Adapt colors to match the confirmed
+design system palette by using CSS custom properties.
+
+Do NOT copy patterns verbatim — adapt proportions, positions, and composition
+to fit the specific section size and context. The patterns are starting points,
+not templates.
+
 ### Anti-Bento Layout Rules (MANDATORY)
 
 Claude's HTML generation has systematic biases that produce "bento box" layouts —
