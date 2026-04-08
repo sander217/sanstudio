@@ -785,6 +785,7 @@ Run before export:
 - **Wireframe Contract**: LOCKED decisions respected or explicitly OVERRIDDEN
 - **Interactive**: ALL interactive elements functional — no non-functional UI chrome
 - **Anti-Bento**: Annotations hidden by default, hero has ≤5 elements, no equal-weight grids without justification, section gaps ≥64px on scroll pages, no 50/50 hero splits
+- **Visual Assets**: No gray placeholder rectangles visible, hero has contextual SVG or atmospheric bg (not flat white), animations use prefers-reduced-motion, max 3 animation types per screen, SVGs use CSS custom properties not hardcoded colors
 ```
 
 ### HTML Capture Guardrail
@@ -999,3 +1000,12 @@ check DDR first.
   panels + badges all in the hero area. Pick ONE visual treatment.
 - **Uniform section padding.** Every section has the same top/bottom padding.
   This kills scroll rhythm. Alternate spacious and dense.
+- **Gray placeholder rectangles.** Using `background: #ccc` where an image
+  should be. Generate an inline SVG illustration instead.
+- **Animation circus.** More than 3 animation types on one screen. Pick the
+  ones that serve the hierarchy and cut the rest.
+- **Decorative SVG in data-heavy screens.** Adding illustrations to tables,
+  forms, or dashboards. Dense UI needs information density, not decoration.
+- **Stock photo energy.** Generic, context-free illustrations that could
+  belong to any product. Every SVG should reference the specific industry
+  or use case.
