@@ -960,7 +960,7 @@ Run before export:
 - **Wireframe Contract**: LOCKED decisions respected or explicitly OVERRIDDEN
 - **Interactive**: ALL interactive elements functional — no non-functional UI chrome
 - **Anti-Bento**: Annotations hidden by default, hero has ≤5 elements, no equal-weight grids without justification, section gaps ≥64px on scroll pages, no 50/50 hero splits
-- **Visual Assets**: No gray placeholder rectangles visible, hero has contextual SVG or atmospheric bg (not flat white), animations use prefers-reduced-motion, max 3 animation types per screen, SVGs use CSS custom properties not hardcoded colors
+- **Visual Assets**: No gray placeholder rectangles visible, hero has contextual SVG or atmospheric bg (not flat white), animations use prefers-reduced-motion, max 3 animation types per screen, SVGs use CSS custom properties not hardcoded colors, every content section has a paired visual per Step 6.5 brief, SVG scenes match section text content (no generic shapes)
 ```
 
 ### HTML Capture Guardrail
@@ -1190,3 +1190,8 @@ check DDR first.
 - **Stock photo energy.** Generic, context-free illustrations that could
   belong to any product. Every SVG should reference the specific industry
   or use case.
+- **Generic SVG that ignores content.** Section text talks about parking
+  problems but the SVG shows a generic abstract shape. The illustration
+  MUST depict what the text describes. If the text changes, the SVG changes.
+- **Missing visual brief.** Jumping to HTML without running Step 6.5. Every
+  section needs a visual decision BEFORE generation, not after.
