@@ -295,6 +295,171 @@ For ITERATE: proactively generate obvious state variations (e.g., on-track / beh
 
 ---
 
+## Step 6.5: Section Visual Brief (MANDATORY)
+
+Before generating any HTML, scan every section/screen's content and produce a
+visual brief. This step ensures every section gets a purposeful visual element
+driven by its own content — not generic decoration.
+
+### How It Works
+
+For each section in the mockup, extract the **core subject** from its heading
+and body text, then assign a visual treatment:
+
+```
+🎨 SECTION VISUAL BRIEF
+
+Section: [section name or heading text]
+Subject: [the specific thing this section talks about — extract from content]
+Visual type: [SVG illustration | atmospheric bg | data viz | animation | none]
+Scene description: [one line — what the SVG/visual depicts]
+Composition: [which SVG patterns to combine, or CSS technique to use]
+Placement: [where in the section — left of text, right of text, behind text, above text, full-width below heading]
+```
+
+Repeat for every section. Skip "none" entries in the output.
+
+### Content → Visual Mapping Rules
+
+Read the section's heading and body text. Extract the **most concrete noun or
+scenario** mentioned. That noun/scenario IS the illustration subject.
+
+**Mapping logic:**
+
+| Content mentions... | → Generate SVG of... |
+|---------------------|---------------------|
+| A physical problem (parking, traffic, crowding, queuing) | The problem scene: cars in tight lot, traffic jam, crowd, queue line |
+| A person doing an action (booking, consulting, browsing) | Person + action context: person at screen, person talking to professional, person on phone |
+| A place (clinic, office, store, restaurant, school) | The place exterior or interior: building facade, reception desk, storefront, classroom |
+| A device or tool (app, dashboard, scanner, camera) | The device in use: phone with UI hint, laptop with chart, device with indicator |
+| Data or metrics (growth, decline, comparison, trend) | Data visualization: trend line up/down, bar comparison, pie breakdown |
+| An emotion or state (trust, anxiety, relief, confusion) | Abstract representation: shield for trust, tangled line for confusion, checkmark for relief, question marks for anxiety |
+| A process (workflow, pipeline, funnel, journey) | Flow visualization: connected nodes, funnel shape, timeline with stages |
+| A benefit or outcome (save time, reduce cost, improve quality) | Before/after or outcome scene: clock with less time, wallet with arrow up, star/sparkle |
+
+**If the content mentions multiple things**, pick the ONE most specific and
+concrete noun. "Our platform helps clinics manage parking for patients" →
+subject is "parking at a clinic", not "platform" or "clinics" or "management".
+
+**If the content is abstract with no concrete noun** (e.g., "We believe in
+excellence"), use atmospheric background or decorative accents instead of a
+forced illustration. Not every section needs a scene — but every section needs
+SOMETHING visual (even if just a gradient bg or spacing-based rhythm).
+
+### SVG Scene Generation Rules
+
+When the visual type is "SVG illustration":
+
+1. **Extract the scene from content.** Don't invent — illustrate what the
+   text literally says.
+   - Text says "patients waiting in lobby" → SVG shows: person silhouettes +
+     chairs + reception desk outline
+   - Text says "parking problem at the clinic" → SVG shows: car shapes packed
+     tight + building outline + frustrated indicator (exclamation)
+   - Text says "doctor reviewing X-ray results" → SVG shows: person +
+     monitor with bone/tooth shape on screen
+   - Text says "easy online booking" → SVG shows: phone outline + calendar
+     grid + checkmark
+
+2. **Use the SVG pattern library** (`skills/design-lock/svg-patterns.md`).
+   Combine building blocks: person + environment object + domain object +
+   accent shapes. Don't build from scratch when a pattern exists.
+
+3. **Scene complexity scales with section importance:**
+   - Hero section: full composed scene (4-6 elements, 60-80 SVG lines)
+   - Feature/value prop section: medium scene (3-4 elements, 40-60 lines)
+   - Supporting section: spot illustration (1-2 elements, 20-40 lines)
+   - CTA/footer section: no illustration, use atmospheric bg or animation
+
+4. **Color mapping:** All SVG fills use CSS custom properties from the
+   confirmed design system. Primary shapes at 10-20% opacity (fill, not
+   stroke). Accent details at 15-30% opacity. White fills for "paper" or
+   "screen" objects. Neutral strokes for outlines.
+
+5. **One illustration per section.** Never two SVG scenes in the same
+   section. If a section covers multiple sub-points, illustrate the
+   umbrella concept, not each sub-point.
+
+### Automotive Situations / 環境類場景 SVG 構建指引
+
+For sections describing physical-world scenarios (common in medical, retail,
+logistics, real estate, hospitality):
+
+```
+Vehicle (car top-view or side-view):
+- Side view: rounded rect (80x35) + two circles (wheels) + windshield trapezoid
+- Top view: rounded rect (40x70) + two small rects (mirrors)
+
+Building:
+- Simple facade: rect with smaller rects (windows) + triangle or flat roof
+- Interior: floor line + furniture outlines (desk, chair, counter)
+
+People in environment:
+- Standing: circle (head) + rect (body) — use the Person pattern
+- Sitting: circle + shorter rect + horizontal rect (seat)
+- Queue/crowd: 3-5 person patterns at decreasing opacity, overlapping slightly
+
+Problem indicators:
+- Exclamation: circle bg + "!" text element
+- Crowding: overlapping shapes with reduced spacing
+- Waiting/time: clock circle + hands as lines
+- Frustration: zigzag line above person head
+
+Solution indicators:
+- Checkmark: polyline in accent color
+- Arrow pointing right/up: path element
+- Sparkle: 4-point star shape
+- Expansion: dashed outline larger than solid shape (showing growth)
+```
+
+### Section Types That ALWAYS Get Illustrations
+
+These section types must always have an SVG illustration — never skip:
+
+| Section type | Illustration subject |
+|-------------|---------------------|
+| Hero / above-the-fold | Primary value proposition scene |
+| Problem statement ("The challenge", "Why this matters", "Pain point") | The problem depicted visually |
+| Solution / how-it-works | The solution in action |
+| Feature highlight (individual feature section) | Feature in use context |
+| Testimonial / case study | Client's industry scene or outcome |
+| Empty state (no data, first time) | Friendly guiding illustration |
+| Error state | Recovery-oriented illustration |
+
+### Section Types That Get Atmosphere, Not Illustrations
+
+| Section type | Visual treatment |
+|-------------|-----------------|
+| Pricing / comparison | Column entrance animation, no illustration |
+| Form / input | Validation animation, progress indicator |
+| Data table | Data IS the visual — sparklines if needed |
+| Final CTA / footer | Atmospheric gradient bg, mirror hero energy |
+| Navigation / header | Logo only, no illustration |
+| FAQ / accordion | None or subtle section icon SVGs |
+
+### Output Format
+
+Produce the brief as a table for quick scanning. The user can cut any row
+before you start generating HTML:
+
+```
+🎨 SECTION VISUAL BRIEF
+
+| Section | Subject | Visual Type | Scene | Placement |
+|---------|---------|-------------|-------|-----------|
+| Hero | [extracted] | SVG illustration | [description] | right of headline |
+| Problem | [extracted] | SVG illustration | [description] | left of text |
+| Solution | [extracted] | SVG illustration | [description] | above text, centered |
+| Features | [extracted] | SVG per feature card | [description] | top of each card |
+| Social proof | logos + stats | SVG logo row + count-up | [description] | below testimonial |
+| CTA | — | atmospheric gradient | — | full-width bg |
+```
+
+After presenting, ask: "這是每個 section 的視覺配置。要調整哪些？"
+Proceed to Step 7 only after confirmation or silence (silence = approved).
+
+---
+
 ## Step 7: Hi-Fi Mockup Generation
 
 ### Content Strategy
