@@ -200,8 +200,15 @@ Spec, DDR, and JSON metadata.
 
 ### 2A: Mood & Reference (skip if design system exists or ITERATE)
 
-Present 3-5 visual references matching the direction. For each, note what's 
-relevant and what to steal vs. avoid.
+Present 3-5 visual references matching the direction. For each, note:
+- What's relevant — which layout, hierarchy, or interaction pattern to steal
+- What to avoid — which visual treatment would result in generic output
+
+**Layout reference requirement:** At least one reference must demonstrate the
+TARGET LAYOUT PATTERN (not just color/style). For hero sections: show a reference
+with the intended hero type (full-bleed, split, text-dominant). For dashboards:
+show a reference with the intended card/table density. This anchors layout
+decisions before hi-fi generation.
 
 ### 2B: Style Tile (optional)
 
