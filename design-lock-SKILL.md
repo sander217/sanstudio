@@ -467,6 +467,16 @@ Proceed to Step 7 only after confirmation or silence (silence = approved).
 Realistic content, not Lorem Ipsum. Generate domain-appropriate placeholders.
 Flag [draft] markers. Use real content if provided.
 
+**Content-Visual Pairing:** When writing section text, simultaneously generate
+the paired SVG from the Section Visual Brief (Step 6.5). The text and SVG must
+reference the same scenario — if the heading says "Stop Wasting Time on
+Parking", the adjacent SVG must show a parking-related scene, not a generic
+abstract shape.
+
+Write the section text first, then generate the SVG that illustrates it. If
+the text changes during iteration, update the SVG to match. Text and visual
+must never drift apart.
+
 UI copy must read like a shipped product, not a design review pasted into the screen.
 Default to compressed product language:
 
