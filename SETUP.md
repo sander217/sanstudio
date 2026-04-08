@@ -213,10 +213,15 @@ your-project/
 └── .claude/skills/design-agent-studio/
     ├── CLAUDE.md                                ← skill routing 設定
     ├── README.md                                ← 專案說明
+    ├── context-lock-SKILL-v2.md                 ← Gate 1：理解需求 + 鎖定 visual contract
+    ├── direction-lock-SKILL-v2.md               ← Gate 2：探索方向 + 驗證可行性
+    ├── design-lock-SKILL-v2.md                  ← Gate 3：生成設計 + 匯出
+    ├── scripts/
+    │   └── export-design-session.sh             ← 匯出 session / JSON / companion docs
     ├── skills/
-    │   ├── context-lock/SKILL.md                ← Gate 1：理解需求
-    │   ├── direction-lock/SKILL.md              ← Gate 2：探索方向
-    │   └── design-lock/SKILL.md                 ← Gate 3：生成設計
+    │   └── design-lock/
+    │       ├── design-techniques-db.md          ← Gate 3 技法資料庫
+    │       └── figma-schema-v0.2.md             ← Figma JSON schema
     └── figma-plugin/
         ├── manifest.json                        ← Figma Plugin 設定
         ├── code.ts                              ← Plugin 原始碼

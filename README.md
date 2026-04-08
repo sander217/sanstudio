@@ -82,7 +82,7 @@ multi-state, and the design_system block.
 
 ## Schema version
 
-This parser targets **schema v0.2.0** as defined in `design-lock-SKILL.md`.
+This parser targets **schema v0.2.0** as defined in `skills/design-lock/figma-schema-v0.2.md`.
 Key differences from v0.1.0:
 - `design_system` defined at flow level (not per-screen)
 - `layoutSizingHorizontal/Vertical` replaces bare `width: "FILL"`
