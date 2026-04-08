@@ -372,6 +372,173 @@ Tag every element with a component type during generation. This maps to JSON exp
 - Dark mode toggle if applicable
 ```
 
+### Visual Asset Strategy (MANDATORY for hi-fi)
+
+Hi-fi mockups must look like real products. Real products don't have gray
+placeholder rectangles — they have images, illustrations, animations, and
+atmosphere. Claude cannot call image generation APIs, but it CAN generate
+visual assets as code. Use these techniques:
+
+#### Asset Type 1: Inline SVG Illustrations
+
+Generate contextual SVG scenes directly in the HTML. These are flat-style
+vector illustrations that match the product's color palette and tone.
+
+**When to use:** Hero sections, feature explanations, empty states, onboarding
+steps, about/team sections, error states.
+
+**How to generate:**
+- Keep SVG under 80 lines. Use simple geometric shapes (rect, circle, ellipse,
+  path) composed into recognizable scenes.
+- Use the confirmed color palette — map primary/secondary/accent/neutral to
+  SVG fills.
+- Style: flat illustration, not realistic. Think: Dropbox-style spot
+  illustrations, not photo-realistic renders.
+- Common scenes by industry:
+  - **Medical/health:** stethoscope + clipboard, doctor-patient silhouette,
+    tooth/bone outline, monitor with chart
+  - **SaaS/tech:** laptop + floating UI elements, dashboard preview, connected
+    nodes, gear + checkmark
+  - **E-commerce:** shopping bag + floating products, package delivery, cart
+    with sparkle
+  - **Education:** book + lightbulb, graduation cap, pencil + notepad
+  - **Finance:** chart trending up, shield + lock, wallet + coins
+- If industry isn't listed, compose from: person silhouette + domain-relevant
+  object + abstract accent shape.
+
+**Example structure (medical clinic hero):**
+```svg
+<svg viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background shape -->
+  <ellipse cx="200" cy="280" rx="180" ry="30" fill="var(--neutral-100)" />
+  <!-- Person silhouette -->
+  <circle cx="160" cy="100" r="30" fill="var(--primary)" opacity="0.15" />
+  <rect x="140" y="135" width="40" height="60" rx="8" fill="var(--primary)" opacity="0.15" />
+  <!-- Domain object: monitor with dental X-ray -->
+  <rect x="220" y="60" width="120" height="90" rx="6" fill="white" stroke="var(--neutral-300)" />
+  <rect x="230" y="70" width="100" height="60" rx="2" fill="var(--neutral-50)" />
+  <rect x="270" y="155" width="20" height="20" fill="var(--neutral-300)" />
+  <!-- Accent shapes -->
+  <circle cx="340" cy="50" r="12" fill="var(--accent)" opacity="0.2" />
+  <circle cx="120" cy="60" r="8" fill="var(--secondary)" opacity="0.3" />
+</svg>
+```
+
+#### Asset Type 2: CSS Animations and Micro-Interactions
+
+Add life to static layouts through purposeful CSS animation.
+
+**When to use:** Page load entrance, hero section atmosphere, hover states,
+scroll reveals, loading/transition states, trust-building number counters.
+
+**Animation Catalog:**
+
+| Animation | CSS Pattern | Use For |
+|-----------|------------|---------|
+| **Fade-up entrance** | `@keyframes fadeUp { from { opacity:0; transform:translateY(20px) } to { opacity:1; transform:translateY(0) } }` | Section reveals on scroll, card entrances |
+| **Stagger children** | `.parent > * { animation: fadeUp 0.5s ease both; } .parent > *:nth-child(2) { animation-delay: 0.1s }` | Feature grids, card rows, pricing columns |
+| **Float/breathe** | `@keyframes float { 0%,100% { transform:translateY(0) } 50% { transform:translateY(-10px) } }` | Hero decorative elements, accent shapes |
+| **Gradient shift** | `@keyframes gradientShift { 0% { background-position:0% 50% } 100% { background-position:100% 50% } } background-size: 200% 200%` | Hero backgrounds, section atmospheres |
+| **Number count-up** | JS: `requestAnimationFrame` loop incrementing textContent | Trust numbers, KPI values, social proof stats |
+| **Pulse glow** | `@keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(primary,0.3) } 50% { box-shadow: 0 0 0 12px rgba(primary,0) } }` | Primary CTA buttons, notification dots |
+| **Typewriter** | `overflow:hidden; white-space:nowrap; border-right:2px solid; animation: typing 3s steps(N), blink 0.5s infinite` | Hero headlines, terminal-style text |
+
+**Rules:**
+- Max 3 distinct animations per screen. More = circus.
+- Entrance animations fire once. Loop animations only for decorative accents.
+- Duration: entrances 0.4-0.7s, loops 3-6s, hovers 0.15-0.25s.
+- Use `prefers-reduced-motion` media query to disable all motion animations.
+- CTA pulse: use sparingly. Only on the ONE primary CTA, never on secondary.
+
+#### Asset Type 3: Atmospheric Backgrounds
+
+Replace flat white section backgrounds with CSS gradients and subtle textures.
+
+**When to use:** Hero sections, alternating sections on landing pages, feature
+highlight areas, testimonial sections.
+
+**Patterns:**
+
+```css
+/* Subtle gradient (premium, calm) */
+.hero { background: linear-gradient(135deg, #f8fafc 0%, #e0f2fe 50%, #f0fdf4 100%); }
+
+/* Radial glow (focus, attention) */
+.highlight { background: radial-gradient(ellipse at 30% 50%, rgba(var(--primary-rgb), 0.06) 0%, transparent 70%); }
+
+/* Noise texture overlay (editorial, premium) — CSS-only */
+.textured::after {
+  content: ''; position: absolute; inset: 0; opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+}
+
+/* Dot grid (tech, dashboard) */
+.dotgrid {
+  background-image: radial-gradient(circle, var(--neutral-300) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+```
+
+**Rules:**
+- Max 2 atmospheric backgrounds per page. Rest stays solid (white/neutral-50).
+- Gradients use brand palette at 3-8% opacity, never full saturation.
+- Noise/texture overlay always under 5% opacity.
+- Hero gets the strongest atmosphere. Other sections taper down.
+
+#### Asset Type 4: SVG Data Visualizations
+
+For dashboards, reports, pricing comparisons, or any data-centric section.
+
+**When to use:** KPI trends, comparison charts, progress indicators, timeline
+visualizations, feature comparison infographics.
+
+**Build with:**
+- Inline SVG `<line>`, `<polyline>`, `<rect>` for charts.
+- CSS `conic-gradient` for pie/donut charts.
+- `<path>` with hand-tuned `d` attribute for simple sparklines.
+- Use the product's color palette, not generic chart colors.
+
+#### Asset Type 5: Decorative SVG Accents
+
+Small floating shapes that add visual texture without carrying meaning.
+
+**When to use:** Landing page sections (near headings or in whitespace areas),
+hero backgrounds, card corners.
+
+**Rules:**
+- Max 3-5 accents per screen. They must feel incidental, not designed.
+- Use brand palette at 10-30% opacity. Never full-color.
+- Common shapes: circles, rounded rectangles, dots, soft blobs, thin rings.
+- Position with `position: absolute` offset from section corners/edges.
+- Apply the float/breathe animation (Asset Type 2) for subtle life.
+- NEVER use accents in dense UI (tables, forms, dashboards). Only in
+  spacious marketing/hero sections.
+
+---
+
+### Visual Asset Selection Logic
+
+Before generating each screen, determine which asset types are appropriate.
+Cross-reference with the matched technique cluster:
+
+| Technique Cluster | Recommended Assets | Avoid |
+|-------------------|-------------------|-------|
+| #1 Onboarding | SVG step illustrations, stagger entrance | Heavy atmosphere |
+| #2 Landing | SVG hero scene, atmospheric bg, float accents, stagger entrance | None — go all in |
+| #3 Pricing | Stagger columns entrance, pulse CTA | SVG illustrations (distract from comparison) |
+| #5 Form | Subtle progress animation, fade-up fields | SVG scenes, heavy atmosphere (distract from input) |
+| #6 Checkout | Trust badge SVGs, count-up total animation | Decorative accents (reduce noise near payment) |
+| #7 Dashboard | SVG sparkline charts, number count-up, subtle dot grid bg | Float animations, heavy illustrations |
+| #8 Dense Data | None or minimal. Let the data be the visual. | Everything — density IS the design |
+| #9 Search | Empty-state SVG illustration, fade-up results | Atmospheric bg on results area |
+| #10 Settings | Minimal. Maybe section icon SVGs. | Animations, atmosphere, accents |
+| #13 Mobile | Simplified SVG (fewer shapes), entrance animations | Heavy SVG scenes (performance), noise textures |
+| #15 Collaborative | Status dot animations, avatar pulse for online | Heavy illustrations |
+| #16 AI Copilot | Skeleton loading animation, typing indicator, subtle glow | Static placeholder images |
+
+If a technique cluster says "Avoid" for an asset type, do NOT include it even
+if it seems visually appealing. Function over decoration.
+
 ### Anti-Bento Layout Rules (MANDATORY)
 
 Claude's HTML generation has systematic biases that produce "bento box" layouts —
