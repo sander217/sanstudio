@@ -606,6 +606,7 @@ Run before export:
 - **Flow**: Consistent nav, clear location, back/escape defined, matches G2 diagram
 - **Wireframe Contract**: LOCKED decisions respected or explicitly OVERRIDDEN
 - **Interactive**: ALL interactive elements functional — no non-functional UI chrome
+- **Anti-Bento**: Annotations hidden by default, hero has ≤5 elements, no equal-weight grids without justification, section gaps ≥64px on scroll pages, no 50/50 hero splits
 ```
 
 ### HTML Capture Guardrail
@@ -613,7 +614,6 @@ Run before export:
 If Figma export uses HTML capture instead of JSON import, verify these before opening any
 capture URL:
 
-- **Anti-Bento**: Annotations hidden by default, hero has ≤5 elements, no equal-weight grids without justification, section gaps ≥64px on scroll pages, no 50/50 hero splits
 ```
 - Screen routing state is applied on initial load, not only after user interaction
 - No screen is hardcoded as the default visible state when a query param or hash selects another screen
