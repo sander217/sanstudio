@@ -365,6 +365,106 @@ Tag every element with a component type during generation. This maps to JSON exp
 - Dark mode toggle if applicable
 ```
 
+### Anti-Bento Layout Rules (MANDATORY)
+
+Claude's HTML generation has systematic biases that produce "bento box" layouts —
+every element crammed into equal-weight grid cells within a single viewport.
+These rules are hard constraints to counter those biases.
+
+#### Rule 1: Annotation Isolation
+
+Design annotations (rationale cards, technique labels, spacing callouts, color
+swatches, decision notes, "VISUAL IMPACT" style commentary) must NEVER appear
+in the main mockup viewport. They belong in a separate annotation overlay that
+is **collapsed by default** and toggled via a floating button.
+
+On initial load, the mockup must look exactly like a shipped product. No
+explanatory chrome, no design commentary, no meta-information visible.
+
+**Test:** Screenshot the mockup at initial load. If a non-designer would ask
+"what are those cards/labels?", the annotations have leaked into the design.
+
+#### Rule 2: Viewport Breathing — Do Not Stuff the Fold
+
+A "page" is not a single viewport. Real products scroll. The mockup must too.
+
+- **Hero sections:** Maximum elements above the fold: 1 background (image or
+  solid), 1 headline, 1 subheadline (optional), 1 primary CTA, 1 secondary
+  CTA (optional). Everything else — features, social proof, explanations,
+  secondary content — goes below the fold.
+- **Dashboard/app screens:** Content may fill the viewport, but must have clear
+  section breaks (32px+ gaps or visual dividers). Never pack cards edge-to-edge
+  without breathing room.
+- **Long-form pages:** Design the scroll rhythm. Alternate between dense sections
+  and spacious sections. Not every section needs the same padding.
+
+**Test:** If removing any one section makes the viewport feel complete, you have
+too many sections above the fold. Remove until each section earns its position.
+
+#### Rule 3: Visual Hierarchy Before Grid
+
+Do not reach for CSS Grid as the default layout. Choose layout by content role:
+
+| Content relationship | Layout | Not this |
+|---------------------|--------|----------|
+| One item dominates, others support | Asymmetric (70/30 or full-width hero + stacked below) | Equal-width grid |
+| Items are genuinely comparable (pricing plans, feature cards) | Equal-width grid | Asymmetric |
+| Sequential steps or narrative | Vertical stack | Side-by-side grid |
+| Primary content + sidebar metadata | Main + aside (65-75% / 25-35%) | 50/50 split |
+| Single focus (form, article, onboarding) | Single column, centered, max-width constrained | Multi-column |
+
+**Test:** For every grid in the mockup, ask: "Are these items actually equal in
+importance?" If no, the grid is wrong — use asymmetric layout or vertical stack.
+
+#### Rule 4: One Hero, Not a Collage
+
+Hero sections get ONE visual treatment. Pick one:
+
+- **Image-dominant:** Full-bleed image with text overlay. Text occupies max 40%
+  of the visual width. No floating cards on top of the image.
+- **Text-dominant:** Bold typography with generous whitespace. Supporting image
+  (if any) is secondary — smaller, off to one side or below.
+- **Split:** Left text / right image (or vice versa). Ratio must be asymmetric
+  (60/40 or 55/45). NEVER 50/50 — it creates visual tension with no winner.
+
+Do NOT combine: full-bleed image + overlay text + floating annotation cards +
+info panels + multiple CTAs. That is a collage, not a hero.
+
+#### Rule 5: Section Rhythm for Scrollable Pages
+
+For pages with 3+ sections (landing pages, marketing pages, long-form product
+pages), design a scroll rhythm:
+
+```
+Section 1 (hero): max visual impact, minimal text, 1 CTA
+    ↓ 80-120px gap
+Section 2 (value prop or social proof): moderate density, supporting the hero claim
+    ↓ 64-80px gap
+Section 3 (features/details): higher density, grid or list OK here
+    ↓ 64-80px gap
+Section 4 (social proof or FAQ): reduce density, build trust
+    ↓ 80-120px gap
+Section 5 (final CTA): mirror hero energy, strong closing
+```
+
+Alternate between **spacious** (large padding, centered, breathing) and **dense**
+(grid, multi-column, content-rich) sections. Never stack two dense sections
+back-to-back without a spacious break.
+
+#### Rule 6: Whitespace Is Not Wasted Space
+
+Minimum spacing rules (override these only if design system specifies tighter):
+
+- Between major page sections: 64px minimum, 80-120px for landing pages
+- Between a heading and its first content: 16-24px
+- Between cards in a grid: 24px minimum
+- Internal card padding: 20-24px minimum
+- Between CTA and nearest content above: 24-32px
+
+If the result looks "too empty", the instinct is wrong. Real products have more
+whitespace than you think. Compare against the Visual Execution specs from
+technique clusters before compressing.
+
 ### Multi-Screen Flows
 
 1. One screen at a time. Start with most critical.
