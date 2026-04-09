@@ -21,31 +21,94 @@ precision. Every visual choice traces back to a product decision.
 
 These rules override all other layout decisions. Violating any = regenerate.
 
-1. **Hero ≤ 5 elements above fold.** 1 bg, 1 headline, 1 subheadline (optional), 
-   1 primary CTA, 1 secondary CTA (optional). Everything else scrolls.
+### The Bento Test (run BEFORE presenting any mockup)
 
-2. **No equal-weight grid unless items are genuinely equal.** Pricing plans = grid OK. 
-   "About + Features + Team" = NOT a grid. Use asymmetric or vertical stack.
+Count every `display: grid` and `display: flex` with `flex-wrap: wrap` in your HTML.
+For EACH one, answer: "Are these N items genuinely equal in importance to the user?"
+If the answer is no for ANY grid → replace it using the alternatives below.
+If you find 3+ grids on a single page → the layout has no opinion. Redesign.
 
-3. **Section gaps ≥ 64px on scrollable pages.** 80-120px for landing pages. 
-   Alternate dense and spacious sections. Never stack two dense sections back-to-back.
+### Constraint 1: Hero ≤ 5 elements above fold
 
-4. **No 50/50 hero splits.** Use 60/40 or 55/45 or full-bleed. 50/50 = generic.
+Only these: 1 background, 1 headline, 1 subheadline (optional), 1 primary CTA, 
+1 secondary CTA (optional). NOTHING else above the fold.
 
-5. **Annotations collapsed by default.** On first load, mockup looks like a shipped 
-   product. No design commentary, no technique labels, no spacing callouts visible.
+**CSS pattern for hero (use this, not a grid):**
+```css
+.hero {
+  min-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 0 max(24px, calc((100% - 1200px) / 2));
+}
+```
 
-6. **One hero treatment.** Pick ONE: image-dominant, text-dominant, or asymmetric split. 
-   Do NOT combine full-bleed + overlay + floating cards + info panels.
+### Constraint 2: No equal-weight grid unless items are genuinely equal
 
-7. **Asymmetry is confidence.** Every screen must have ONE clear visual winner — 
-   the element that is obviously most important.
+Pricing plans, product comparison cards = grid OK.
+Everything else = use one of these INSTEAD:
 
-**Self-check after generating HTML:**
-- Screenshot the mockup. Does it look like a shipped product or a design poster?
-- Is there one clear hero element or a busy collage?
-- Can you remove any above-fold element without loss? If yes, remove it.
-- Are all grids justified? (Equal importance = grid. Otherwise = stack or asymmetric.)
+**For "Feature A + Feature B + Feature C":**
+```css
+/* Stack vertically with alternating image side */
+.feature-section { display: flex; flex-direction: column; gap: 80px; }
+.feature-row { display: flex; align-items: center; gap: 48px; }
+.feature-row:nth-child(even) { flex-direction: row-reverse; }
+.feature-text { flex: 1; }
+.feature-image { flex: 0 0 45%; }
+```
+
+**For "About + Stats + Team" (different importance levels):**
+```css
+/* Full-width stacked sections, NOT side-by-side cards */
+.about { padding: 120px 0; } /* spacious, hero-like */
+.stats { padding: 64px 0; background: var(--bg-secondary); } /* denser band */
+.team { padding: 96px 0; } /* moderate breathing room */
+```
+
+### Constraint 3: Section gaps ≥ 64px
+
+80-120px for landing pages. Alternate dense and spacious. Never two dense 
+sections back-to-back. Use `padding` on sections, not `gap` on a parent grid.
+
+### Constraint 4: No 50/50 hero splits
+
+Use 60/40, 55/45, or full-bleed. 50/50 creates visual tension with no winner.
+```css
+/* Correct: asymmetric split */
+.hero-content { flex: 0 0 55%; }
+.hero-image { flex: 0 0 45%; }
+/* WRONG: .hero-content { flex: 1; } .hero-image { flex: 1; } */
+```
+
+### Constraint 5: Annotations collapsed by default
+
+On first load = shipped product. Zero design commentary visible.
+
+### Constraint 6: One hero treatment
+
+Pick ONE: image-dominant OR text-dominant OR asymmetric split.
+Never combine overlay text + floating cards + info panels.
+
+### Constraint 7: Asymmetry is confidence
+
+Every screen needs ONE dominant element. If everything is the same size, 
+the layout is saying "nothing matters more than anything else" — that is 
+never true in a real product.
+
+### Post-generation self-check (MANDATORY)
+
+Before presenting the mockup, answer these 5 questions. If ANY answer is wrong, 
+fix the HTML before showing the user.
+
+1. How many `display: grid` / `grid-template-columns` exist? → If >2 on one page, 
+   at least one is probably wrong.
+2. Is there ONE element that is visually largest? → If no, add hierarchy.
+3. Count elements above the fold. → If >5, move things below.
+4. Is the hero split 50/50? → If yes, change to 60/40 or full-bleed.
+5. Does any section have the same padding as every other section? → If yes, 
+   alternate: make some 120px and some 64px.
 
 ---
 
@@ -311,7 +374,162 @@ Final CTA: mirror hero energy
 
 ---
 
-## Step 9: Before/After Diff (ITERATE / CRITIQUE)
+## Step 8.5: Micro-Interactions (MANDATORY for hi-fi)
+
+Hi-fi mockups that don't move feel dead. Real products have subtle motion that 
+communicates state, provides feedback, and creates delight. Every mockup MUST 
+include at least 3 of the following interaction types, chosen by relevance to 
+the design's content and purpose.
+
+### Interaction Selection Rules
+
+Pick interactions that serve the CONTENT, not the designer's ego:
+
+| Content type | Required interactions | Why |
+|---|---|---|
+| Landing page / marketing | scroll-reveal + hover-CTA + parallax or counter | Build narrative as user scrolls |
+| E-commerce / product | hover-card + image-zoom + add-to-cart feedback | Help user evaluate products |
+| Dashboard / app | hover-row + tooltip + state-transition | Help user scan and act on data |
+| Form / onboarding | focus-glow + validation-shake + progress-step | Reduce anxiety, show progress |
+| Portfolio / showcase | scroll-reveal + image-hover + cursor-follow | Create premium feel |
+
+### Micro-Interaction Library
+
+Implement these with CSS only (no JS libraries). All must respect 
+`prefers-reduced-motion: reduce`.
+
+#### 1. Scroll reveal (fade-up on enter)
+Sections appear as user scrolls. Stagger children for rhythm.
+```css
+.reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease-out; }
+.reveal.visible { opacity: 1; transform: translateY(0); }
+/* JS: IntersectionObserver adds .visible when section enters viewport */
+```
+```js
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+```
+
+#### 2. Hover CTA (scale + shadow lift)
+Primary buttons feel pressable. Secondary buttons have subtle shift.
+```css
+.cta-primary { transition: transform 0.2s, box-shadow 0.2s; }
+.cta-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+.cta-primary:active { transform: translateY(0); box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+```
+
+#### 3. Hover card (lift + border glow)
+Cards lift toward user on hover, creating depth.
+```css
+.card { transition: transform 0.25s ease, box-shadow 0.25s ease; }
+.card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(0,0,0,0.08); }
+```
+
+#### 4. Counter animation (numbers count up)
+Stats/KPIs animate from 0 to target value when visible.
+```js
+function animateCounter(el) {
+  const target = parseInt(el.dataset.target);
+  const duration = 1500;
+  const start = performance.now();
+  function update(now) {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+    el.textContent = Math.round(target * eased).toLocaleString();
+    if (progress < 1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+// Trigger via IntersectionObserver when stat section enters viewport
+```
+
+#### 5. Smooth accordion / FAQ
+Questions expand with height animation, icon rotates.
+```css
+.faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+.faq-item.open .faq-answer { max-height: 500px; }
+.faq-icon { transition: transform 0.3s; }
+.faq-item.open .faq-icon { transform: rotate(45deg); }
+```
+
+#### 6. Image hover (zoom + overlay)
+Product/portfolio images zoom slightly, optional text overlay fades in.
+```css
+.img-hover { overflow: hidden; }
+.img-hover img { transition: transform 0.4s ease; }
+.img-hover:hover img { transform: scale(1.05); }
+.img-hover .overlay { opacity: 0; transition: opacity 0.3s; }
+.img-hover:hover .overlay { opacity: 1; }
+```
+
+#### 7. Nav scroll effect (shrink + shadow on scroll)
+Sticky nav gets compact and gains shadow after scrolling past hero.
+```css
+.nav { transition: padding 0.3s, box-shadow 0.3s; }
+.nav.scrolled { padding: 12px 0; box-shadow: 0 2px 12px rgba(0,0,0,0.06); }
+```
+
+#### 8. Tab / toggle transition
+Content crossfades between states instead of instant swap.
+```css
+.tab-content { opacity: 0; transform: translateY(8px); transition: all 0.25s; position: absolute; }
+.tab-content.active { opacity: 1; transform: translateY(0); position: relative; }
+```
+
+#### 9. Form focus glow
+Input fields glow with accent color on focus, label floats up.
+```css
+.input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.15); }
+.float-label { transition: all 0.2s; }
+.input:focus + .float-label { transform: translateY(-24px) scale(0.85); color: var(--accent); }
+```
+
+#### 10. Parallax subtle (hero image depth)
+Hero background moves at different speed from content. Keep it subtle.
+```js
+window.addEventListener('scroll', () => {
+  const hero = document.querySelector('.hero-bg');
+  if (hero) hero.style.transform = `translateY(${window.scrollY * 0.3}px)`;
+}, { passive: true });
+```
+
+### Motion Rules
+
+- **Max 3-4 interaction types per page.** More = circus, less = dead.
+- **All transitions 0.2–0.6s.** Under 0.2s feels abrupt. Over 0.6s feels sluggish.
+- **Ease-out for entrances, ease-in for exits.** Not linear.
+- **Respect `prefers-reduced-motion`:**
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { 
+    animation-duration: 0.01ms !important; 
+    transition-duration: 0.01ms !important; 
+  }
+}
+```
+- **Scroll-reveal once only.** Don't re-trigger on scroll up.
+- **No animation on page load.** The hero should be visible immediately. 
+  Scroll-reveal starts on sections BELOW the fold.
+
+### Creative micro-interactions (add 1 per project for delight)
+
+Beyond the functional interactions above, add ONE creative touch that 
+connects to the product's identity:
+
+- **Dental clinic:** Tooth icon in the favicon subtly "sparkles" on hover 
+  over the logo. Or: appointment CTA has a gentle pulse like a heartbeat.
+- **E-commerce:** Add-to-cart button shows a brief check animation + 
+  cart badge bounces.
+- **SaaS dashboard:** Toggle between views has a smooth morph transition. 
+  Or: data cards "breathe" with a subtle scale pulse when data updates.
+- **Restaurant:** Menu category pills have a food-emoji that bounces on select.
+- **Portfolio:** Cursor leaves a subtle trail or projects have a tilt effect 
+  that follows mouse position.
+
+The creative interaction should feel inevitable — like "of course a dental 
+site would do that." If it feels random, cut it.
 
 ```
 📝 CHANGES
@@ -364,9 +582,12 @@ QA CHECKLIST:
 - Interactive: all elements functional
 - Layout: annotations hidden, hero ≤5 elements, no unjustified grids, 
   section gaps ≥64px, no 50/50 splits
+- Bento test: count all grids, justify each one, fix or remove unjustified
 - Images: no gray placeholders, hero has photo or strong typography,
   SVG for icons only, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
+- Micro-interactions: ≥3 interaction types present, prefers-reduced-motion 
+  respected, no animation on initial page load, 1 creative delight touch
 
 🔍 QA: ✅ [X] passed · ⚠️ [Y] warnings · ❌ [Z] failures
 ```
