@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>植牙預約轉化 Flow v1</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;700&family=Noto+Sans+TC:wght@400;500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f4f6f2;
+        --surface: rgba(255, 255, 255, 0.92);
+        --surface-strong: #ffffff;
+        --ink: #14313b;
+        --muted: #64777e;
+        --line: rgba(12, 54, 66, 0.1);
+        --primary: #0c8b8f;
+        --primary-strong: #096f73;
+        --primary-soft: #ddf3f2;
+        --accent: #f2b44d;
+        --success: #1f8f66;
+        --shadow-lg: 0 22px 60px rgba(15, 52, 67, 0.16);
+        --shadow-md: 0 12px 30px rgba(15, 52, 67, 0.12);
+        --shadow-sm: 0 5px 14px rgba(15, 52, 67, 0.08);
+        --radius-xl: 28px;
+        --radius-lg: 20px;
+        --radius-md: 16px;
+        --radius-sm: 12px;
+        --space: 8px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: "Noto Sans TC", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at top left, rgba(12, 139, 143, 0.14), transparent 34%),
+          radial-gradient(circle at bottom right, rgba(242, 180, 77, 0.15), transparent 28%),
+          linear-gradient(180deg, #f8fbfb 0%, #edf2ef 52%, #e8efeb 100%);
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .shell {
+        display: grid;
+        gap: 24px;
+        justify-content: center;
+        padding: 28px 20px 48px;
+      }
+
+      .topbar {
+        width: min(1080px, 100%);
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin: 0 auto;
+      }
+
+      .meta {
+        display: grid;
+        gap: 6px;
+      }
+
+      .eyebrow {
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--primary);
+      }
+
+      .meta h1 {
+        margin: 0;
+        font-size: clamp(24px, 3vw, 34px);
+        line-height: 1.1;
+      }
+
+      .meta p {
+        margin: 0;
+        max-width: 640px;
+        color: var(--muted);
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .segmented {
+        display: inline-flex;
+        padding: 4px;
+        border: 1px solid rgba(12, 139, 143, 0.16);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.74);
+        backdrop-filter: blur(12px);
+      }
+
+      .segmented button,
+      .ghost-toggle {
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: var(--muted);
+        padding: 10px 14px;
+        cursor: pointer;
+        transition: 0.2s ease;
+      }
+
+      .segmented button.active,
+      .ghost-toggle.active {
+        background: var(--ink);
+        color: #fff;
+      }
+
+      .workspace {
+        width: min(1080px, 100%);
+        display: grid;
+        grid-template-columns: minmax(320px, 390px) minmax(280px, 420px);
+        gap: 28px;
+        align-items: start;
+      }
+
+      .phone-wrap {
+        position: relative;
+        display: flex;
+        justify-content: center;
+      }
+
+      .phone {
+        position: relative;
+        width: 375px;
+        min-height: 812px;
+        border-radius: 36px;
+        padding: 16px 14px;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 251, 0.98)),
+          #fff;
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+      }
+
+      .phone::before {
+        content: "";
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 126px;
+        height: 30px;
+        border-radius: 999px;
+        background: rgba(8, 27, 35, 0.92);
+      }
+
+      .screen {
+        position: relative;
+        height: 100%;
+        margin-top: 34px;
+      }
+
+      .status {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        padding: 0 6px;
+        font-family: "DM Sans", sans-serif;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 0 6px;
+      }
+
+      .brand-mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, #0fb6ba, #0b6e71);
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 800;
+      }
+
+      .brand-copy strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .brand-copy span {
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .surface {
+        background: var(--surface);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        box-shadow: var(--shadow-sm);
+        backdrop-filter: blur(16px);
+      }
+
+      .hero {
+        margin-top: 18px;
+        padding: 22px;
+        border-radius: 28px;
+        background:
+          radial-gradient(circle at top right, rgba(242, 180, 77, 0.28), transparent 35%),
+          linear-gradient(135deg, rgba(12, 139, 143, 0.12), rgba(255, 255, 255, 0.92));
+        border: 1px solid rgba(12, 139, 143, 0.1);
+      }
+
+      .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.76);
+        color: var(--primary-strong);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .hero h2 {
+        margin: 14px 0 10px;
+        font-size: 31px;
+        line-height: 1.18;
+        letter-spacing: -0.03em;
+      }
+
+      .hero h2 span {
+        color: var(--primary);
+      }
+
+      .hero p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #41545b;
+      }
+
+      .chips,
+      .trust-list,
+      .slot-list,
+      .option-grid,
+      .proof-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .chips {
+        margin-top: 16px;
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .chip {
+        padding: 12px 10px;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.82);
+        border: 1px solid rgba(12, 139, 143, 0.08);
+        text-align: center;
+      }
+
+      .chip strong {
+        display: block;
+        font-size: 12px;
+      }
+
+      .chip span {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.4;
+      }
+
+      .panel {
+        margin-top: 16px;
+        padding: 18px;
+        border-radius: 24px;
+      }
+
+      .panel-head {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .panel-head h3 {
+        margin: 0;
+        font-size: 18px;
+      }
+
+      .panel-head p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        line-height: 1.55;
+        color: var(--muted);
+      }
+
+      .step-pill {
+        padding: 8px 10px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+        font-family: "DM Sans", sans-serif;
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+      }
+
+      .option-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .option {
+        display: grid;
+        gap: 4px;
+        padding: 16px 14px;
+        border-radius: 18px;
+        border: 1px solid var(--line);
+        background: #fff;
+        cursor: pointer;
+        transition: 0.18s ease;
+      }
+
+      .option strong {
+        font-size: 14px;
+      }
+
+      .option span {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      .option.active {
+        border-color: rgba(12, 139, 143, 0.48);
+        background: linear-gradient(180deg, rgba(12, 139, 143, 0.12), rgba(255, 255, 255, 0.96));
+        box-shadow: 0 10px 20px rgba(12, 139, 143, 0.12);
+      }
+
+      .slot-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .slot {
+        padding: 12px 8px;
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        text-align: center;
+        background: #fff;
+        cursor: pointer;
+      }
+
+      .slot b {
+        display: block;
+        font-family: "DM Sans", sans-serif;
+        font-size: 15px;
+      }
+
+      .slot span {
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .slot.active {
+        background: var(--ink);
+        border-color: var(--ink);
+        color: #fff;
+      }
+
+      .slot.active span {
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .microcopy {
+        margin-top: 12px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: #f7fbfa;
+        color: #42545b;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .proof-grid {
+        grid-template-columns: 1fr 1fr;
+        margin-top: 14px;
+      }
+
+      .proof {
+        padding: 14px;
+        border-radius: 18px;
+        background: linear-gradient(180deg, rgba(12, 139, 143, 0.08), rgba(255, 255, 255, 0.96));
+        border: 1px solid rgba(12, 139, 143, 0.08);
+      }
+
+      .proof strong {
+        display: block;
+        font-family: "DM Sans", sans-serif;
+        font-size: 20px;
+      }
+
+      .proof span {
+        display: block;
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      .doctor {
+        display: grid;
+        grid-template-columns: 84px 1fr;
+        gap: 14px;
+        margin-top: 16px;
+      }
+
+      .doctor-visual {
+        border-radius: 20px;
+        background:
+          linear-gradient(160deg, rgba(12, 139, 143, 0.2), rgba(242, 180, 77, 0.2)),
+          linear-gradient(180deg, #edf8f7, #e7f0ee);
+        min-height: 96px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .doctor-visual::before,
+      .doctor-visual::after {
+        content: "";
+        position: absolute;
+        border-radius: 999px;
+        background: rgba(12, 139, 143, 0.18);
+      }
+
+      .doctor-visual::before {
+        width: 58px;
+        height: 58px;
+        top: 12px;
+        left: 12px;
+      }
+
+      .doctor-visual::after {
+        width: 70px;
+        height: 42px;
+        bottom: 10px;
+        left: 8px;
+      }
+
+      .doctor-copy strong {
+        display: block;
+        font-size: 15px;
+      }
+
+      .doctor-copy p {
+        margin: 6px 0 0;
+        font-size: 12px;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      .accordion {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .faq {
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        background: #fff;
+        overflow: hidden;
+      }
+
+      .faq button {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        padding: 16px;
+        border: 0;
+        background: transparent;
+        text-align: left;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .faq button span {
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .faq p {
+        display: none;
+        margin: 0;
+        padding: 0 16px 16px;
+        font-size: 12px;
+        line-height: 1.7;
+        color: var(--muted);
+      }
+
+      .faq.open p {
+        display: block;
+      }
+
+      .sticky-cta {
+        position: sticky;
+        bottom: 8px;
+        margin-top: 18px;
+        z-index: 4;
+      }
+
+      .sticky-cta button,
+      .primary-btn,
+      .secondary-btn {
+        width: 100%;
+        border: 0;
+        border-radius: 18px;
+        padding: 16px 18px;
+        cursor: pointer;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.01em;
+      }
+
+      .sticky-cta button,
+      .primary-btn {
+        color: #fff;
+        background: linear-gradient(180deg, #11949b, #0a7276);
+        box-shadow: 0 14px 28px rgba(12, 139, 143, 0.32);
+      }
+
+      .secondary-btn {
+        background: #fff;
+        border: 1px solid rgba(12, 139, 143, 0.16);
+        color: var(--ink);
+      }
+
+      .sheet,
+      .success {
+        position: absolute;
+        inset: 0;
+        display: none;
+        padding: 34px 18px 18px;
+        background: rgba(11, 32, 40, 0.26);
+        backdrop-filter: blur(10px);
+        z-index: 9;
+      }
+
+      .sheet.active,
+      .success.active {
+        display: block;
+      }
+
+      .sheet-card,
+      .success-card {
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: 12px;
+        padding: 20px;
+        border-radius: 28px;
+        background: #fff;
+        box-shadow: var(--shadow-lg);
+      }
+
+      .sheet-card h3,
+      .success-card h3 {
+        margin: 0;
+        font-size: 24px;
+      }
+
+      .sheet-card p,
+      .success-card p {
+        margin: 8px 0 0;
+        font-size: 13px;
+        line-height: 1.65;
+        color: var(--muted);
+      }
+
+      .summary-row {
+        display: flex;
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .summary-chip {
+        flex: 1;
+        padding: 12px;
+        border-radius: 16px;
+        background: #f5faf9;
+        border: 1px solid rgba(12, 139, 143, 0.08);
+      }
+
+      .summary-chip label {
+        display: block;
+        margin-bottom: 4px;
+        font-size: 11px;
+        color: var(--muted);
+      }
+
+      .summary-chip strong {
+        font-size: 13px;
+      }
+
+      form {
+        margin-top: 18px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field label {
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .field input,
+      .field select {
+        width: 100%;
+        padding: 15px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(12, 54, 66, 0.12);
+        background: #fbfdfd;
+      }
+
+      .inline {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .sheet-actions {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+      }
+
+      .legal {
+        margin-top: 10px;
+        font-size: 11px;
+        line-height: 1.6;
+        color: var(--muted);
+      }
+
+      .success-card {
+        top: 138px;
+        bottom: auto;
+        text-align: center;
+      }
+
+      .success-mark {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 14px;
+        border-radius: 24px;
+        display: grid;
+        place-items: center;
+        font-size: 28px;
+        color: #fff;
+        background: linear-gradient(180deg, #24b38b, #148b69);
+        box-shadow: 0 18px 32px rgba(31, 143, 102, 0.28);
+      }
+
+      .checklist {
+        margin-top: 16px;
+        display: grid;
+        gap: 10px;
+        text-align: left;
+      }
+
+      .checklist div {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: #f7fbfa;
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .spec {
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+
+      .spec-card {
+        padding: 20px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.82);
+        box-shadow: var(--shadow-sm);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(14px);
+      }
+
+      .spec-card h2,
+      .spec-card h3 {
+        margin: 0 0 8px;
+      }
+
+      .spec-card p,
+      .spec-card li {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #42545b;
+      }
+
+      .spec-card ul {
+        margin: 0;
+        padding-left: 18px;
+        display: grid;
+        gap: 8px;
+      }
+
+      .spec-grid {
+        display: grid;
+        gap: 12px;
+      }
+
+      .spec-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary-strong);
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .annotation {
+        display: none;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border-radius: 14px;
+        background: rgba(20, 49, 59, 0.92);
+        color: #fff;
+        font-size: 11px;
+        line-height: 1.5;
+      }
+
+      body.show-annotations .annotation {
+        display: block;
+      }
+
+      .hidden {
+        display: none !important;
+      }
+
+      @media (max-width: 960px) {
+        .workspace {
+          grid-template-columns: 1fr;
+          justify-items: center;
+        }
+
+        .spec {
+          width: min(680px, 100%);
+        }
+      }
+
+      @media (max-width: 420px) {
+        .shell {
+          padding-inline: 10px;
+        }
+
+        .phone {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <div class="topbar">
+        <div class="meta">
+          <span class="eyebrow">Gate 3 / Hi-fi Preview</span>
+          <h1>植牙預約轉化 Flow</h1>
+          <p>
+            把原本「先選分店與日期」改成「先讓高意圖用戶願意跨出第一步」，
+            用低承諾 quick check 接到最小表單，再補後續排程。
+          </p>
+        </div>
+        <div class="controls">
+          <div class="segmented" aria-label="state switcher">
+            <button class="active" data-view="landing">Landing</button>
+            <button data-view="form">Form</button>
+            <button data-view="success">Success</button>
+          </div>
+          <button class="ghost-toggle" id="annotationToggle">Show annotations</button>
+        </div>
+      </div>
+
+      <div class="workspace">
+        <div class="phone-wrap">
+          <div class="phone">
+            <div class="screen">
+              <div class="status">
+                <span>9:41</span>
+                <span>5G 100%</span>
+              </div>
+
+              <div class="brand-row">
+                <div class="brand-mark">L</div>
+                <div class="brand-copy">
+                  <strong>植牙重建醫療團隊</strong>
+                  <span>從 IG 廣告落地的 30 秒預約 flow</span>
+                </div>
+              </div>
+
+              <section class="hero">
+                <div class="hero-badge">IG 專屬評估入口</div>
+                <h2>
+                  先確認你<span>適不適合植牙</span><br />
+                  再安排專人重建評估
+                </h2>
+                <p>
+                  你已經知道植牙是什麼，現在只差一個安心的下一步。
+                  先用 2 題快速判斷需求，留下資料後由專人安排院所、醫師與評估時段。
+                </p>
+                <div class="chips">
+                  <div class="chip">
+                    <strong>30 秒完成</strong>
+                    <span>先做 quick check 再留資料</span>
+                  </div>
+                  <div class="chip">
+                    <strong>15 分內回覆</strong>
+                    <span>由專人協助安排評估</span>
+                  </div>
+                  <div class="chip">
+                    <strong>清楚說明費用</strong>
+                    <span>先談可行性與預算範圍</span>
+                  </div>
+                </div>
+                <div class="annotation">
+                  Hero 不再直接要求「日期 + 分店」，而是先承接 IG 廣告帶來的意圖，
+                  讓使用者知道他不需要先做高成本決定，只要先留下最低承諾。
+                </div>
+              </section>
+
+              <section class="panel surface">
+                <div class="panel-head">
+                  <div>
+                    <h3>先回答 2 題，幫你安排對的人聯絡</h3>
+                    <p>不是正式掛號。目的是先判斷需求與最適合的評估方式。</p>
+                  </div>
+                  <div class="step-pill">Step 1 / 2</div>
+                </div>
+
+                <div class="option-grid" id="needOptions">
+                  <button class="option active" data-group="need" data-value="單顆缺牙">
+                    <strong>單顆缺牙</strong>
+                    <span>想知道是否適合補植牙與大致流程</span>
+                  </button>
+                  <button class="option" data-group="need" data-value="多顆缺牙">
+                    <strong>多顆缺牙</strong>
+                    <span>在意穩定度、療程時間與修復方式</span>
+                  </button>
+                  <button class="option" data-group="need" data-value="活動假牙困擾">
+                    <strong>活動假牙困擾</strong>
+                    <span>希望更穩、咬合更自然</span>
+                  </button>
+                  <button class="option" data-group="need" data-value="全口重建">
+                    <strong>全口重建</strong>
+                    <span>需要較完整的評估與醫師安排</span>
+                  </button>
+                </div>
+
+                <div class="microcopy">
+                  多數人最卡的是「不知道自己適不適合」和「怕一留資料就被強迫推銷」。
+                  所以這一步只確認需求，不先壓你選日期。
+                </div>
+                <div class="annotation">
+                  將原本早期的日期選擇，延後成聯絡後安排。這樣可以降低 decision friction，
+                  對高意圖但仍在風險評估期的醫療用戶更合理。
+                </div>
+              </section>
+
+              <section class="panel surface">
+                <div class="panel-head">
+                  <div>
+                    <h3>你希望什麼時候接到聯繫？</h3>
+                    <p>先選聯絡時段，不逼你先決定正式看診日期。</p>
+                  </div>
+                  <div class="step-pill">Step 2 / 2</div>
+                </div>
+
+                <div class="slot-list" id="timeOptions">
+                  <button class="slot active" data-group="time" data-value="今天 18:00 前">
+                    <b>今天</b>
+                    <span>18:00 前</span>
+                  </button>
+                  <button class="slot" data-group="time" data-value="今晚 18:00 - 21:00">
+                    <b>今晚</b>
+                    <span>18:00 - 21:00</span>
+                  </button>
+                  <button class="slot" data-group="time" data-value="明天白天">
+                    <b>明天</b>
+                    <span>白天聯繫</span>
+                  </button>
+                </div>
+
+                <div class="proof-grid">
+                  <div class="proof">
+                    <strong>4.9 / 5</strong>
+                    <span>Google 評價摘要，先建立專業信任，而不是只講優惠。</span>
+                  </div>
+                  <div class="proof">
+                    <strong>1,200+</strong>
+                    <span>重建評估案例，給高風險決策一個可依賴的信號。</span>
+                  </div>
+                </div>
+
+                <div class="doctor">
+                  <div class="doctor-visual" aria-hidden="true"></div>
+                  <div class="doctor-copy">
+                    <strong>由植牙重建專人先了解狀況，再安排合適醫師</strong>
+                    <p>
+                      先讓患者感覺「有人在幫我判斷」，而不是「我要立刻被迫掛號」。
+                      這對醫療轉化比直接丟排程器更有效。
+                    </p>
+                  </div>
+                </div>
+
+                <div class="accordion">
+                  <div class="faq open">
+                    <button type="button">
+                      <span>留下資料後會發生什麼？</span>
+                      <strong>-</strong>
+                    </button>
+                    <p>
+                      專人會先電話或 LINE 了解缺牙情況、區域與時間偏好，再安排實際評估。
+                      這一步的目的是降低你一開始的決策壓力。
+                    </p>
+                  </div>
+                  <div class="faq">
+                    <button type="button">
+                      <span>現在就要決定療程嗎？</span>
+                      <strong>+</strong>
+                    </button>
+                    <p>
+                      不需要。你先拿到可行性判斷、預算區間與時間安排，再決定要不要進一步評估。
+                    </p>
+                  </div>
+                </div>
+                <div class="annotation">
+                  Trust layer 放在 CTA 前，不再埋在頁面下半段。因為對高意圖用戶，現在阻礙不是認知，
+                  而是風險與承諾成本。這裡直接回答「留資料後會不會很麻煩」。
+                </div>
+              </section>
+
+              <div class="sticky-cta">
+                <button id="openForm">下一步，留下聯絡方式</button>
+              </div>
+            </div>
+
+            <div class="sheet" id="formSheet">
+              <div class="sheet-card">
+                <h3>最後一步，讓專人聯絡你</h3>
+                <p>
+                  你已完成 quick check。現在只要留下基本資訊，專人會依你的需求與時段回覆。
+                </p>
+
+                <div class="summary-row">
+                  <div class="summary-chip">
+                    <label>需求類型</label>
+                    <strong id="summaryNeed">單顆缺牙</strong>
+                  </div>
+                  <div class="summary-chip">
+                    <label>希望聯繫</label>
+                    <strong id="summaryTime">今天 18:00 前</strong>
+                  </div>
+                </div>
+
+                <form id="leadForm">
+                  <div class="field">
+                    <label for="name">姓名</label>
+                    <input id="name" name="name" type="text" placeholder="怎麼稱呼你？" required />
+                  </div>
+                  <div class="field">
+                    <label for="phone">手機號碼</label>
+                    <input
+                      id="phone"
+                      name="phone"
+                      type="tel"
+                      inputmode="numeric"
+                      placeholder="0912 345 678"
+                      required
+                    />
+                  </div>
+                  <div class="inline">
+                    <div class="field">
+                      <label for="clinic">偏好區域</label>
+                      <select id="clinic" name="clinic">
+                        <option>台北中山</option>
+                        <option>台北信義</option>
+                        <option>新北板橋</option>
+                        <option>由專人建議</option>
+                      </select>
+                    </div>
+                    <div class="field">
+                      <label for="contact">聯絡方式</label>
+                      <select id="contact" name="contact">
+                        <option>電話</option>
+                        <option>LINE</option>
+                        <option>皆可</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div class="sheet-actions">
+                    <button class="primary-btn" type="submit">送出預約資料</button>
+                    <button class="secondary-btn" type="button" id="closeForm">回上一步</button>
+                  </div>
+                </form>
+
+                <div class="legal">
+                  送出即表示同意由重建團隊以電話或訊息聯繫，僅用於安排評估與諮詢，不會直接替你完成掛號。
+                </div>
+                <div class="annotation">
+                  表單只保留最小必要資料：姓名、手機、區域、聯絡方式。原本高摩擦的日期決策移到人工接手後，
+                  讓使用者在心理上更容易完成送出。
+                </div>
+              </div>
+            </div>
+
+            <div class="success" id="successSheet">
+              <div class="success-card">
+                <div class="success-mark">✓</div>
+                <h3>已收到你的預約資料</h3>
+                <p>
+                  接下來 15 分鐘內會由專人依你填寫的需求與時段聯繫，協助安排評估與合適院所。
+                </p>
+                <div class="checklist">
+                  <div>需求摘要：<strong id="successNeed">單顆缺牙</strong></div>
+                  <div>聯繫時間：<strong id="successTime">今天 18:00 前</strong></div>
+                  <div>下一步：確認狀況、說明療程方向、安排實際評估時間</div>
+                </div>
+                <div class="sheet-actions">
+                  <button class="primary-btn" type="button" id="restartFlow">回看流程</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="spec">
+          <section class="spec-card">
+            <span class="spec-pill">Viewport: mobile 375px</span>
+            <h2>Baseline Acknowledgment</h2>
+            <p>
+              保留原本的醫療信任語氣、青綠色系與「預約評估」框架；
+              但把一進頁就要求選分店與日期，改成先做低承諾 quick check，再收聯絡方式。
+            </p>
+            <div class="spec-grid">
+              <div>
+                <h3>Keeping</h3>
+                <ul>
+                  <li>醫療感的 teal palette，維持專業與安心。</li>
+                  <li>主軸仍是預約評估，不改成折價促銷型 landing page。</li>
+                  <li>社會證明與醫師信任內容保留，但前移到 CTA 前。</li>
+                </ul>
+              </div>
+              <div>
+                <h3>Changing</h3>
+                <ul>
+                  <li>首屏文案改成 ad-message continuity，先承接「我想知道自己適不適合」。</li>
+                  <li>把日期選擇改為聯絡時段選擇，降低決策成本。</li>
+                  <li>表單從前置流程改成第 2 步，且縮到最小必要欄位。</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section class="spec-card">
+            <h2>Inferred Design System</h2>
+            <ul>
+              <li>Font: `Noto Sans TC` + `DM Sans` for numeric emphasis</li>
+              <li>Primary: `#0C8B8F`, Primary strong: `#096F73`</li>
+              <li>Accent: `#F2B44D`, Ink: `#14313B`, Bg: `#F4F6F2`</li>
+              <li>Spacing base: `8px`, Radius scale: `12 / 16 / 20 / 28`</li>
+              <li>Shadow style: soft medical-card elevation, not e-commerce hard shadows</li>
+            </ul>
+          </section>
+
+          <section class="spec-card">
+            <h2>State Matrix</h2>
+            <ul>
+              <li>Primary state 1: Landing default with quick qualification</li>
+              <li>Primary state 2: Contact sheet open with prefilled summary chips</li>
+              <li>Primary state 3: Success confirmation after submit</li>
+              <li>Secondary state: FAQ expanded/collapsed</li>
+              <li>Secondary state: different need/time selections</li>
+            </ul>
+          </section>
+
+          <section class="spec-card">
+            <h2>Why This Should Convert Better</h2>
+            <ul>
+              <li>先讓使用者感到被理解，再要求輸入資料，符合高風險醫療決策心理。</li>
+              <li>把「預約」拆成 micro-commit，先完成 2 題選擇，心理上更容易進到表單。</li>
+              <li>強調專人協助安排，避免讓人誤以為現在就要做完整看診排程。</li>
+              <li>CTA 前就回應三個核心疑慮：適不適合、會不會被強推、接下來怎麼走。</li>
+            </ul>
+          </section>
+        </aside>
+      </div>
+    </div>
+
+    <script>
+      const viewButtons = document.querySelectorAll("[data-view]");
+      const annotationToggle = document.getElementById("annotationToggle");
+      const formSheet = document.getElementById("formSheet");
+      const successSheet = document.getElementById("successSheet");
+      const openForm = document.getElementById("openForm");
+      const closeForm = document.getElementById("closeForm");
+      const restartFlow = document.getElementById("restartFlow");
+      const leadForm = document.getElementById("leadForm");
+      const summaryNeed = document.getElementById("summaryNeed");
+      const summaryTime = document.getElementById("summaryTime");
+      const successNeed = document.getElementById("successNeed");
+      const successTime = document.getElementById("successTime");
+
+      const state = {
+        need: "單顆缺牙",
+        time: "今天 18:00 前",
+      };
+
+      function syncSummary() {
+        summaryNeed.textContent = state.need;
+        summaryTime.textContent = state.time;
+        successNeed.textContent = state.need;
+        successTime.textContent = state.time;
+      }
+
+      function setView(view) {
+        viewButtons.forEach((button) => {
+          button.classList.toggle("active", button.dataset.view === view);
+        });
+
+        formSheet.classList.toggle("active", view === "form");
+        successSheet.classList.toggle("active", view === "success");
+      }
+
+      viewButtons.forEach((button) => {
+        button.addEventListener("click", () => setView(button.dataset.view));
+      });
+
+      annotationToggle.addEventListener("click", () => {
+        document.body.classList.toggle("show-annotations");
+        annotationToggle.classList.toggle("active");
+        annotationToggle.textContent = document.body.classList.contains("show-annotations")
+          ? "Hide annotations"
+          : "Show annotations";
+      });
+
+      document.querySelectorAll("[data-group]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const group = button.dataset.group;
+          document.querySelectorAll(`[data-group="${group}"]`).forEach((node) => {
+            node.classList.remove("active");
+          });
+          button.classList.add("active");
+          state[group] = button.dataset.value;
+          syncSummary();
+        });
+      });
+
+      document.querySelectorAll(".faq").forEach((faq) => {
+        faq.querySelector("button").addEventListener("click", () => {
+          const isOpen = faq.classList.contains("open");
+          faq.classList.toggle("open");
+          faq.querySelector("strong").textContent = isOpen ? "+" : "-";
+        });
+      });
+
+      openForm.addEventListener("click", () => {
+        syncSummary();
+        setView("form");
+      });
+
+      closeForm.addEventListener("click", () => {
+        setView("landing");
+      });
+
+      leadForm.addEventListener("submit", (event) => {
+        event.preventDefault();
+        syncSummary();
+        setView("success");
+      });
+
+      restartFlow.addEventListener("click", () => {
+        setView("landing");
+      });
+
+      syncSummary();
+    </script>
+  </body>
+</html>
