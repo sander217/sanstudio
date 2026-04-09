@@ -1,1 +1,1 @@
-../../context-lock-SKILL.md
+../../context-lock-SKILL-v2.md

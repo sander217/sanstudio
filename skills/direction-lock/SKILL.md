@@ -1,1 +1,1 @@
-../../direction-lock-SKILL.md
+../../direction-lock-SKILL-v2.md

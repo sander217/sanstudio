@@ -1,1 +1,1 @@
-../../design-lock-SKILL.md
+../../design-lock-SKILL-v2.md
