@@ -5,18 +5,16 @@ A 3-gate design system: fuzzy requirements → Figma-ready output.
 ## Skills
 
 ```text
-context-lock-SKILL-v2.md       # Gate 1: understand + infer + extract visual contract
-direction-lock-SKILL-v2.md     # Gate 2: research + validate + propose directions
-design-lock-SKILL-v2.md        # Gate 3: design + iterate + export
 skills/
 ├── context-lock/
-│   └── SKILL.md               → symlink to ../../context-lock-SKILL-v2.md
+│   └── SKILL.md               # Gate 1: understand + infer + extract visual contract
 ├── direction-lock/
-│   └── SKILL.md               → symlink to ../../direction-lock-SKILL-v2.md
+│   └── SKILL.md               # Gate 2: research + validate + propose directions
 └── design-lock/
-    ├── SKILL.md               → symlink to ../../design-lock-SKILL-v2.md
+    ├── SKILL.md               # Gate 3: design + iterate + export
     ├── design-techniques-db.md
-    └── figma-schema-v0.2.md
+    ├── figma-schema-v0.2.md
+    └── svg-patterns.md
 ```
 
 ## Routing
@@ -58,9 +56,11 @@ User request
 
 Read ONLY the current gate's skill file. Do NOT pre-read downstream gates.
 
-- Entering Gate 1 → read `context-lock-SKILL-v2.md` only
-- Transitioning to Gate 2 → read `direction-lock-SKILL-v2.md` only
-- Transitioning to Gate 3 → read `design-lock-SKILL-v2.md` only
+- Entering Gate 1 → read `skills/context-lock/SKILL.md` only
+- Transitioning to Gate 2 → read `skills/direction-lock/SKILL.md` only
+- Transitioning to Gate 3 → read `skills/design-lock/SKILL.md` only
+  - Gate 3 may also read support files: `skills/design-lock/design-techniques-db.md`,
+    `skills/design-lock/figma-schema-v0.2.md`, `skills/design-lock/svg-patterns.md`
 
 The previous gate's skill file is already in conversation history. Do not re-read it.
 
