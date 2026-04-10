@@ -193,10 +193,27 @@ For each section that needs an image, construct a specific query:
      border-radius: var(--radius);" />
 ```
 
-### Method 2: web_search + web_fetch (FALLBACK)
+### Method 2: Unsplash direct URL (FALLBACK)
 
-If image_search is unavailable, use web_search to find photos on Unsplash or Pexels.
-Construct queries: `"unsplash [subject] [style]"`. Fetch the image URL and embed.
+If image_search is unavailable, use Unsplash source URLs directly — **no fetch needed**,
+these embed immediately in `<img src="">`:
+
+```
+https://source.unsplash.com/[WIDTH]x[HEIGHT]/?[keyword1],[keyword2]
+```
+
+Examples:
+```html
+<!-- Hero: dental clinic -->
+<img src="https://source.unsplash.com/1400x800/?dental,clinic,modern"
+     style="width:100%;height:480px;object-fit:cover;" alt="..." />
+
+<!-- Person / headshot -->
+<img src="https://source.unsplash.com/400x400/?professional,portrait,business"
+     style="width:80px;height:80px;border-radius:50%;object-fit:cover;" alt="..." />
+```
+
+Keep keywords specific — `dental,clinic,modern` beats `medical`. Use 2-3 keywords max.
 
 ### Method 3: CSS-only (LAST RESORT)
 
@@ -228,6 +245,55 @@ Before generating HTML, plan every visual slot:
 | Features | SVG icons | — | — |
 | Social proof | none | — | — |
 | CTA | CSS gradient | — | — |
+```
+
+---
+
+## Step 7B: Icon Strategy (MANDATORY)
+
+**NEVER use emoji as icons.** Emoji are not icons. Using 🦷 or 📅 in a UI mockup is 
+a credibility destroyer. Always use SVG icons.
+
+### Source: Iconify API (no install, no CDN script needed)
+
+Embed any icon as an inline `<img>` using the Iconify API:
+
+```html
+<img src="https://api.iconify.design/[set]:[icon-name].svg?color=%23[hex]"
+     width="24" height="24" alt="[label]" />
+```
+
+**Recommended icon sets:**
+| Set prefix | Style | Use for |
+|---|---|---|
+| `lucide` | thin, modern | SaaS, productivity apps |
+| `heroicons` | clean, solid/outline | marketing sites, dashboards |
+| `tabler` | outlined, detailed | data-heavy UIs, admin panels |
+| `ph` (Phosphor) | versatile, multiple weights | mobile apps, consumer products |
+
+**Common icon examples:**
+```html
+<!-- Checkmark -->
+<img src="https://api.iconify.design/lucide:check-circle.svg?color=%2322c55e" width="20" height="20" alt="check" />
+<!-- Calendar -->
+<img src="https://api.iconify.design/lucide:calendar.svg?color=%236366f1" width="20" height="20" alt="calendar" />
+<!-- User -->
+<img src="https://api.iconify.design/lucide:user.svg?color=%23374151" width="20" height="20" alt="user" />
+<!-- Arrow right -->
+<img src="https://api.iconify.design/lucide:arrow-right.svg?color=%23ffffff" width="16" height="16" alt="arrow" />
+<!-- Star -->
+<img src="https://api.iconify.design/lucide:star.svg?color=%23f59e0b" width="16" height="16" alt="star" />
+```
+
+**URL rules:**
+- Color parameter: `?color=%23[hex without #]` — e.g. white = `%23ffffff`, gray-700 = `%23374151`
+- Size: always set explicit `width` and `height` attributes
+- The API returns a styled SVG — it renders in all browsers without any script
+
+### Icon plan (add to Image Plan table)
+
+```
+| Feature card | checkmark, search, calendar | Iconify lucide set | color matches accent |
 ```
 
 ---
@@ -364,8 +430,8 @@ QA CHECKLIST:
 - Interactive: all elements functional
 - Layout: annotations hidden, hero ≤5 elements, no unjustified grids, 
   section gaps ≥64px, no 50/50 splits
-- Images: no gray placeholders, hero has photo or strong typography,
-  SVG for icons only, alt text on all images
+- Images: no gray placeholders, hero has real photo via image_search or source.unsplash.com,
+  SVG icons via Iconify API only — zero emoji in UI, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
 
 🔍 QA: ✅ [X] passed · ⚠️ [Y] warnings · ❌ [Z] failures
@@ -429,8 +495,9 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 
 1. **Hard layout constraints are law.** Re-read them before every HTML generation.
 2. **Visual contract = exact CSS values.** Don't reinterpret, don't improve, don't drift.
-3. **Images first, CSS-only last.** Always try image_search before falling back.
-4. **No gray rectangles.** Ever. Design without image (Route C) instead.
+3. **Images first, CSS-only last.** Try image_search → Unsplash source URL → CSS-only.
+4. **No gray rectangles.** Ever. Design without image instead.
+5. **No emoji icons.** Ever. Use Iconify API SVG. `🦷` in a mockup = instant reject.
 5. **Realistic content.** No Lorem Ipsum.
 6. **Surface type = composition rules.** Website ≠ app ≠ dashboard.
 7. **Sans-serif default.** Serif only when explicitly requested.
@@ -452,3 +519,5 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 8. **Visual contract drift:** Reference site was black/white/blue, output is purple.
 9. **Generic stock photo:** "Happy people" when section discusses dental procedures.
 10. **Lorem Ipsum in hi-fi:** Credibility destroyer.
+11. **Emoji icons:** 🦷📅✅ are not UI icons. Use Iconify API SVG every time.
+12. **Missing images:** If image_search fails, use `source.unsplash.com` — not a gray box, not a gradient pretending to be a photo.
