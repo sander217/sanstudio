@@ -8,6 +8,6 @@
   "enableProposedApi": false,
   "editorType": ["figma"],
   "networkAccess": {
-    "allowedDomains": ["http://127.0.0.1:3333"]
+    "allowedDomains": ["http://localhost:3333"]
   }
 }
