@@ -8,6 +8,7 @@
   "enableProposedApi": false,
   "editorType": ["figma"],
   "networkAccess": {
-    "allowedDomains": ["http://localhost:3333"]
+    "allowedDomains": ["http://localhost:3333"],
+    "reasoning": "Communicates with a local bridge server (port 3333) to receive design JSON exported by Claude Code for auto-import into Figma."
   }
 }
