@@ -49,9 +49,18 @@ Is the screen primarily about DATA CONSUMPTION (viewing, scanning, monitoring)?
                     └─ No → Does it involve AI-GENERATED content or assistance?
                         ├─ Yes → #16 AI Copilot and Generative Guidance
                         │
-                        └─ No → Is the primary viewport MOBILE?
-                            ├─ Yes → #13 Mobile Focus and Thumb Flow
-                            └─ No → Use fallback (see below)
+                        └─ No → Is this a MOBILE APP (product_surface = mobile-app)?
+                            ├─ Yes → #13 Mobile App Design (ALWAYS as base layer)
+                            │         Then overlay screen-level technique:
+                            │         ├─ Feed/list screen → #13 + #9 Search and Discovery
+                            │         ├─ Settings screen → #13 + #10 Settings and Safety
+                            │         ├─ Onboarding flow → #13 + #1 Activation Onboarding
+                            │         ├─ Checkout/payment → #13 + #6 Checkout Reassurance
+                            │         ├─ Dashboard/stats → #13 + #7 Dashboard Scanability
+                            │         └─ Other → #13 alone
+                            └─ No → Is the primary viewport MOBILE (responsive web)?
+                                ├─ Yes → #13 Mobile Focus (web variant)
+                                └─ No → Use fallback (see below)
 ```
 
 If two branches seem equally valid, pick both (max 2 screen-level techniques).
@@ -797,52 +806,71 @@ Format:
 - **Avoid:** Photography, atmospheric backgrounds, decorative accents, and
   entrance animations. Settings pages need trust through stability, not flair.
 
-### 13. Mobile Focus and Thumb Flow
+### 13. Mobile App Design
 
-**Keywords:** mobile, app, handheld, one-hand, thumb, bottom action, compact
+**Keywords:** mobile app, native app, iOS, Android, tab bar, navigation, thumb zone, 
+safe area, bottom sheet, push/pop
 
-**Use when:** the primary viewport is mobile and reachability matters.
+**Use when:** `product_surface = mobile-app`. This is a BASE LAYER technique — always 
+applied first, then overlay a screen-level technique on top.
 
 **Apply:**
-- Keep primary actions in comfortable thumb zones
-- Reduce simultaneous choices on a single step
-- Use bottom sheets and segmented progression where helpful
-- Preserve strong visual rhythm with larger tap targets
+- Every screen wrapped in phone frame with status bar, nav bar, tab bar, safe areas
+- Primary actions in thumb zone (bottom 1/3)
+- Touch targets ≥ 44x44pt (iOS) / 48x48dp (Android)
+- Platform-specific components (see `mobile-app-patterns.md`)
+- `:active` press states, never `:hover`
+
+**Also use for responsive mobile web when:** the primary viewport is mobile and 
+reachability matters. In that case, skip the phone frame but keep thumb zone and 
+touch target rules.
 
 **Avoid when:** desktop is the real primary work surface.
 
-**Steal the mechanism, not the skin:** reachability and task pacing, not app-store visual clichés.
+**Steal the mechanism, not the skin:** reachability, task pacing, and platform-native 
+composition — not app-store visual clichés.
 
-#### Visual Execution
+#### Visual Execution (iOS default)
 
-- **Layout:** Single column, `max-width: 375px` viewport. Bottom action bar fixed with safe area padding. Content stacks vertically. Horizontal scroll only for carousels/galleries.
-- **Spacing:** 24px section gap. 16px horizontal padding (screen edges). 12px between list items. Bottom bar height 56px + safe area.
-- **Typography weight:** Screen title 600/20px. Body 400/15px (min). List item title 500/16px. List item meta 400/13px. Tab bar labels 500/10px.
-- **Color distribution:** Bottom bar uses neutral bg or white + top border. Active tab in primary color. Content area white bg. Cards use subtle border, not shadow (saves visual weight on small screens).
-- **Component density:** Touch targets minimum 44x44px. Max 3-4 actions in bottom bar. Cards show 2-3 per screen height. Pull-to-refresh, not reload button. Swipe actions where appropriate.
-- **Key CSS pattern:**
-  ```css
-  .mobile-app { max-width: 375px; min-height: 100vh; display: flex; flex-direction: column; }
-  .mobile-content { flex: 1; overflow-y: auto; padding: 16px; padding-bottom: 72px; }
-  .bottom-bar { position: fixed; bottom: 0; left: 0; right: 0; height: 56px; padding-bottom: env(safe-area-inset-bottom); background: white; border-top: 1px solid var(--neutral-200); display: flex; justify-content: space-around; align-items: center; }
-  .bottom-bar button { min-width: 44px; min-height: 44px; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-  .bottom-bar .label { font-size: 10px; font-weight: 500; }
-  .list-item { padding: 12px 0; border-bottom: 1px solid var(--neutral-100); display: flex; align-items: center; gap: 12px; min-height: 44px; }
-  ```
+- **Layout:** Phone frame 393x852pt. Nav bar 44pt + status bar 59pt at top. Tab bar 
+  49pt + home indicator 34pt at bottom. Content scrolls between them. Single column.
+  Horizontal scroll only for carousels/galleries.
+- **Spacing:** 16px horizontal padding (screen edges). 20px between grouped list 
+  sections. 0.5px dividers (inset 16px from left). No section gaps > 32px — this 
+  is an app, not a marketing page.
+- **Typography weight:** Large title 700/34pt (top-level tabs only). Nav title 
+  600/17pt. Body 400/17pt. List title 400/17pt. List subtitle 400/15pt secondary. 
+  Tab label 500/10pt. Section header 400/13pt uppercase.
+- **Color distribution:** Nav bar and tab bar: translucent blur bg 
+  (rgba(249,249,249,0.94) + backdrop-filter). Active tab = tint color. 
+  Content bg: system white or #F2F2F7 (grouped). Cards: white with 10pt radius, 
+  no shadow (or very subtle). Tint color default: #007AFF.
+- **Component density:** Touch targets 44x44pt min. Tab bar 3-5 items max. 
+  List rows show 6-8 visible before scroll. Grouped list sections with headers. 
+  Bottom sheets for secondary actions, not new screens.
+- **Key CSS pattern:** See `mobile-app-patterns.md` §3 for full component CSS 
+  (tab bar, nav bar, list view, bottom sheet, search bar, segmented control).
+
+#### Visual Execution (Android variant)
+
+- **Layout:** Same structure but: top app bar 64dp (title left-aligned), bottom 
+  nav 80dp with pill indicator. FAB at bottom-right 16dp above bottom nav.
+- **Typography:** Roboto. Body 16sp. Headline 28sp. Top bar title 22sp.
+- **Components:** Ripple effect on tap. Bottom sheets peek at 50% by default. 
+  Material 3 color system with tonal elevation.
 
 #### Visual Assets
 
-- **Image route:** Follow Step 0.5 detection. Route A (generate) if available,
-  Route B (stock) as fallback, Route C (css-only) as last resort.
-- **Mobile imagery:** Only use photography when it materially supports the
-  screen and stays lightweight. Route C icon-first layouts are often the
-  default on mobile.
-- **Entrance animations:** Screen transitions use slide-left/right (0.3s).
-  List items stagger fade-up on first load only (not on every scroll).
-- **Bottom bar interaction:** Active tab icon animates (subtle scale or
-  color fill transition, 0.15s).
-- **Avoid:** Heavy photography, noise textures, and looped float/breathe
-  animations. Keep it tight.
+- **Image route:** Use image_search → Unsplash source URL → CSS icon-only. 
+  Photography only when it supports the screen content (e.g., product detail hero, 
+  profile photo). Most app screens are icon + text layouts.
+- **Icons:** Iconify API only. `lucide` or `ph` for iOS, `mdi` for Android.
+  See `mobile-app-patterns.md` §8 for specific icon examples.
+- **Entrance animations:** Screen transitions use slide-left/right (0.3s). 
+  List items stagger fade-up on first load only.
+- **Tab bar interaction:** Active icon color transitions (0.15s).
+- **Avoid:** Heavy photography, hero sections, noise textures, marketing 
+  compositions, decorative illustrations, and web-style section rhythm.
 
 ### 15. Collaborative Workflow
 

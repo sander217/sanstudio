@@ -41,11 +41,49 @@ These rules override all other layout decisions. Violating any = regenerate.
 7. **Asymmetry is confidence.** Every screen must have ONE clear visual winner — 
    the element that is obviously most important.
 
-**Self-check after generating HTML:**
+### ⛔ APP-SPECIFIC LAYOUT CONSTRAINTS (when surface = mobile-app)
+
+These REPLACE rules 1-4 and 6 above. Rules 5 and 7 still apply.
+
+A1. **Screen = one purpose.** Each screen does ONE thing. No scrollable 
+    multi-section landing pages inside an app.
+
+A2. **Navigation bar + content + tab bar.** This is the anatomy. 
+    Nav bar: 44pt (iOS) / 64dp (Android). Tab bar: 49pt+34pt safe area (iOS) / 
+    80dp (Android). Content fills the middle.
+
+A3. **Safe areas are sacred.** Status bar: 59pt (iPhone Dynamic Island) / 
+    47pt (notch) / 24dp (Android). Home indicator: 34pt (iOS) / 
+    48dp (Android gesture nav). NEVER place interactive elements in these zones.
+
+A4. **Thumb zone drives action placement.** Primary actions in bottom 1/3 
+    of screen. Secondary in middle. Destructive/rare actions in top or behind menu.
+
+A5. **Touch targets ≥ 44x44pt (iOS) / 48x48dp (Android).** No exceptions.
+    Spacing between targets ≥ 8pt.
+
+A6. **No website patterns in apps:**
+    - No hero sections or section-gap rhythm (80-120px gaps = web)
+    - No full-bleed marketing bands or editorial banding
+    - No 50/50 or 60/40 splits (use full-width stacked)
+    - No sticky sidebar, no breadcrumbs
+
+A7. **Phone frame is mandatory.** Every app mockup wraps in a CSS phone frame
+    with status bar, dynamic island/notch, and home indicator. 
+    See `mobile-app-patterns.md` Section 6.
+
+**Self-check after generating HTML (WEB):**
 - Screenshot the mockup. Does it look like a shipped product or a design poster?
 - Is there one clear hero element or a busy collage?
 - Can you remove any above-fold element without loss? If yes, remove it.
 - Are all grids justified? (Equal importance = grid. Otherwise = stack or asymmetric.)
+
+**Self-check after generating HTML (APP):**
+- Does it look like a real installed app, not a website in a phone frame?
+- Is there ONE clear action per screen?
+- Are primary actions in the bottom third (thumb zone)?
+- Can you identify the platform (iOS/Android) from the nav style alone?
+- Is the tab bar ≤ 5 items?
 
 ---
 
@@ -88,11 +126,24 @@ ask — do not silently deviate.
 
 ### Surface-Fit Check (MANDATORY)
 
-Declare what you're designing: marketing site, product website, mobile app, 
-desktop app, or dashboard. Then enforce:
-- Marketing site: no phone shells, no bottom nav, no app composition
-- App: no website hero sections or editorial banding
-- "Mobile-first" ≠ app composition
+Declare what you're designing. Then enforce:
+
+- **Marketing site:** no phone shells, no bottom nav, no app composition
+- **Mobile app (iOS):**
+  - Must use: navigation bar (44pt), tab bar (49pt), safe area insets
+  - Must NOT use: web hero, editorial banding, sidebar, floating cards
+  - Typography: -apple-system / SF Pro, 17pt body, 34pt large title
+  - Navigation: push/pop stack within tabs, modal for creation flows
+  - Read `skills/design-lock/mobile-app-patterns.md` for components and CSS
+- **Mobile app (Android):**
+  - Must use: top app bar (64dp), bottom navigation (80dp), edge-to-edge
+  - Must NOT use: iOS chevron back, centered nav titles
+  - Typography: Roboto / system-ui, 16sp body, 28sp headline
+  - Navigation: bottom nav (3-5), drawer for 6+, FAB for primary create action
+  - Read `skills/design-lock/mobile-app-patterns.md` for components and CSS
+- **Mobile app (cross-platform / unspecified):** default to iOS visual language
+- **Desktop app / dashboard:** no phone shells, no tab bars
+- "Mobile-first website" ≠ app composition
 
 ---
 
@@ -150,7 +201,20 @@ Override protocol: stop → flag → get user confirmation.
 
 ## Step 5: Viewport Declaration (MANDATORY)
 
+### Web
 Declare: mobile (375px) / desktop (1440px) / both. State reasoning.
+
+### Mobile App
+| Device | Size | Use as default |
+|---|---|---|
+| iPhone SE | 375 x 667pt | Legacy/compact |
+| iPhone 15 | 393 x 852pt | ✅ iOS default |
+| iPhone 15 Pro Max | 430 x 932pt | Large variant |
+| Android compact | 360 x 800dp | ✅ Android default |
+| Android medium | 412 x 915dp | Common midrange |
+
+Default: iPhone 15 (393pt) unless user specifies platform or device.
+Always state safe area values in the declaration.
 
 ---
 
@@ -333,7 +397,7 @@ For marketing sites:
 If Chinese headline feels heavy: increase line-height, reduce bold glyph collision, 
 split into intentional lines, add breathing room around the block.
 
-### HTML Technical Requirements
+### HTML Technical Requirements (Web)
 
 ```
 - Single self-contained HTML
@@ -343,6 +407,23 @@ split into intentional lines, add breathing room around the block.
 - Images via image_search URLs or CSS fallback (no gray rectangles)
 - Annotations layer collapsed by default, toggled via floating button
 - Dark mode toggle if applicable
+```
+
+### HTML Technical Requirements (Mobile App)
+
+```
+- Single self-contained HTML
+- Wrap in CSS phone frame (see mobile-app-patterns.md §6)
+- Status bar with time (9:41) + signal/wifi/battery icons
+- Dynamic Island or notch cutout (iOS) via CSS
+- Safe area insets via env(safe-area-inset-*) or hardcoded pt values
+- Tab bar with Iconify icons (lucide for iOS, mdi for Android)
+- Navigation bar with back button, title, optional right action
+- Content area with overscroll-behavior: contain
+- Touch states: :active with opacity/scale — NO :hover, NO cursor:pointer
+- System font stack: -apple-system, BlinkMacSystemFont, Roboto, sans-serif
+- Images via Unsplash or image_search (no gray placeholders)
+- Dark mode: #1C1C1E (iOS) or #121212 (Android), never pure #000
 ```
 
 ### Layout Decision Table
@@ -355,7 +436,18 @@ split into intentional lines, add breathing room around the block.
 | Primary + sidebar | Main + aside (65-75% / 25-35%) | 50/50 |
 | Single focus (form, article) | Single column, centered | Multi-column |
 
-### Section Rhythm (scrollable pages, 3+ sections)
+**App Layout Decision Table** (when surface = mobile-app):
+
+| Content type | Use this | NOT this |
+|---|---|---|
+| List of items | Full-width rows (44pt+ each) | Card grid |
+| Item detail | Scrollable single column, sticky bottom CTA | Split pane |
+| Settings | Grouped table view (iOS) / preference list (Android) | Free-form cards |
+| Creation flow | Modal + step progression | Inline form on existing screen |
+| Media gallery | Grid (2-3 columns), tap-to-expand | Carousel only |
+| Chat/messages | Reverse scroll, input pinned to bottom | Top-aligned input |
+
+### Section Rhythm — Web (scrollable pages, 3+ sections)
 
 ```
 Hero: max impact, minimal text, 1 CTA
@@ -368,6 +460,20 @@ Trust / FAQ: reduce density
   ↓ 80-120px
 Final CTA: mirror hero energy
 ```
+
+### Screen Flow Rhythm — Mobile App (multi-screen)
+
+App screens are NOT sections on a long page. Each screen is discrete:
+
+```
+Tab 1 (Home):    feed/list → item detail → action → confirmation
+Tab 2 (Search):  search bar + results → filter sheet → detail
+Tab 3 (Create):  modal → step 1 → step 2 → done (dismiss modal)
+Tab 4 (Activity): notification list → item detail
+Tab 5 (Profile): settings list → sub-settings → account management
+```
+
+Design screens in the order a user encounters them (core loop first).
 
 ### DS Compliance Check (after each mockup)
 
@@ -428,8 +534,15 @@ QA CHECKLIST:
 - Components: identical across screens
 - States: primary hi-fi'd, secondary in spec
 - Interactive: all elements functional
-- Layout: annotations hidden, hero ≤5 elements, no unjustified grids, 
+- Layout (web): annotations hidden, hero ≤5 elements, no unjustified grids, 
   section gaps ≥64px, no 50/50 splits
+- Layout (app): phone frame present, safe areas clear, tab bar ≤5 items,
+  one purpose per screen, no web hero/section patterns
+- Touch targets (app): all ≥ 44x44pt, spacing ≥ 8pt between targets
+- Navigation (app): back button on non-root, tab bar highlights correct tab,
+  swipe-back doesn't conflict with horizontal scroll
+- Platform fidelity (app): iOS looks iOS, Android looks Android, no mixing
+- Interaction (app): :active press states only, no :hover, no cursor:pointer
 - Images: no gray placeholders, hero has real photo via image_search or source.unsplash.com,
   SVG icons via Iconify API only — zero emoji in UI, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
@@ -498,16 +611,17 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 3. **Images first, CSS-only last.** Try image_search → Unsplash source URL → CSS-only.
 4. **No gray rectangles.** Ever. Design without image instead.
 5. **No emoji icons.** Ever. Use Iconify API SVG. `🦷` in a mockup = instant reject.
-5. **Realistic content.** No Lorem Ipsum.
-6. **Surface type = composition rules.** Website ≠ app ≠ dashboard.
-7. **Sans-serif default.** Serif only when explicitly requested.
-8. **Asymmetry is confidence.** Every screen needs a clear visual winner.
-9. **One screen at a time.** Show → iterate → move on.
-10. **All interactive elements work.** Toggle toggles, slider slides.
+6. **Realistic content.** No Lorem Ipsum.
+7. **Surface type = composition rules.** Website ≠ app ≠ dashboard.
+8. **Sans-serif default.** Serif only when explicitly requested.
+9. **Asymmetry is confidence.** Every screen needs a clear visual winner.
+10. **One screen at a time.** Show → iterate → move on.
+11. **All interactive elements work.** Toggle toggles, slider slides.
+12. **App = phone frame + platform fidelity.** Read `mobile-app-patterns.md` before any app HTML.
 
 ---
 
-## Anti-Patterns (top 10)
+## Anti-Patterns
 
 1. **Bento box:** Equal-weight grid with no hierarchy. The #1 failure mode.
 2. **50/50 split hero:** The most common AI layout default. Always generic.
@@ -521,3 +635,10 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 10. **Lorem Ipsum in hi-fi:** Credibility destroyer.
 11. **Emoji icons:** 🦷📅✅ are not UI icons. Use Iconify API SVG every time.
 12. **Missing images:** If image_search fails, use `source.unsplash.com` — not a gray box, not a gradient pretending to be a photo.
+13. **Web layout in app shell:** Hero section + scrolling sections inside a tab = not an app.
+14. **Mixed platform language:** iOS back chevron + Android FAB + web hamburger = Frankenstein.
+15. **Tiny touch targets:** Anything < 44x44pt is a usability failure. Common with icon-only buttons.
+16. **Ignoring safe areas:** Content behind status bar or home indicator.
+17. **Tab bar overflow:** More than 5 items in bottom nav. Use drawer instead.
+18. **Hover states in app:** Apps don't have hover. Use :active press states.
+19. **Desktop nav in app:** Sidebar nav, breadcrumbs, top horizontal nav bar inside a phone frame.
