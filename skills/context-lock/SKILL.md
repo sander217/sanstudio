@@ -278,10 +278,31 @@ DO NOT lecture. Match energy.
 Before the Context Summary, explicitly declare:
 - Marketing website / landing page
 - Product website  
-- Mobile app
+- Mobile app → also declare:
+  - **Platform:** iOS / Android / cross-platform (default: iOS if unspecified)
+  - **Primary navigation:** tab-bar (3-5 tabs) / drawer / stack-only
+  - **Key screens:** [list, e.g., home, detail, profile, settings]
+  - **Device class:** phone-only / phone + tablet
 - Desktop app / dashboard
 
 This constrains Gate 3's composition. A marketing site must NOT look like an app.
+
+### Mobile App Inference (when surface = mobile-app)
+
+Infer platform from context clues:
+- "像 XX app" → check if XX is iOS-only, Android-only, or cross-platform
+- Chinese-speaking user → default iOS-first (Taiwan/HK market)
+- No clue → default iOS visual language
+
+Infer navigation pattern:
+- Social/content app → tab bar (4-5 tabs)
+- Utility/tool app → tab bar (3-4 tabs) or stack-only
+- E-commerce → tab bar (5 tabs: home, search, cart, orders, profile)
+- Enterprise/B2B → drawer navigation
+
+Infer key flows (not just screens):
+- App design = flow-first, not page-first
+- Identify the core loop (e.g., browse → detail → action → confirmation)
 
 ---
 
@@ -342,6 +363,10 @@ user: [one line]
 goal: [one line]
 scope: [one line]
 product_surface: [marketing-site|landing-page|product-website|mobile-app|desktop-app|dashboard]
+app_platform: ios|android|cross-platform|none
+app_navigation: tab-bar|drawer|stack-only|none
+app_device_class: phone|phone+tablet|none
+app_key_flows: ["flow1","flow2"] | none
 constraints: [comma separated]
 key_insight: [one sentence]
 blind_spots: [comma list]
