@@ -65,7 +65,14 @@ interface DASTransition {
 // COLOR UTILITIES
 // ============================================================
 
-function hexToRgb(hex: string): RGB {
+function hexToRgb(hex: any): RGB {
+  if (typeof hex !== 'string') {
+    // Already an {r,g,b} or {r,g,b,a} object — return it directly
+    if (hex && typeof hex === 'object' && 'r' in hex) {
+      return { r: Number(hex.r), g: Number(hex.g), b: Number(hex.b) };
+    }
+    return { r: 0.9, g: 0.9, b: 0.9 };
+  }
   hex = hex.replace('#', '');
   if (hex.length === 3) {
     hex = hex[0] + hex[0] + hex[1] + hex[1] + hex[2] + hex[2];
@@ -77,12 +84,32 @@ function hexToRgb(hex: string): RGB {
   };
 }
 
+function parseColor(color: any): RGB {
+  if (typeof color === 'string') {
+    return hexToRgb(color);
+  }
+  if (typeof color === 'object' && color !== null && 'r' in color) {
+    return { r: color.r, g: color.g, b: color.b };
+  }
+  return { r: 0.9, g: 0.9, b: 0.9 };
+}
+
+function parseOpacity(color: any, fallback: number): number {
+  if (typeof color === 'object' && color !== null && 'a' in color) {
+    return color.a;
+  }
+  return fallback;
+}
+
 function parseFills(fills: any[]): Paint[] {
   if (!fills || !Array.isArray(fills)) return [];
   return fills.map(f => {
     if (f.type === 'SOLID' && f.color) {
-      const rgb = hexToRgb(f.color);
-      return { type: 'SOLID' as const, color: rgb, opacity: f.opacity ?? 1 };
+      return {
+        type: 'SOLID' as const,
+        color: parseColor(f.color),
+        opacity: f.opacity ?? parseOpacity(f.color, 1),
+      };
     }
     return { type: 'SOLID' as const, color: { r: 0.9, g: 0.9, b: 0.9 } };
   });
@@ -92,7 +119,11 @@ function parseStrokes(strokes: any[]): Paint[] {
   if (!strokes || !Array.isArray(strokes)) return [];
   return strokes.map(s => {
     if (s.type === 'SOLID' && s.color) {
-      return { type: 'SOLID' as const, color: hexToRgb(s.color), opacity: s.opacity ?? 1 };
+      return {
+        type: 'SOLID' as const,
+        color: parseColor(s.color),
+        opacity: s.opacity ?? parseOpacity(s.color, 1),
+      };
     }
     return { type: 'SOLID' as const, color: { r: 0.8, g: 0.8, b: 0.8 } };
   });
@@ -173,7 +204,7 @@ async function createNode(node: DASNode): Promise<SceneNode | null> {
   }
 }
 
-function createFrame(name: string, props: Record<string, any>, isImage: boolean): FrameNode {
+function createFrame(name: string, props: Record<string, any>, isImage: boolean = false): FrameNode {
   const frame = figma.createFrame();
   frame.name = name;
 
@@ -234,6 +265,10 @@ function createFrame(name: string, props: Record<string, any>, isImage: boolean)
   if (props.cornerRadius !== undefined) {
     frame.cornerRadius = props.cornerRadius;
   }
+
+  // Absolute position (for non-auto-layout parents)
+  if (props.x !== undefined) frame.x = props.x;
+  if (props.y !== undefined) frame.y = props.y;
 
   // Clip content (frames clip by default in Figma)
   frame.clipsContent = props.clipsContent ?? true;
@@ -319,6 +354,8 @@ function createRectangle(name: string, props: Record<string, any>): RectangleNod
     if (props.strokeWeight) rect.strokeWeight = props.strokeWeight;
   }
   if (props.cornerRadius !== undefined) rect.cornerRadius = props.cornerRadius;
+  if (props.x !== undefined) rect.x = props.x;
+  if (props.y !== undefined) rect.y = props.y;
 
   return rect;
 }
@@ -380,7 +417,12 @@ async function buildTree(
 
   // Pass 1: create all nodes
   for (const node of nodes) {
-    const figmaNode = await createNode(node);
+    let figmaNode: SceneNode | null = null;
+    try {
+      figmaNode = await createNode(node);
+    } catch (err: any) {
+      throw new Error(`node "${node.id}" (${node.type}): ${err.message}`);
+    }
     if (figmaNode) {
       nodeMap.set(node.id, figmaNode);
     }
@@ -391,22 +433,34 @@ async function buildTree(
     const figmaNode = nodeMap.get(node.id);
     if (!figmaNode) continue;
 
-    if (node.parentId === null) {
-      // Root node — append to the screen frame
-      parentFrame.appendChild(figmaNode);
-    } else {
-      const parentNode = nodeMap.get(node.parentId);
-      if (parentNode && 'appendChild' in parentNode) {
-        (parentNode as FrameNode).appendChild(figmaNode);
-      } else {
-        // Parent not found — append to screen frame as fallback
-        console.warn(`Parent "${node.parentId}" not found for node "${node.id}", appending to root`);
+    try {
+      if (node.parentId === null) {
         parentFrame.appendChild(figmaNode);
+      } else {
+        const parentNode = nodeMap.get(node.parentId);
+        const isContainer = parentNode && (
+          parentNode.type === 'FRAME' ||
+          parentNode.type === 'GROUP' ||
+          parentNode.type === 'COMPONENT' ||
+          parentNode.type === 'COMPONENT_SET' ||
+          parentNode.type === 'SECTION' ||
+          parentNode.type === 'INSTANCE'
+        );
+        if (isContainer) {
+          (parentNode as FrameNode).appendChild(figmaNode);
+        } else {
+          parentFrame.appendChild(figmaNode);
+        }
       }
+    } catch (err: any) {
+      throw new Error(`Pass2-append "${node.id}": ${err.message}`);
     }
 
-    // Apply sizing AFTER appending to parent (requires auto-layout context)
-    applyChildSizing(figmaNode, node.props);
+    try {
+      applyChildSizing(figmaNode, node.props);
+    } catch (err: any) {
+      throw new Error(`Pass2-sizing "${node.id}": ${err.message}`);
+    }
   }
 
   return nodeMap;
@@ -560,16 +614,21 @@ async function importFlow(data: DASFlow) {
     });
 
     // Create label above screen
-    const label = await createScreenLabel(
-      screen.name,
-      screen.state,
-      xOffset,
-      screen.canvas.width
-    );
-    figma.currentPage.appendChild(label);
+    let label: TextNode;
+    try {
+      label = await createScreenLabel(screen.name, screen.state, xOffset, screen.canvas.width);
+      figma.currentPage.appendChild(label);
+    } catch (err: any) {
+      throw new Error(`label "${screen.name}": ${err.message}`);
+    }
 
     // Create screen
-    const screenFrame = await buildScreen(screen, xOffset);
+    let screenFrame: FrameNode;
+    try {
+      screenFrame = await buildScreen(screen, xOffset);
+    } catch (err: any) {
+      throw new Error(`screen "${screen.name}": ${err.message}`);
+    }
     figma.currentPage.appendChild(screenFrame);
     screenFrames.push(screenFrame);
 
@@ -578,7 +637,7 @@ async function importFlow(data: DASFlow) {
 
   // Zoom to fit
   if (screenFrames.length > 0) {
-    figma.viewport.scrollAndZoomIntoView(screenFrames);
+    try { figma.viewport.scrollAndZoomIntoView(screenFrames); } catch (_) {}
   }
 
   // Report results
