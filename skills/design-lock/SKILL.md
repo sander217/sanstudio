@@ -558,7 +558,41 @@ Fix failures before export.
 
 "Ready to export. Full flow, key screens, or partial?"
 
-Read `skills/design-lock/figma-schema-v0.2.md` for JSON schema.
+### Detect Figma MCP (check BEFORE choosing export path)
+
+At the start of every export step, scan available tools for any of:
+- `mcp__Figma_Dev_Mode__*`
+- `mcp__plugin_design_figma__*`
+- Any tool with "figma" in its name
+
+---
+
+### Path A: Figma MCP connected ✅ (preferred)
+
+Push directly via MCP — no bridge server needed.
+
+1. Read `skills/design-lock/figma-schema-v0.2.md` for JSON schema
+2. Generate `design-export.json` per schema
+3. Call the MCP tool to push (e.g. `create_design_system_rules`, `get_design_context`
+   or whichever push/import tool is available in the connected MCP)
+4. Confirm the push succeeded and tell the user which Figma file was updated
+
+**Tell the user:**
+> "Figma MCP detected — pushing directly to Figma. No bridge server needed."
+
+---
+
+### Path B: No Figma MCP — bridge server
+
+1. Read `skills/design-lock/figma-schema-v0.2.md` for JSON schema
+2. Generate `design-export.json` and write to:
+   `/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output/latest/figma/design-export.json`
+3. Run export script: `./scripts/export-design-session.sh`
+4. Push to bridge: `curl -X POST http://localhost:3333/push -d @.../design-export.json`
+5. Tell user to open Figma Plugin → Auto-import tab → Start listening
+
+**Tell the user:**
+> "No Figma MCP detected. Using bridge server. Make sure `node figma-plugin/server.js` is running."
 
 ---
 
