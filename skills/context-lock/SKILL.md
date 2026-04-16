@@ -40,7 +40,18 @@ Inventory what the user provided and process each type:
 
 ### Figma Links
 
-If Figma MCP tools available: pull design data. If not: ask for screenshots directly.
+**Check for Figma MCP first.** If any `mcp__Figma*` or `mcp__plugin_design_figma*` 
+tools are listed in the current session:
+
+1. Call `get_design_context` or equivalent to pull the file's layer tree, styles, 
+   and component inventory
+2. Extract the same visual contract fields as the URL/screenshot path:
+   colors (hex), fonts, spacing, component names
+3. Note which components already exist (Gate 3 should reuse them, not rebuild)
+4. Flag any design system tokens found (colors, text styles, effects)
+
+If Figma MCP is NOT available: ask for screenshots directly. Do not try to fetch 
+Figma URLs via `web_fetch` — Figma requires auth and will return an error page.
 
 ### Documents (PRD, Spec, Brief)
 
