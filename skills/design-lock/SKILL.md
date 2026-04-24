@@ -1,9 +1,13 @@
 ---
 name: design-lock
-version: 2.0.0
+version: 2.1.0
 description: |
   Gate 3 of Design Agent Studio. Executes the confirmed direction.
   Generates hi-fi HTML mockups with real images, exports Figma JSON.
+  
+  v2.1 changes: Step 2.5 Reference Lookup (curated Mobbin library), Hi-Fi Fill
+  Checklist (catches wireframe-disguised-as-hi-fi output), new Rules 13-14
+  and Anti-Pattern 20.
   
   v2 changes: hard layout constraints at top, fixed image sourcing via 
   image_search/web_search, visual contract enforcement from Gate 1, 
@@ -107,22 +111,56 @@ Flag gaps, proceed with assumptions noted.
 
 ### Visual Contract Enforcement (MANDATORY)
 
-If `visual_contract` exists in upstream context, extract and lock these values 
-BEFORE any visual work:
+**Two sources, in priority order.** Read whichever exists. If both, DESIGN.md wins.
+
+#### Source 1 — Session DESIGN.md (preferred, from Gate 1)
+
+If `design_md_path` is in the upstream CONTEXT-LOCK block, that file is the
+**single source of truth for visual values**. Open it and:
+
+1. Read `skills/design-lock/design-md-spec.md` once if not already loaded —
+   it explains the YAML token schema, token references (`{colors.primary}`),
+   and section semantics.
+2. Parse the YAML frontmatter into a token map.
+3. Read the prose body — `## Overview`, `## Colors`, `## Typography`, etc. —
+   these explain *why* the tokens exist and constrain how they're used.
+4. Treat every token as a binding CSS value. Resolve `{}` references before
+   embedding. Honor every `## Do's and Don'ts` bullet as a hard rule.
+
+Announce:
+```
+🔒 DESIGN.md LOADED — <name from frontmatter>
+   Tokens: <N> colors, <N> typography levels, <N> components
+   Sections present: Overview, Colors, ..., Do's and Don'ts
+   Do's/Don'ts rule count: <N> (binding)
+```
+
+#### Source 2 — Inline `visual_contract` JSON (legacy / direct-invocation)
+
+If only `visual_contract` exists in upstream context (no DESIGN.md path),
+extract and lock these values BEFORE any visual work:
 
 ```
 🔒 VISUAL CONTRACT (from Gate 1)
 Background: [hex values]
-Accent: [hex values]  
+Accent: [hex values]
 Text: [hex values]
 Fonts: [family names]
 Layout: [max-width, hero pattern, section gaps]
 Excluded colors: [list]
 ```
 
-These are binding CSS values. Use them directly. Do not reinterpret, do not 
-"improve" them, do not substitute. If you disagree with a value, flag it and 
+These are binding CSS values. Use them directly. Do not reinterpret, do not
+"improve" them, do not substitute. If you disagree with a value, flag it and
 ask — do not silently deviate.
+
+#### Manifesto overlay (always)
+
+Independently of the two above, also load
+`skills/design-lock/references/style-manifesto.md` (itself a partial DESIGN.md).
+Its `## Do's and Don'ts` are appended to the session's binding rules. Its
+`colors`/`typography` frontmatter (if filled) acts as a fallback when the
+session DESIGN.md / visual_contract is silent on a value.
 
 ### Surface-Fit Check (MANDATORY)
 
@@ -176,6 +214,81 @@ Emit `🎯 TECHNIQUE MATCH` block. These are binding layout constraints.
 
 ### 2B: Confirmation
 "This is the visual language. Confirm or adjust?"
+
+---
+
+## Step 2.5: Reference Lookup (MANDATORY for mobile-app, recommended for mobile-web)
+
+Before any hi-fi HTML, anchor to concrete reference designs from the curated
+library. **This is the single most important step for turning Gate 3 output
+from wireframe-ish to real hi-fi.**
+
+### Load order
+
+1. Read `skills/design-lock/references/style-manifesto.md` — **rules here are BINDING**.
+   Treat each numbered rule as a hard constraint on par with the visual contract.
+2. Read `skills/design-lock/references/INDEX.md` — find the 2–3 most relevant entries
+   by matching (in priority order):
+   - `industry` (from CONTEXT-LOCK)
+   - `style_tags` (compatible with visual_contract + manifesto)
+   - `components` (from direction + screens planned)
+3. For each matched entry, open its `.md` file (under `mobile-app-examples/<industry>/`):
+   - The **"為什麼這是 hi-fi"** section = what to replicate visually
+   - The **"我的處方"** section = binding decision rules for this generation
+   - The **"可直接複用的 component"** = structural inventory to mirror
+   - The screenshot itself (`.png`) may be viewable via Read tool if needed
+
+### Announce (mandatory before generating HTML)
+
+```
+📚 REFERENCE MATCH
+Matched [N] references for this generation:
+1. [001-cashapp-home] — industry match, dark-neon style match
+2. [005-monarch-transactions] — component match (transaction-row, category-pill)
+3. [011-copilot-categories] — layout pattern match
+
+Manifesto rules loaded: [N] binding rules from style-manifesto.md
+Top 3 prescriptive rules from matched references:
+- [quoted rule 1]
+- [quoted rule 2]
+- [quoted rule 3]
+```
+
+### Embed trace comments in HTML
+
+During generation, embed reference attribution so iteration can verify compliance:
+
+```html
+<!-- REF: 001-cashapp-home — balance card anatomy -->
+<section class="balance-card">...</section>
+
+<!-- REF: 005-monarch-transactions — transaction row -->
+<article class="transaction-row">...</article>
+
+<!-- MANIFESTO: rule 3 (data viz mandatory) — sparkline added here -->
+<svg class="sparkline">...</svg>
+```
+
+These comments are for self-audit and review, not for production. Keep them.
+
+### Fallback when INDEX is empty
+
+If `INDEX.md` has no populated entries for the target industry/style, state explicitly:
+
+```
+⚠️ No curated references matched for [industry] + [style].
+   Falling back to convention-based hi-fi.
+   Risk: output may tend toward generic "mobile app" default.
+   Recommendation: add 3–5 references for this industry before next iteration.
+```
+
+Then proceed with the conventional `image_search` + pattern-file approach —
+but be extra strict on the Hi-Fi Fill Checklist (Step 8) to compensate.
+
+### When to skip
+
+- `product_surface = marketing-site` or `desktop-app` → skip (this step targets app / mobile hi-fi)
+- `iteration_rounds ≥ 3` with the same references already loaded → skip re-announcing
 
 ---
 
@@ -372,6 +485,7 @@ Before writing HTML, verify:
 - [ ] Image plan complete?
 - [ ] Surface type declared?
 - [ ] Viewport declared?
+- [ ] **Reference lookup done?** (Step 2.5 — references matched + manifesto loaded)
 
 ### Content Strategy
 
@@ -424,6 +538,11 @@ split into intentional lines, add breathing room around the block.
 - System font stack: -apple-system, BlinkMacSystemFont, Roboto, sans-serif
 - Images via Unsplash or image_search (no gray placeholders)
 - Dark mode: #1C1C1E (iOS) or #121212 (Android), never pure #000
+- Reference trace comments embedded (<!-- REF: ... --> — see Step 2.5)
+- DESIGN.md token comments embedded — when using a tokenized value, annotate:
+  e.g. `<button style="background:#3DD68C">` becomes
+       `<button style="background:#3DD68C"><!-- {components.button-primary.backgroundColor} --></button>`
+  This lets review verify which tokens were actually used.
 ```
 
 ### Layout Decision Table
@@ -479,6 +598,36 @@ Design screens in the order a user encounters them (core loop first).
 
 ```
 ✅ DS CHECK: Colors ✓|✗ · Typography ✓|✗ · Spacing ✓|✗ · Radius ✓|✗
+```
+
+### Hi-Fi Fill Checklist (MANDATORY — run BEFORE showing user, especially mobile-app)
+
+**This is the difference between wireframe and hi-fi.** Any ❌ = regenerate that section.
+Do NOT ship wireframe-level output under a hi-fi label.
+
+```
+□ All amounts are real numbers — not $0.00, not "Amount"
+□ All names are real content — not "User", not "Transaction Name", not "Lorem"
+□ At least 1 data viz present — chart / sparkline / progress / ring / bar
+□ At least 1 illustration, color block, or gradient section — not all white/gray
+□ Category / tag elements have color coding — not gray chips
+□ Typography has ≥3 hierarchy levels — e.g. 48 / 24 / 16 / 12
+□ Brand accent color appears ≥3 places — CTA + header + icon + active state
+□ Zero gray placeholder rectangles — use real image or redesign section
+□ Avatars where users/entities appear — colored-bg initial OR real photo
+□ Empty-state (if applicable) uses illustration, not blank canvas
+□ Every reference comment (<!-- REF: ... -->) has a matching implemented section
+□ Every manifesto rule has been checked against the output
+```
+
+If the screen has ≥3 failures: **the output is still a wireframe. Regenerate, don't ship.**
+
+State the result explicitly:
+
+```
+🎯 HI-FI FILL: ✅ [X] passed · ❌ [Y] failed
+  Failures: [list]
+  Action: [regenerate sections / ship]
 ```
 
 ---
@@ -546,6 +695,17 @@ QA CHECKLIST:
 - Images: no gray placeholders, hero has real photo via image_search or source.unsplash.com,
   SVG icons via Iconify API only — zero emoji in UI, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
+- Hi-Fi Fill: Step 8 Fill Checklist passed with 0 failures
+- References: Step 2.5 matches announced, trace comments embedded, manifesto rules honored
+- DESIGN.md lint (run if session DESIGN.md exists — see design-md-spec.md):
+  · broken-ref: every `{path.to.token}` resolves (BLOCKING)
+  · contrast-ratio: every component bg/text pair WCAG AA ≥ 4.5:1 normal text,
+    ≥ 3:1 large text 18pt+ / 14pt bold+ (BLOCKING)
+  · missing-primary: `colors.primary` defined (warning)
+  · missing-typography: ≥1 typography token defined (warning)
+  · orphaned-tokens: every color token referenced by ≥1 component (warning)
+  · section-order: prose sections in canonical order (warning)
+  · duplicate-section: no `##` heading appears twice (BLOCKING)
 
 🔍 QA: ✅ [X] passed · ⚠️ [Y] warnings · ❌ [Z] failures
 ```
@@ -560,7 +720,9 @@ Fix failures before export.
 
 ### Detect Figma MCP (check BEFORE choosing export path)
 
-At the start of every export step, scan available tools for any of:
+At the start of every export step, scan available tools for any name containing
+`figma` (case-insensitive). Common namespaces include:
+
 - `mcp__Figma_Dev_Mode__*`
 - `mcp__plugin_design_figma__*`
 - Any tool with "figma" in its name
@@ -624,7 +786,10 @@ viewport: mobile|desktop|both
 dark_mode: included|light-only
 design_system: [name|ad-hoc|inferred]
 visual_contract_enforced: true|false
+references_used: [list of reference IDs, or "none-available"]
+manifesto_rules_applied: [N or "no-manifesto"]
 qa_status: all-clear|warnings|fixed
+hifi_fill_status: all-pass|regenerated-N-times
 iteration_rounds: [N]
 companion_docs: DDR,interaction-spec,handoff-summary
 ---END-DESIGN-LOCK---
@@ -652,6 +817,9 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 10. **One screen at a time.** Show → iterate → move on.
 11. **All interactive elements work.** Toggle toggles, slider slides.
 12. **App = phone frame + platform fidelity.** Read `mobile-app-patterns.md` before any app HTML.
+13. **Hi-fi means filled.** Real numbers, real names, color-coded categories, ≥1 data viz, ≥1 decorative element. Blank `$0.00` + gray chips = wireframe, not hi-fi.
+14. **References anchor the output.** For mobile-app, always run Step 2.5 Reference Lookup. If the library is empty, flag it — don't silently default to generic patterns.
+15. **DESIGN.md is law when present.** Token values bind, prose constrains, Do's/Don'ts are hard rules. Never invent a color/font outside the token map without flagging. WCAG AA contrast failures block export — fix the tokens, don't ship inaccessible UI. Spec at `skills/design-lock/design-md-spec.md`.
 
 ---
 
@@ -676,3 +844,6 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 17. **Tab bar overflow:** More than 5 items in bottom nav. Use drawer instead.
 18. **Hover states in app:** Apps don't have hover. Use :active press states.
 19. **Desktop nav in app:** Sidebar nav, breadcrumbs, top horizontal nav bar inside a phone frame.
+20. **Wireframe disguised as hi-fi:** `$0.00` balances, `"User Name"` placeholders, gray category chips, empty charts, no illustrations, no color blocks. The Hi-Fi Fill Checklist exists to catch this — treat every failure as a regenerate trigger, not a warning to ignore.
+21. **Inaccessible color pair:** Component `backgroundColor` × `textColor` with WCAG AA contrast under 4.5:1 (normal text). Even if it looks "design-y," it fails users with low vision. The DESIGN.md `contrast-ratio` lint catches this — never override.
+22. **Token invention without declaration:** Inline-styling with a hex/font that isn't in the DESIGN.md token map. If you need it, propose adding it as a token (e.g. `colors.warning`) and have the user confirm — don't silently expand the palette.

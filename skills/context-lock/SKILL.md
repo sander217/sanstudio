@@ -1,11 +1,15 @@
 ---
 name: context-lock
-version: 2.0.0
+version: 2.1.0
 description: |
   Gate 1 of Design Agent Studio. Strategic entry point for all design work.
   Core job: turn a fuzzy prompt into a locked design spec with concrete visual 
   constraints. Infers aggressively — who the user is, what they like, why they 
   need this — before asking a single question.
+
+  v2.1 changes: emits a session DESIGN.md (skills/design-lock/design-md-spec.md
+  format) as the canonical visual contract. The DESIGN.md path is passed
+  downstream via `design_md_path` in the CONTEXT-LOCK handoff block.
 ---
 
 # /context-lock — Understand Before You Design
@@ -65,7 +69,8 @@ This is critical — see Step 0.5 for mandatory visual extraction.
 ### Design System Files / Tokens
 
 Extract colors, typography, spacing, component inventory, grid rules. Create a digest 
-for handoff.
+for handoff. If the file is already a DESIGN.md, ingest it directly — the format spec
+is at `skills/design-lock/design-md-spec.md`.
 
 ### Text-Only Requirements
 
@@ -136,6 +141,80 @@ user before passing downstream.
 Previous versions extracted abstract labels like "sans-first" or "copy-light". 
 These are useless — they don't constrain CSS. Every value in the contract must be 
 directly usable in code: hex colors, font family names, pixel values, layout ratios.
+
+---
+
+## Step 0.6: DESIGN.md Emission (MANDATORY when extracting visual contract)
+
+The Visual Contract from Step 0.5 must also be written as a **session DESIGN.md** —
+the canonical, structured visual spec that Gate 2 validates against and Gate 3 reads
+as source of truth.
+
+### Format
+
+Read `skills/design-lock/design-md-spec.md` (once per session) for the full schema.
+Worked example: `skills/design-lock/references/_DESIGN.example.md`.
+
+A DESIGN.md is a single file with:
+
+1. **YAML frontmatter** — design tokens (`colors`, `typography`, `rounded`, `spacing`, `components`)
+2. **Markdown body** — `## Overview`, `## Colors`, `## Typography`, `## Layout`, `## Elevation & Depth`, `## Shapes`, `## Components`, `## Do's and Don'ts`
+
+### Where to write
+
+```
+/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output/sessions/<timestamp>-<slug>/DESIGN.md
+```
+
+If the session output directory doesn't exist yet (first artifact of the session), 
+create it. The session slug is derived from the user's request.
+
+### What to fill
+
+- **At minimum**: `colors.primary`, `colors.surface`, `colors.on-surface`, one
+  typography token (`body-md`), and the `## Overview` + `## Do's and Don'ts` sections.
+- **From reference URL/screenshot**: populate every token you extracted in Step 0.5.
+- **From Figma MCP**: ingest existing tokens directly into the YAML.
+- **Component tokens**: include any component the reference clearly demonstrates
+  (e.g., `button-primary`, `card`, `transaction-row`). Use token references
+  (`{colors.primary}`) for values, not duplicated hex.
+- **`## Do's and Don'ts`**: pull from explicit user statements + obvious Step 0.5
+  exclusions (e.g., "Excluded colors" → "Don't use purple").
+
+### Manifesto overlay
+
+Before writing, also load `skills/design-lock/references/style-manifesto.md`. Any
+tokens or rules in the manifesto act as **defaults** — the session DESIGN.md may
+override them but should explicitly say so in the prose body.
+
+### Lint before handoff
+
+After writing, mentally run the lint rules from `design-md-spec.md`:
+
+- ❌ broken-ref (BLOCKING): every `{path.to.token}` resolves
+- ❌ duplicate-section (BLOCKING): no `##` heading appears twice
+- ⚠️ contrast-ratio: every component bg/text pair WCAG AA ≥ 4.5:1 — flag if not
+- ⚠️ missing-primary: warn if `colors.primary` is missing
+- ⚠️ orphaned-tokens: warn on color tokens that no component references
+- ⚠️ section-order: prose sections in canonical order
+
+If a BLOCKING rule fails, fix it before handoff. Warnings are tolerated but
+flagged in the CONTEXT-LOCK handoff block.
+
+### Announce
+
+```
+🎨 DESIGN.md emitted
+   Path: <absolute path>
+   Tokens: <N> colors, <N> typography, <N> components
+   Lint: ✅ passed | ⚠️ <N> warnings | ❌ <N> errors (must fix)
+```
+
+### When to skip
+
+- ITERATE entry path on an existing screen with no reference → skip; Gate 3 reuses
+  the existing DESIGN.md from the previous session.
+- COMPARE entry path that ends without G2/G3 → skip; the evaluation is the artifact.
 
 ---
 
@@ -331,6 +410,7 @@ Surface type: [marketing-site | app | dashboard | etc.]
 Constraints: [tech/brand/time — mark [?] if inferred]
 
 🎨 Visual Contract: [if reference provided — summary of key hex/font/layout values]
+🎨 DESIGN.md: [path if emitted, lint status]
 
 💡 Key Insight: [1-2 lines, specific and actionable]
 ⚠️ Blind Spots: [1-2 things user hasn't considered]
@@ -367,7 +447,7 @@ Then: "(1) Enough. (2) Gate 3. (3) Gate 2."
 
 ```
 ---CONTEXT-LOCK---
-schema: 2.0
+schema: 2.1
 entry_type: [TYPE]
 confidence: [HIGH|MEDIUM|LOW]
 user: [one line]
@@ -385,6 +465,8 @@ language: zh-TW|en|mixed
 routed_to: G2|G3
 design_system_digest: [JSON] | none
 visual_contract: {"bg_primary":"#hex","bg_secondary":"#hex","accent_primary":"#hex","accent_secondary":"#hex|none","text_primary":"#hex","text_secondary":"#hex","cta_color":"#hex","heading_font":"family","body_font":"family","heading_weight":N,"max_width":"Npx","hero_pattern":"type","section_gap":"Npx","excluded_colors":["list"]} | none
+design_md_path: /absolute/path/to/sessions/<slug>/DESIGN.md | none
+design_md_lint: {"errors":N,"warnings":N,"blocking_failures":["list"]} | none
 ---END-CONTEXT-LOCK---
 ```
 
@@ -409,3 +491,7 @@ Acknowledge → save PARTIAL block → summarize progress.
    #FFFFFF text, #2563EB accent" is correct.
 5. **Match the user's energy.** ITERATE = fast. BLANK = exploratory.
 6. **No AI slop.** No filler, no corporate voice, no empty praise.
+7. **Emit DESIGN.md when extracting visual contract.** This is the cross-gate
+   language. Format spec at `skills/design-lock/design-md-spec.md`. Path is passed
+   downstream via `design_md_path`. Lint failures (broken-ref, duplicate-section)
+   block handoff — fix or flag.
