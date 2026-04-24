@@ -707,25 +707,64 @@ Use `#121212` (Material) with tonal elevation that adds slight tint as surfaces 
 
 ## 9. App-Specific Image Strategy
 
-App screens need different image treatment than web pages:
+App screens need different image treatment than web pages.
+
+**ALWAYS use full `<img>` tag with explicit px dimensions.** Unsplash URLs WILL break if 
+you omit the size in the URL or the inline style. These are the only formats that render:
+
+### Correct Unsplash format for app images
+
+```html
+<!-- List thumbnail (60x60, square, rounded) -->
+<img src="https://source.unsplash.com/120x120/?restaurant,interior"
+     style="width:60px;height:60px;border-radius:10px;object-fit:cover;flex-shrink:0;" alt="..." />
+
+<!-- List thumbnail (56x56, slightly smaller) -->
+<img src="https://source.unsplash.com/112x112/?coffee,cafe"
+     style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex-shrink:0;" alt="..." />
+
+<!-- Featured card hero (full width, tall) -->
+<img src="https://source.unsplash.com/800x480/?restaurant,atmospheric,interior"
+     style="width:100%;height:200px;object-fit:cover;border-radius:0;" alt="..." />
+
+<!-- Detail screen hero (full width) -->
+<img src="https://source.unsplash.com/800x600/?[subject],detail,professional"
+     style="width:100%;height:240px;object-fit:cover;" alt="..." />
+
+<!-- Profile avatar (circular) -->
+<img src="https://source.unsplash.com/200x200/?portrait,professional,face"
+     style="width:44px;height:44px;border-radius:50%;object-fit:cover;" alt="..." />
+
+<!-- Profile avatar (larger) -->
+<img src="https://source.unsplash.com/200x200/?portrait,professional"
+     style="width:72px;height:72px;border-radius:50%;object-fit:cover;" alt="..." />
+```
+
+### Query keywords by domain
+
+| App type | List thumbnail | Featured hero | Detail |
+|---|---|---|---|
+| Restaurant / food | `restaurant,interior,cozy` | `restaurant,atmospheric,dim` | `food,dish,plated` |
+| Cafe / coffee | `coffee,cafe,interior` | `cafe,coffee,morning` | `coffee,latte,art` |
+| Retail / fashion | `fashion,store,minimal` | `fashion,editorial` | `clothing,detail` |
+| Fitness | `gym,workout,fitness` | `fitness,motivation` | `exercise,training` |
+| Travel | `travel,destination` | `landscape,scenic` | `landmark,architecture` |
+| Health / medical | `medical,professional,clean` | `healthcare,modern` | `doctor,consultation` |
+| Real estate | `house,interior,modern` | `architecture,exterior` | `room,interior` |
+| Local services | `professional,service,clean` | `workplace,office` | `professional,work` |
+
+### When to use images vs icons
 
 | Screen type | Image approach |
 |---|---|
-| Feed / list | Thumbnails (60-80pt square or 16:9 ratio). Use Unsplash. |
-| Detail hero | Full-width image (height 240-300pt). Use Unsplash. |
-| Profile / avatar | Circular crop (44-80pt). Unsplash "portrait, face". |
-| Settings | No images. Icons only (Iconify). |
-| Onboarding | Illustration or Unsplash lifestyle photo. Center-focused. |
-| Empty state | Simple SVG illustration or Iconify icon + text. |
-| Chat / messages | Avatar thumbnails (36pt). No hero images. |
-
-**Unsplash queries for common app contexts:**
-```
-Profile avatar:     source.unsplash.com/200x200/?portrait,professional
-Feed thumbnail:     source.unsplash.com/400x300/?[subject],lifestyle
-Detail hero:        source.unsplash.com/800x600/?[subject],detail
-Onboarding:         source.unsplash.com/800x800/?[concept],minimal
-```
+| Feed / list items | ✅ 60x60pt thumbnail (Unsplash). Always. Gray box = reject. |
+| Featured card | ✅ Full-width photo behind gradient overlay |
+| Detail hero | ✅ Full-width photo, 240-300pt height |
+| Profile / avatar | ✅ Circular 44-72pt (Unsplash portrait) |
+| Settings rows | ❌ Icons only (Iconify). No photos. |
+| Onboarding | ✅ Full-width lifestyle photo OR icon-only illustration |
+| Empty state | ❌ Iconify icon (64pt) + headline + subtext. No photo. |
+| Tab bar | ❌ Iconify icons only. No photos. |
 
 ---
 
@@ -775,6 +814,302 @@ a, button, [role="button"] { cursor: default; }
   background-size: 100% 100%;
 }
 ```
+
+---
+
+## 12. What Makes App Design "Awesome"
+
+These are the visual quality principles that separate generic AI output from 
+shipped-quality design. Apply ALL of these before generating HTML.
+
+### Depth System (elevation layers)
+
+Every screen must have 3 visible layers:
+
+```
+Layer 0 — Page background:  #F2F2F7 (iOS grouped) or white
+Layer 1 — Cards/surfaces:   white with subtle shadow
+Layer 2 — Elevated/active:  white with stronger shadow + slight scale
+```
+
+```css
+/* Layer 1: Standard card */
+.card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* Layer 2: Featured / elevated card */
+.card-featured {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+```
+
+### Visual Hierarchy Rule: ONE HERO per screen
+
+Every screen needs ONE element that is obviously the most important thing:
+
+| Screen type | Hero element | Hero treatment |
+|---|---|---|
+| Discovery/feed | Featured card | 200pt+ height, photo bg, gradient overlay |
+| Detail | Header image | Full-width, 240pt height, sticky on scroll |
+| Settings | n/a | No hero. Grouped list = the structure IS the hierarchy. |
+| Onboarding | Illustration / photo | 50-60% of screen height |
+| Profile | Cover photo + avatar | Layered: cover bg + floating avatar |
+
+**Rule:** If you cannot identify the hero element in your mockup in 2 seconds, redesign.
+
+### Featured Card Pattern (discovery apps)
+
+Featured cards MUST have:
+1. Background photo (full bleed, NOT a thumbnail on white)
+2. Gradient overlay (bottom-up, dark → transparent)
+3. Text ON the photo (white, high contrast)
+4. One clear CTA (pill button, bottom of card)
+
+```css
+.featured-card {
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  height: 200px;
+  margin: 0 16px;
+}
+
+.featured-card .bg-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.featured-card .gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.2) 50%, transparent 100%);
+}
+
+.featured-card .content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px;
+  color: white;
+}
+
+.featured-card .title {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.featured-card .subtitle {
+  font-size: 13px;
+  opacity: 0.85;
+  margin-bottom: 12px;
+}
+
+.featured-card .cta-pill {
+  display: inline-block;
+  background: white;
+  color: #000;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 100px;
+}
+```
+
+### Section Header Pattern
+
+Sections need visual breathing room. Never stack two dense sections:
+
+```css
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 16px 12px;
+}
+
+.section-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.section-see-all {
+  font-size: 15px;
+  color: var(--tint, #007AFF);
+  font-weight: 400;
+}
+```
+
+### Horizontal Scroll Chips (category filters)
+
+Filter chips give breathing room and break the vertical monotony:
+
+```css
+.chip-scroll {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.chip-scroll::-webkit-scrollbar { display: none; }
+
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: 1.5px solid #E5E5EA;
+  background: white;
+}
+
+.chip.active {
+  background: var(--tint, #007AFF);
+  color: white;
+  border-color: transparent;
+}
+```
+
+### List Item Rhythm (avoiding monotonous density)
+
+The problem with dense lists is no visual variety. Use these techniques:
+
+**Technique 1: Leading image anchors**
+Every list item has a 60x60pt image — this creates rhythm and breaks text monotony.
+
+**Technique 2: Status indicators**
+Use colored badges, pills, or dots to create visual interest:
+```css
+.urgency-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 100px;
+  background: #FF3B30;
+  color: white;
+}
+.ends-soon { background: #FF9500; }
+.available { background: #34C759; }
+```
+
+**Technique 3: Spacing variation**
+- Between sections: 20-24px (the `section-header` padding handles this)
+- Within section: 0 (dividers only, no gaps between rows)
+- This contrast of tight rows + spacious section breaks creates rhythm
+
+### Typography Scale (iOS, use exactly)
+
+```css
+:root {
+  --text-large-title:  34px; font-weight: 700; /* top-level tab title */
+  --text-title1:       28px; font-weight: 700; /* section/page title */
+  --text-title2:       22px; font-weight: 700; /* card title, featured */
+  --text-title3:       20px; font-weight: 600; /* section headers */
+  --text-headline:     17px; font-weight: 600; /* list item title */
+  --text-body:         17px; font-weight: 400; /* body text */
+  --text-callout:      16px; font-weight: 400; /* secondary info */
+  --text-subhead:      15px; font-weight: 400; /* subtitles, meta */
+  --text-footnote:     13px; font-weight: 400; /* captions, timestamps */
+  --text-caption:      12px; font-weight: 400; /* smallest text */
+  --text-tab-label:    10px; font-weight: 500; /* tab bar labels */
+}
+```
+
+Use AT LEAST 3 different sizes per screen. Monotony = all text at 15-17px.
+
+---
+
+## 13. Reference App Patterns
+
+Study these to understand what "awesome" looks like in each category.
+
+### Discovery + Booking (Airbnb model)
+
+```
+Header:  Location + date = personalized entry
+Hero:    Full-width card carousel — photo dominant, 2-3 words max
+Below:   Category chips (horizontal scroll)
+List:    2-column grid, photo cards, minimal text (name + price)
+CTA:     Prominent "Book" or primary action on the card itself
+```
+
+Key visual moves:
+- Photos take 60-70% of screen real estate
+- White space is generous (16px padding, 12px card gaps)
+- Typography: large title collapses on scroll (parallax feel)
+- Color: white base + 1 accent (coral, teal, etc.)
+
+### Local Deals (Foursquare / Groupon model)
+
+```
+Header:  Location + count ("9 deals near you") — specificity = trust
+Filters: Horizontal chip scroll (All, Food, Retail, Services)
+Hero:    1 featured card with photo background + gradient + CTA
+List:    Full-width rows: [60x60 thumbnail] + [2-line info] + [Book pill]
+Badge:   Urgency ("Ends 3:00 PM" in orange, "5 slots left" in red)
+```
+
+Key visual moves:
+- Featured card at 200pt height — clearly the most important item
+- List items use real photos as thumbnails (not icons, not initials)
+- Urgency indicators drive action (colored badges, not plain text)
+- "Book" is a pill button on each row — not a full-width CTA
+
+### Food Delivery (Grab / Uber Eats model)
+
+```
+Header:  Address + delivery time estimate
+Hero:    Promotional banner (scrollable) — 160pt height
+Below:   Restaurant categories (icon + label chips)
+List:    Restaurant cards: photo (16:9) + name + rating + delivery time + fee
+```
+
+Key visual moves:
+- Every restaurant has a banner-style photo (NOT square thumbnail)
+- Rating displayed as ⭐ 4.8 (star icon + number) not text only
+- Delivery time + fee shown inline — utility before aesthetics
+
+### Social / Community (Instagram model)
+
+```
+Header:  App name/logo + notification + compose icons
+Stories: Horizontal scroll of circular avatars (64pt)
+Feed:    Full-width posts: [avatar + name] > [photo] > [actions] > [caption]
+```
+
+Key visual moves:
+- User-generated photos take full width (square or 4:5 ratio)
+- Reactions and counts below the photo (not overlaid)
+- Comments are collapsed — "View all 47 comments" pattern
+
+### Settings / Profile (iOS Settings model)
+
+```
+Header:   Profile row: [avatar 60pt] + [name] + [subtitle] + [›]
+Sections: Grouped list with section headers (uppercase 13pt gray)
+Rows:     [colored icon square] + [label] + [value or chevron]
+Danger:   Separated section at bottom, red text, no icon
+```
+
+Key visual moves:
+- Icon squares add color and visual rhythm to what would be pure text
+- Section breaks (20px+ gap) prevent the "wall of settings" feeling
+- Destructive actions isolated at the bottom
 
 ---
 
