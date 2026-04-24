@@ -111,22 +111,56 @@ Flag gaps, proceed with assumptions noted.
 
 ### Visual Contract Enforcement (MANDATORY)
 
-If `visual_contract` exists in upstream context, extract and lock these values 
-BEFORE any visual work:
+**Two sources, in priority order.** Read whichever exists. If both, DESIGN.md wins.
+
+#### Source 1 — Session DESIGN.md (preferred, from Gate 1)
+
+If `design_md_path` is in the upstream CONTEXT-LOCK block, that file is the
+**single source of truth for visual values**. Open it and:
+
+1. Read `skills/design-lock/design-md-spec.md` once if not already loaded —
+   it explains the YAML token schema, token references (`{colors.primary}`),
+   and section semantics.
+2. Parse the YAML frontmatter into a token map.
+3. Read the prose body — `## Overview`, `## Colors`, `## Typography`, etc. —
+   these explain *why* the tokens exist and constrain how they're used.
+4. Treat every token as a binding CSS value. Resolve `{}` references before
+   embedding. Honor every `## Do's and Don'ts` bullet as a hard rule.
+
+Announce:
+```
+🔒 DESIGN.md LOADED — <name from frontmatter>
+   Tokens: <N> colors, <N> typography levels, <N> components
+   Sections present: Overview, Colors, ..., Do's and Don'ts
+   Do's/Don'ts rule count: <N> (binding)
+```
+
+#### Source 2 — Inline `visual_contract` JSON (legacy / direct-invocation)
+
+If only `visual_contract` exists in upstream context (no DESIGN.md path),
+extract and lock these values BEFORE any visual work:
 
 ```
 🔒 VISUAL CONTRACT (from Gate 1)
 Background: [hex values]
-Accent: [hex values]  
+Accent: [hex values]
 Text: [hex values]
 Fonts: [family names]
 Layout: [max-width, hero pattern, section gaps]
 Excluded colors: [list]
 ```
 
-These are binding CSS values. Use them directly. Do not reinterpret, do not 
-"improve" them, do not substitute. If you disagree with a value, flag it and 
+These are binding CSS values. Use them directly. Do not reinterpret, do not
+"improve" them, do not substitute. If you disagree with a value, flag it and
 ask — do not silently deviate.
+
+#### Manifesto overlay (always)
+
+Independently of the two above, also load
+`skills/design-lock/references/style-manifesto.md` (itself a partial DESIGN.md).
+Its `## Do's and Don'ts` are appended to the session's binding rules. Its
+`colors`/`typography` frontmatter (if filled) acts as a fallback when the
+session DESIGN.md / visual_contract is silent on a value.
 
 ### Surface-Fit Check (MANDATORY)
 
@@ -505,6 +539,10 @@ split into intentional lines, add breathing room around the block.
 - Images via Unsplash or image_search (no gray placeholders)
 - Dark mode: #1C1C1E (iOS) or #121212 (Android), never pure #000
 - Reference trace comments embedded (<!-- REF: ... --> — see Step 2.5)
+- DESIGN.md token comments embedded — when using a tokenized value, annotate:
+  e.g. `<button style="background:#3DD68C">` becomes
+       `<button style="background:#3DD68C"><!-- {components.button-primary.backgroundColor} --></button>`
+  This lets review verify which tokens were actually used.
 ```
 
 ### Layout Decision Table
@@ -659,6 +697,15 @@ QA CHECKLIST:
 - Visual contract: all values from Gate 1 contract used, no drift
 - Hi-Fi Fill: Step 8 Fill Checklist passed with 0 failures
 - References: Step 2.5 matches announced, trace comments embedded, manifesto rules honored
+- DESIGN.md lint (run if session DESIGN.md exists — see design-md-spec.md):
+  · broken-ref: every `{path.to.token}` resolves (BLOCKING)
+  · contrast-ratio: every component bg/text pair WCAG AA ≥ 4.5:1 normal text,
+    ≥ 3:1 large text 18pt+ / 14pt bold+ (BLOCKING)
+  · missing-primary: `colors.primary` defined (warning)
+  · missing-typography: ≥1 typography token defined (warning)
+  · orphaned-tokens: every color token referenced by ≥1 component (warning)
+  · section-order: prose sections in canonical order (warning)
+  · duplicate-section: no `##` heading appears twice (BLOCKING)
 
 🔍 QA: ✅ [X] passed · ⚠️ [Y] warnings · ❌ [Z] failures
 ```
@@ -772,6 +819,7 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 12. **App = phone frame + platform fidelity.** Read `mobile-app-patterns.md` before any app HTML.
 13. **Hi-fi means filled.** Real numbers, real names, color-coded categories, ≥1 data viz, ≥1 decorative element. Blank `$0.00` + gray chips = wireframe, not hi-fi.
 14. **References anchor the output.** For mobile-app, always run Step 2.5 Reference Lookup. If the library is empty, flag it — don't silently default to generic patterns.
+15. **DESIGN.md is law when present.** Token values bind, prose constrains, Do's/Don'ts are hard rules. Never invent a color/font outside the token map without flagging. WCAG AA contrast failures block export — fix the tokens, don't ship inaccessible UI. Spec at `skills/design-lock/design-md-spec.md`.
 
 ---
 
@@ -797,3 +845,5 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 18. **Hover states in app:** Apps don't have hover. Use :active press states.
 19. **Desktop nav in app:** Sidebar nav, breadcrumbs, top horizontal nav bar inside a phone frame.
 20. **Wireframe disguised as hi-fi:** `$0.00` balances, `"User Name"` placeholders, gray category chips, empty charts, no illustrations, no color blocks. The Hi-Fi Fill Checklist exists to catch this — treat every failure as a regenerate trigger, not a warning to ignore.
+21. **Inaccessible color pair:** Component `backgroundColor` × `textColor` with WCAG AA contrast under 4.5:1 (normal text). Even if it looks "design-y," it fails users with low vision. The DESIGN.md `contrast-ratio` lint catches this — never override.
+22. **Token invention without declaration:** Inline-styling with a hex/font that isn't in the DESIGN.md token map. If you need it, propose adding it as a token (e.g. `colors.warning`) and have the user confirm — don't silently expand the palette.

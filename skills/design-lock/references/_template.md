@@ -5,6 +5,29 @@ screen: （畫面名，e.g. Home / Send / Transaction Detail）
 industry: finance | accounting | ecommerce | social | wellness | productivity | content
 style_tags: [dark, neon, bold, minimal, pastel, playful, illustrated, data-dense]
 components: [transaction-row, big-balance-card, category-pill-colored]
+# Partial DESIGN.md tokens extracted from this screenshot — Gate 3 may merge these
+# into the session DESIGN.md as starting points. Hex values must be exact.
+# Format follows skills/design-lock/design-md-spec.md
+extracted_tokens:
+  colors:
+    # primary: "#hex"
+    # surface: "#hex"
+    # on-surface: "#hex"
+  typography:
+    # display-lg:
+    #   fontFamily: Inter
+    #   fontSize: 48px
+    #   fontWeight: 700
+    #   lineHeight: 1.1
+  rounded:
+    # md: 14px
+    # full: 9999px
+  components:
+    # balance-card:
+    #   backgroundColor: "#hex"
+    #   textColor: "#hex"
+    #   rounded: 20px
+    #   padding: 24px
 ---
 
 ## 為什麼這是 hi-fi（描述式——寫客觀觀察）
@@ -15,6 +38,7 @@ components: [transaction-row, big-balance-card, category-pill-colored]
 - Avatar / 圖像：（真人照 / 品牌 logo / 首字母底色）
 - 字級對比：（最大 / 最小，幾層階層）
 - 裝飾：（漸層 / 插畫 / 色塊 / 幾何元素）
+- 陰影 / Elevation：（用陰影？tonal layer？邊框？）
 
 ## 我的處方（處方式——寫決定規則，最重要的一段）
 
@@ -38,7 +62,10 @@ components: [transaction-row, big-balance-card, category-pill-colored]
 - __
 - __
 
-## 可直接複用的 component
+## 可直接複用的 component（用 DESIGN.md 命名）
 
-- __
-- __
+對應到 frontmatter 的 `extracted_tokens.components`：
+
+- `<component-name>` — _一句話描述怎麼用_
+- 例：`balance-card` — 主色容器 + display-lg 大字 + lg 圓角，hero of home screen
+- 例：`transaction-row` — 固定 64px 高，左 avatar、中 2 行文字、右金額（色編碼）
