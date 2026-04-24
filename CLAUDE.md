@@ -14,7 +14,21 @@ skills/
     ├── SKILL.md               # Gate 3: design + iterate + export
     ├── design-techniques-db.md
     ├── figma-schema-v0.2.md
-    └── svg-patterns.md
+    ├── svg-patterns.md
+    ├── mobile-app-patterns.md # iOS / Android anatomy, components, CSS
+    └── references/            # curated hi-fi library (mobile-app)
+        ├── INDEX.md           # lookup by industry / style / component
+        ├── _template.md       # per-screenshot annotation template
+        ├── style-manifesto.md # binding design rules (loaded every Gate 3 run)
+        ├── mobile-app-examples/
+        │   ├── finance/       # Cash App, Revolut…
+        │   ├── accounting/
+        │   ├── ecommerce/
+        │   ├── social/
+        │   ├── wellness/
+        │   ├── productivity/
+        │   └── content/
+        └── style-presets/
 ```
 
 ## Routing
@@ -59,8 +73,14 @@ Read ONLY the current gate's skill file. Do NOT pre-read downstream gates.
 - Entering Gate 1 → read `skills/context-lock/SKILL.md` only
 - Transitioning to Gate 2 → read `skills/direction-lock/SKILL.md` only
 - Transitioning to Gate 3 → read `skills/design-lock/SKILL.md` only
-  - Gate 3 may also read support files: `skills/design-lock/design-techniques-db.md`,
-    `skills/design-lock/figma-schema-v0.2.md`, `skills/design-lock/svg-patterns.md`
+  - Gate 3 may also read support files:
+    - `skills/design-lock/design-techniques-db.md`
+    - `skills/design-lock/figma-schema-v0.2.md`
+    - `skills/design-lock/svg-patterns.md`
+    - `skills/design-lock/mobile-app-patterns.md` (when surface = mobile-app)
+    - `skills/design-lock/references/style-manifesto.md` (every Gate 3 run)
+    - `skills/design-lock/references/INDEX.md` (every Gate 3 run targeting mobile)
+    - Matched reference `.md` files under `references/mobile-app-examples/`
 
 The previous gate's skill file is already in conversation history. Do not re-read it.
 
@@ -76,6 +96,7 @@ When a gate completes and the user confirms, read the skill file for the next ga
 
 - **Infer before asking.** Gate 1 decomposes vague prompts, researches references, simulates end users, and extracts concrete visual values before the first question.
 - **Visual contract is binding.** When a user provides a reference URL or screenshot, Gate 1 extracts hex colors, font families, layout patterns, and excluded colors. Gate 3 uses those values directly.
+- **Reference library anchors hi-fi.** Gate 3 Step 2.5 loads curated Mobbin-style screenshots + their `.md` prescriptions + `style-manifesto.md` before every mobile-app generation. This is what prevents wireframe-disguised-as-hi-fi output.
 - **Match the user's language.** Traditional Chinese if Chinese, English if English.
 - **Match the user's energy.** ITERATE = fast. BLANK = exploratory.
 - **Every visual artifact is an HTML file.** Write artifacts to files, not inline code blocks in the conversation.
@@ -143,3 +164,14 @@ Gates communicate via structured text blocks:
 ## Design system
 
 Gate 1 creates the digest. Gate 2 uses it for feasibility. Gate 3 enforces compliance.
+
+## Reference library
+
+Populate `skills/design-lock/references/` over time:
+
+1. Drop Mobbin / Dribbble screenshots into the correct industry folder under `mobile-app-examples/`
+2. For each screenshot, copy `_template.md` and fill in (especially the **我的處方** section — this is what encodes your design brain)
+3. Update `INDEX.md` with the new entry's ID
+4. Edit `style-manifesto.md` when your design philosophy evolves
+
+20–30 curated entries across 4–6 industries outperforms 200 undecorated screenshots.
