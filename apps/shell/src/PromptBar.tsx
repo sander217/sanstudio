@@ -5,16 +5,23 @@
 
 import { useState } from 'react';
 
+import { runIterate, type DaemonHealth } from './DaemonClient';
+
 interface Props {
   /** Most recent session slug, if any — shown for context. */
   sessionSlug: string | null;
   /** Most recent poll error (red dot in status). */
   lastError: string | null;
+  /** Daemon health from /api/claude/health. null = still probing. */
+  daemon: DaemonHealth | null;
 }
 
-export function PromptBar({ sessionSlug, lastError }: Props) {
+export function PromptBar({ sessionSlug, lastError, daemon }: Props) {
   const [draft, setDraft] = useState('');
-  const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState<'sending' | 'copied' | null>(null);
+  const [progress, setProgress] = useState<string | null>(null);
+
+  const daemonReady = daemon?.ok === true;
 
   function buildEntryPrompt(): string {
     const trimmed = draft.trim();
@@ -33,19 +40,74 @@ export function PromptBar({ sessionSlug, lastError }: Props) {
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1800);
+      setBusy('copied');
+      setTimeout(() => setBusy(null), 1800);
     } catch (err) {
       console.error('[shell] clipboard failed', err);
     }
   }
+
+  async function sendPrompt() {
+    const text = buildEntryPrompt();
+    if (!text) return;
+    setBusy('sending');
+    setProgress('Starting Claude…');
+    try {
+      const startedAt = Date.now();
+      for await (const evt of runIterate({ prompt: text })) {
+        if (evt.type === 'started') setProgress('Claude is running Gate 1 → 2 → 3…');
+        else if (evt.type === 'stdout') {
+          // Show the last non-empty line as a heartbeat.
+          const last = evt.chunk.split('\n').reverse().find((l) => l.trim());
+          if (last) setProgress(last.slice(0, 80));
+        } else if (evt.type === 'stderr') {
+          // Treat as info, not error — claude prints status to stderr too.
+          setProgress(evt.chunk.slice(0, 80));
+        } else if (evt.type === 'done') {
+          const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+          setProgress(
+            evt.code === 0
+              ? `✓ Done in ${seconds}s — iframe will refresh shortly`
+              : `✗ Claude exited ${evt.code} after ${seconds}s`,
+          );
+          setTimeout(() => setProgress(null), 4000);
+        } else if (evt.type === 'error') {
+          setProgress(`✗ ${evt.message}`);
+          setTimeout(() => setProgress(null), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('[shell] sendPrompt failed', err);
+      setProgress(`✗ ${err instanceof Error ? err.message : 'send failed'}`);
+      setTimeout(() => setProgress(null), 5000);
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  const action = daemonReady ? sendPrompt : copyPrompt;
+  const buttonLabel = busy === 'sending'
+    ? 'Sending…'
+    : busy === 'copied'
+      ? 'Copied ✓'
+      : daemonReady
+        ? 'Send Gate 1 prompt'
+        : 'Copy Gate 1 prompt';
+
+  const layerLabel = daemonReady
+    ? 'Layer 1 · live'
+    : daemon === null
+      ? 'probing claude…'
+      : 'Layer 0 · manual sync';
 
   return (
     <header style={bar}>
       <div style={brand}>
         <span style={dot} />
         <strong style={brandText}>sanstudio · shell</strong>
-        <span style={subtle}>Layer 0 · manual sync</span>
+        <span style={subtle} title={daemon && !daemon.ok ? daemon.error : undefined}>
+          {layerLabel}
+        </span>
       </div>
 
       <div style={center}>
@@ -55,24 +117,27 @@ export function PromptBar({ sessionSlug, lastError }: Props) {
           onChange={(e) => setDraft(e.target.value)}
           placeholder='New design — e.g. "design a fintech dashboard like Stripe"'
           style={input}
+          disabled={busy === 'sending'}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              void copyPrompt();
+              void action();
             }
           }}
         />
         <button
-          onClick={copyPrompt}
-          disabled={!draft.trim()}
+          onClick={action}
+          disabled={!draft.trim() || busy === 'sending'}
           style={draft.trim() ? btnPrimary : btnDisabled}
         >
-          {copied ? 'Copied ✓' : 'Copy Gate 1 prompt'}
+          {buttonLabel}
         </button>
       </div>
 
       <div style={status}>
-        {lastError ? (
+        {progress ? (
+          <span style={statusBusy} title={progress}>{progress}</span>
+        ) : lastError ? (
           <span style={statusError} title={lastError}>● error</span>
         ) : sessionSlug ? (
           <span style={statusOk}>● {sessionSlug}</span>
@@ -132,3 +197,14 @@ const status: React.CSSProperties = {
 const statusOk: React.CSSProperties = { color: '#16a34a' };
 const statusError: React.CSSProperties = { color: '#dc2626' };
 const statusIdle: React.CSSProperties = { color: '#94a3b8' };
+const statusBusy: React.CSSProperties = {
+  color: '#1e293b',
+  background: '#fef3c7',
+  padding: '2px 8px',
+  borderRadius: 4,
+  display: 'inline-block',
+  maxWidth: 220,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};

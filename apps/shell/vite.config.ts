@@ -1,5 +1,6 @@
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
+import { spawn, spawnSync, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import { promises as fs } from 'node:fs';
 import { existsSync, statSync, watch } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
@@ -16,6 +17,14 @@ const SESSIONS_ROOT = resolve(
   __dirname,
   '../../../sanstudio-ai-output/sessions',
 );
+
+// Sanstudio repo root — the cwd for spawned `claude` processes so the
+// agent loads sanstudio's CLAUDE.md, skills/, design-systems/, etc.
+const SANSTUDIO_ROOT = resolve(__dirname, '../..');
+
+// Configurable via env so users can override (e.g. `CLAUDE_BIN=/opt/claude
+// npm run dev`). Defaults to `claude` resolved on PATH.
+const CLAUDE_BIN = process.env.CLAUDE_BIN ?? 'claude';
 
 interface SessionEntry {
   slug: string;
@@ -140,8 +149,161 @@ function sessionsPlugin(): Plugin {
   };
 }
 
+// Vite plugin: exposes Claude Code as a streaming HTTP endpoint so the
+// shell can drive iterate / generation turns without leaving the browser.
+//
+// Endpoints:
+//   GET  /api/claude/health
+//        → { ok: true, version: "...", bin: "claude" } when `claude` is
+//          executable; { ok: false, error } otherwise. Cached for the
+//          lifetime of the dev server (one spawnSync at startup).
+//
+//   POST /api/claude/iterate
+//        body: { prompt: string }
+//        Spawns `${CLAUDE_BIN} --print` with cwd=sanstudio root and pipes
+//        the prompt over stdin. Streams ND-JSON events back to the client:
+//          { type: "started", at: epochMs }
+//          { type: "stdout", chunk: string }    (one or more)
+//          { type: "stderr", chunk: string }    (one or more)
+//          { type: "done", code: number, durationMs }
+//          { type: "error", message }           (only on spawn failure)
+//        The client tees output and watches /sessions.json — the iframe
+//        auto-reloads when claude writes a new artifact.
+function claudeRunnerPlugin(): Plugin {
+  // Probe once at startup. If the user installs claude later, they need to
+  // restart `npm run dev` — that's an acceptable tradeoff for not paying a
+  // shell-spawn cost on every health check.
+  let health: { ok: true; version: string; bin: string } | { ok: false; error: string };
+  try {
+    const probe = spawnSync(CLAUDE_BIN, ['--version'], { encoding: 'utf8' });
+    if (probe.error) throw probe.error;
+    if (probe.status !== 0) {
+      throw new Error(`${CLAUDE_BIN} --version exited ${probe.status}: ${probe.stderr.trim()}`);
+    }
+    health = { ok: true, version: probe.stdout.trim(), bin: CLAUDE_BIN };
+  } catch (err) {
+    health = {
+      ok: false,
+      error: err instanceof Error ? err.message : String(err),
+    };
+  }
+
+  return {
+    name: 'sanstudio-shell-claude-runner',
+    configureServer(server) {
+      if (health.ok) {
+        server.config.logger.info(
+          `[sanstudio-shell] claude bridge ready — ${health.version} (cwd: ${SANSTUDIO_ROOT})`,
+        );
+      } else {
+        server.config.logger.warn(
+          `[sanstudio-shell] claude not available — Send buttons will fall back to clipboard.\n` +
+            `  reason: ${health.error}\n` +
+            `  fix: install Claude Code (https://docs.claude.com/claude-code) or set CLAUDE_BIN.`,
+        );
+      }
+
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url) return next();
+
+        if (req.url === '/api/claude/health') {
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Cache-Control', 'no-store');
+          res.end(JSON.stringify({ ...health, sanstudioRoot: SANSTUDIO_ROOT }));
+          return;
+        }
+
+        if (req.url === '/api/claude/iterate' && req.method === 'POST') {
+          if (!health.ok) {
+            res.statusCode = 503;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'claude not available', detail: health.error }));
+            return;
+          }
+
+          let body = '';
+          req.on('data', (chunk: Buffer) => {
+            body += chunk.toString('utf8');
+          });
+          req.on('end', () => {
+            let prompt = '';
+            try {
+              const parsed = JSON.parse(body || '{}') as { prompt?: string };
+              prompt = parsed.prompt ?? '';
+            } catch {
+              res.statusCode = 400;
+              res.end('invalid json body');
+              return;
+            }
+            if (!prompt.trim()) {
+              res.statusCode = 400;
+              res.end('missing prompt');
+              return;
+            }
+
+            res.setHeader('Content-Type', 'application/x-ndjson');
+            res.setHeader('Cache-Control', 'no-store');
+            res.setHeader('X-Accel-Buffering', 'no');
+            const writeEvent = (event: object): void => {
+              res.write(JSON.stringify(event) + '\n');
+            };
+            writeEvent({ type: 'started', at: Date.now() });
+
+            let proc: ChildProcessWithoutNullStreams;
+            try {
+              proc = spawn(CLAUDE_BIN, ['--print'], {
+                cwd: SANSTUDIO_ROOT,
+                stdio: ['pipe', 'pipe', 'pipe'],
+              }) as ChildProcessWithoutNullStreams;
+            } catch (err) {
+              writeEvent({
+                type: 'error',
+                message: err instanceof Error ? err.message : 'spawn failed',
+              });
+              res.end();
+              return;
+            }
+
+            const startedAt = Date.now();
+            proc.stdout.on('data', (chunk: Buffer) => {
+              writeEvent({ type: 'stdout', chunk: chunk.toString('utf8') });
+            });
+            proc.stderr.on('data', (chunk: Buffer) => {
+              writeEvent({ type: 'stderr', chunk: chunk.toString('utf8') });
+            });
+            proc.on('error', (err) => {
+              writeEvent({ type: 'error', message: err.message });
+              res.end();
+            });
+            proc.on('close', (code) => {
+              writeEvent({
+                type: 'done',
+                code: code ?? -1,
+                durationMs: Date.now() - startedAt,
+              });
+              res.end();
+            });
+
+            // Client disconnect → kill the subprocess so we don't leak.
+            req.on('close', () => {
+              if (!proc.killed) proc.kill('SIGTERM');
+            });
+
+            // Pipe the prompt as stdin, then close.
+            proc.stdin.write(prompt);
+            proc.stdin.end();
+          });
+          return;
+        }
+
+        next();
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), sessionsPlugin()],
+  plugins: [react(), sessionsPlugin(), claudeRunnerPlugin()],
   server: {
     port: 5180,
     strictPort: true,

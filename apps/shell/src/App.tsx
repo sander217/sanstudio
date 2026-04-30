@@ -14,6 +14,7 @@ import {
   startSessionPolling,
   type SessionState,
 } from './SessionWatcher';
+import { getHealth, type DaemonHealth } from './DaemonClient';
 
 const COMPANION_URL = '/refinetool/companion.iife.js';
 
@@ -21,9 +22,18 @@ export function App() {
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION_STATE);
   const [resetKey, setResetKey] = useState(0);
   const [iframeEl, setIframeEl] = useState<HTMLIFrameElement | null>(null);
+  const [daemon, setDaemon] = useState<DaemonHealth | null>(null);
   const lastSrcRef = useRef<string | null>(null);
 
   useEffect(() => startSessionPolling(setSession, 1500), []);
+
+  // Probe the daemon at boot. We don't poll — if Claude becomes available
+  // mid-session, the user can refresh; that's fine for Layer 1.
+  useEffect(() => {
+    const ac = new AbortController();
+    void getHealth(ac.signal).then(setDaemon);
+    return () => ac.abort();
+  }, []);
 
   const src =
     session.latestSlug && session.latestHtml
@@ -40,7 +50,11 @@ export function App() {
 
   return (
     <div style={layout}>
-      <PromptBar sessionSlug={session.latestSlug} lastError={session.error} />
+      <PromptBar
+        sessionSlug={session.latestSlug}
+        lastError={session.error}
+        daemon={daemon}
+      />
       <div style={body}>
         <main style={stage}>
           <PreviewIframe
@@ -64,6 +78,7 @@ export function App() {
             }
             sessionSlug={session.latestSlug}
             resetKey={resetKey}
+            daemon={daemon}
           />
         </aside>
       </div>

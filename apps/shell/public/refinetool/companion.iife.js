@@ -636,6 +636,31 @@
     ev.stopPropagation();
     selectRegion(picked);
   }
+  function onDblClick(ev) {
+    if (!refineEnabled) return;
+    if (inlineTextActive) return;
+    if (!selected) return;
+    const el = document.elementFromPoint(ev.clientX, ev.clientY);
+    if (!el || !(el instanceof Element)) return;
+    if (!selected.contains(el) && el !== selected) return;
+    let target = selected;
+    if (TEXT_TAGS.has(selected.tagName.toLowerCase())) ;
+    else {
+      const inner = findInnerTextTarget(selected);
+      if (inner) target = inner;
+    }
+    ev.preventDefault();
+    ev.stopPropagation();
+    if (target !== selected) selectRegion(target);
+    try {
+      startInlineTextEdit();
+      if (activePending) {
+        postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_SELECTED", pending: activePending });
+      }
+    } catch (err) {
+      console.warn("[ifl-companion] dblclick → inline edit failed", err);
+    }
+  }
   function onKey(ev) {
     if (!refineEnabled) return;
     if (ev.key === "Escape") {
@@ -660,10 +685,12 @@
       document.documentElement.classList.add("ifl-picking-active");
       document.addEventListener("mousemove", onMouseMove, true);
       document.addEventListener("click", onClick, true);
+      document.addEventListener("dblclick", onDblClick, true);
       document.addEventListener("keydown", onKey, true);
     } else {
       document.removeEventListener("mousemove", onMouseMove, true);
       document.removeEventListener("click", onClick, true);
+      document.removeEventListener("dblclick", onDblClick, true);
       document.removeEventListener("keydown", onKey, true);
       document.documentElement.classList.remove("ifl-picking-active");
       overlay == null ? void 0 : overlay.hideBanner();

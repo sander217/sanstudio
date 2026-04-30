@@ -16,6 +16,7 @@ import {
 import { buildIteratePrompt, type SavedRefinement } from './RefinementToPrompt';
 import { StyleControls } from './StyleControls';
 import { ImageControls } from './ImageControls';
+import { runIterate, type DaemonHealth } from './DaemonClient';
 
 interface Props {
   iframe: HTMLIFrameElement | null;
@@ -24,9 +25,11 @@ interface Props {
   sessionSlug: string | null;
   /** Bumped each time the user wants the panel to reset (e.g. new artifact loaded). */
   resetKey: number;
+  /** Daemon health from /api/claude/health. null = still probing. */
+  daemon: DaemonHealth | null;
 }
 
-export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Props) {
+export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemon }: Props) {
   const [rpc, setRpc] = useState<RefineRpc | null>(null);
   const [refineOn, setRefineOn] = useState(false);
   const [pending, setPending] = useState<PendingSelection | null>(null);
@@ -125,14 +128,55 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
     const nextSaved = [item, ...saved];
     setSaved(nextSaved);
 
-    // Auto-copy the cumulative iterate prompt — the whole point of saving
-    // is so the user can paste into Claude Code without an extra click.
-    const promptForClipboard = buildIteratePrompt(nextSaved, {
+    const promptText = buildIteratePrompt(nextSaved, {
       artifactPath: artifactPath ?? undefined,
       sessionSlug: sessionSlug ?? undefined,
     });
+
+    // Clear active selection BEFORE the long-running send — user can pick
+    // another region while Claude works. visual changes persist (revert: false).
+    void rpc?.applyDirectEdit({ type: 'reset_pending_selection', revert: false });
+    setPending(null);
+    setNote('');
+    setEditing(false);
+
+    if (daemon?.ok) {
+      // Layer 1: stream to Claude directly. iframe auto-reloads when files
+      // change so we don't need to do anything special after `done`.
+      setToast(`Sending to Claude — ${nextSaved.length} refinement${nextSaved.length === 1 ? '' : 's'}…`);
+      try {
+        const startedAt = Date.now();
+        for await (const evt of runIterate({ prompt: promptText })) {
+          if (evt.type === 'started') {
+            setToast(`Claude is iterating Gate 3…`);
+          } else if (evt.type === 'stdout' || evt.type === 'stderr') {
+            const last = evt.chunk.split('\n').reverse().find((l) => l.trim());
+            if (last) setToast(last.slice(0, 100));
+          } else if (evt.type === 'done') {
+            const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+            setToast(
+              evt.code === 0
+                ? `✓ Iterate done in ${seconds}s — preview should refresh shortly`
+                : `✗ Claude exited ${evt.code} after ${seconds}s — see terminal`,
+            );
+            // Keep the success toast around longer than the streaming chatter
+            setTimeout(() => setToast(null), 5000);
+          } else if (evt.type === 'error') {
+            setToast(`✗ ${evt.message}`);
+            setTimeout(() => setToast(null), 5000);
+          }
+        }
+      } catch (err) {
+        console.error('[shell] daemon send failed', err);
+        setToast(`✗ daemon send failed: ${err instanceof Error ? err.message : String(err)}`);
+        setTimeout(() => setToast(null), 5000);
+      }
+      return;
+    }
+
+    // Layer 0 fallback: copy to clipboard, user pastes manually.
     try {
-      await navigator.clipboard.writeText(promptForClipboard);
+      await navigator.clipboard.writeText(promptText);
       setToast(
         `Saved · ${nextSaved.length} refinement${nextSaved.length === 1 ? '' : 's'} copied. Paste in Claude Code (Cmd+V).`,
       );
@@ -141,13 +185,6 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
       setToast('Saved, but clipboard write failed. Use the "Copy" button below.');
     }
     setTimeout(() => setToast(null), 4500);
-
-    // Clear active selection so user can pick another region. Don't revert —
-    // visual changes persist in the iframe.
-    void rpc?.applyDirectEdit({ type: 'reset_pending_selection', revert: false });
-    setPending(null);
-    setNote('');
-    setEditing(false);
   }
 
   async function drillIntoText() {
@@ -259,9 +296,13 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
             onClick={saveCurrent}
             disabled={!note.trim() && pending.diffs.length === 0}
             style={btnPrimary}
-            title="Save this refinement and copy the cumulative iterate prompt to your clipboard"
+            title={
+              daemon?.ok
+                ? 'Send refinement to Claude Code (live iterate)'
+                : 'Save this refinement and copy the cumulative iterate prompt to your clipboard'
+            }
           >
-            Save
+            {daemon?.ok ? 'Send to Claude' : 'Save'}
           </button>
         </section>
       )}
