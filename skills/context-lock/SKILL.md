@@ -144,6 +144,65 @@ directly usable in code: hex colors, font family names, pixel values, layout rat
 
 ---
 
+## Step 0.55: Design System Library Lookup (when no reference provided)
+
+If the user did NOT provide a reference URL, screenshot, Figma file, or design system 
+file — but DID give a style hint (e.g. "像 Stripe 那樣", "fintech app feel", "premium 
+luxury", "developer tools aesthetic", or just a product category like "SaaS landing") — 
+check `design-systems/` for a matching pre-built DESIGN.md before inventing one from scratch.
+
+### Available systems (73 total)
+
+Read `design-systems/` (one `ls`, no need to read each DESIGN.md). The folders are 
+named after public products and grouped by industry implicitly:
+
+- **Fintech / Crypto:** stripe, revolut, wise, kraken, coinbase, binance, mastercard
+- **AI / Dev tools:** claude, cursor, opencode-ai, vercel, replicate, supabase, linear-app, sentry, posthog, raycast, warp, cohere, mistral-ai, together-ai, x-ai, elevenlabs, runwayml, ollama, minimax
+- **Design / Creative:** figma, framer, webflow, miro, sanity, mintlify
+- **Productivity / Comms:** notion, airtable, intercom, cal, superhuman, expo, hashicorp, ibm, mongodb, clickhouse, composio, voltagent, lovable, resend, zapier
+- **Consumer / Social:** spotify, airbnb, uber, pinterest, x.ai, xiaohongshu, theverge, wired, starbucks
+- **Commerce / Brand:** shopify, nike, apple, meta, playstation
+- **Auto / Luxury:** tesla, bmw, ferrari, lamborghini, bugatti, renault
+- **Other:** spacex, vodafone, clay, warm-editorial (starter), default (starter)
+
+### Match rules
+
+1. **Direct mention** — user names a product Sanstudio has in the library → use it. 
+   "像 Stripe" → `design-systems/stripe/DESIGN.md`.
+2. **Category match** — user names a category but no specific brand → suggest the 
+   2-3 strongest exemplars from that category. "想要 fintech 的感覺" → suggest 
+   stripe / revolut / wise; ask user to pick one or "blend top 2".
+3. **Vibe match** — user gives an adjective ("premium", "playful", "minimal", 
+   "warm editorial") → suggest 2-3 systems whose visual identity matches that vibe.
+4. **No match** — nothing in the library fits and no extraction source exists → 
+   skip this step; Gate 1 invents the contract from scratch in Step 0.6.
+
+### Output
+
+```
+🎨 DESIGN SYSTEM SUGGESTION
+Based on: [user's hint]
+
+Suggestions:
+1. design-systems/stripe — fintech, premium, weight-300 elegance
+2. design-systems/revolut — fintech, vibrant, more playful than Stripe
+3. design-systems/wise — fintech, friendly, approachable green/yellow
+
+Pick one (1/2/3), say "blend 1+2", or "none of these — design from scratch".
+```
+
+If the user picks one, set `design_system_ref: <name>` in the handoff block. The 
+session DESIGN.md in Step 0.6 inherits from this file (read it as base, layer 
+project-specific overrides on top).
+
+### Don't recommend if
+
+- The user already provided a URL/screenshot/Figma — that's the contract; skip the picker.
+- The user explicitly said "I don't want it to look like any existing brand".
+- ITERATE entry path on an existing screen — reuse the previous DESIGN.md.
+
+---
+
 ## Step 0.6: DESIGN.md Emission (MANDATORY when extracting visual contract)
 
 The Visual Contract from Step 0.5 must also be written as a **session DESIGN.md** —
@@ -175,6 +234,15 @@ create it. The session slug is derived from the user's request.
   typography token (`body-md`), and the `## Overview` + `## Do's and Don'ts` sections.
 - **From reference URL/screenshot**: populate every token you extracted in Step 0.5.
 - **From Figma MCP**: ingest existing tokens directly into the YAML.
+- **From design system library (Step 0.55 picked one)**: read 
+  `design-systems/<name>/DESIGN.md` and use it as the **base**. Inherit its YAML 
+  frontmatter (colors / typography / components) wholesale, then add project-specific 
+  overrides under a clearly-marked section. In the prose body, note `Inherited from: 
+  design-systems/<name>` so Gate 3 knows where tokens came from.
+- **From design system library (blend mode)**: if user said "blend stripe + revolut", 
+  pick the dominant one as base, then cherry-pick specific tokens from the second 
+  (typically: keep base colors, borrow accent or component style). Document the 
+  blend explicitly in `## Overview`.
 - **Component tokens**: include any component the reference clearly demonstrates
   (e.g., `button-primary`, `card`, `transaction-row`). Use token references
   (`{colors.primary}`) for values, not duplicated hex.
@@ -410,6 +478,7 @@ Surface type: [marketing-site | app | dashboard | etc.]
 Constraints: [tech/brand/time — mark [?] if inferred]
 
 🎨 Visual Contract: [if reference provided — summary of key hex/font/layout values]
+🎨 Design System Base: [design-systems/<name> if picked from library, else "from-scratch" or "from-reference"]
 🎨 DESIGN.md: [path if emitted, lint status]
 
 💡 Key Insight: [1-2 lines, specific and actionable]
@@ -464,6 +533,7 @@ blind_spots: [comma list]
 language: zh-TW|en|mixed
 routed_to: G2|G3
 design_system_digest: [JSON] | none
+design_system_ref: <name> | <name1>+<name2> | none   # name(s) under design-systems/, base for session DESIGN.md
 visual_contract: {"bg_primary":"#hex","bg_secondary":"#hex","accent_primary":"#hex","accent_secondary":"#hex|none","text_primary":"#hex","text_secondary":"#hex","cta_color":"#hex","heading_font":"family","body_font":"family","heading_weight":N,"max_width":"Npx","hero_pattern":"type","section_gap":"Npx","excluded_colors":["list"]} | none
 design_md_path: /absolute/path/to/sessions/<slug>/DESIGN.md | none
 design_md_lint: {"errors":N,"warnings":N,"blocking_failures":["list"]} | none

@@ -33,6 +33,27 @@ skills/
         └── style-presets/
 ```
 
+## Design System Library
+
+`design-systems/` holds 73 ready-made DESIGN.md files (Stripe, Spotify, Tesla, Vercel, Figma, Linear, Notion, Airbnb, Nike, Apple, ...). Each is a portable visual contract — same format Gate 1 emits.
+
+```text
+design-systems/
+├── NOTICE.md                  # attribution (Apache 2.0 / MIT — see file)
+├── default/                   # neutral modern starter
+├── warm-editorial/            # editorial starter
+├── stripe/DESIGN.md
+├── spotify/DESIGN.md
+├── tesla/DESIGN.md
+└── ...                        # 70+ more
+```
+
+**Gate 1 picker behavior.** When the user has no reference and the brief allows ("design like a fintech app", "I want it to feel premium", or no reference at all), Gate 1 may suggest matching design systems from this library. If the user picks one, its `DESIGN.md` becomes the **base** for the session DESIGN.md — Gate 1 still adds project-specific overrides, but the colors / typography / spacing tokens are inherited rather than invented.
+
+**Gate 3 loader behavior.** When the CONTEXT-LOCK block contains a `design_system_ref` field (e.g. `design_system_ref: stripe`), Gate 3 reads `design-systems/<name>/DESIGN.md` alongside the session DESIGN.md and treats the library file as the upstream source of truth for any token not overridden in the session file.
+
+**Imported, not original.** These files are community-curated observations of public products. They're inspiration scaffolds, not licenses to clone — Gate 1 should always blend, never copy verbatim. See `design-systems/NOTICE.md`.
+
 ## Routing
 
 Design requests → invoke `/context-lock` first. Do NOT answer design questions directly.

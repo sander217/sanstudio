@@ -135,6 +135,36 @@ Announce:
    Do's/Don'ts rule count: <N> (binding)
 ```
 
+#### Source 1.5 — Library design system (when `design_system_ref` is set)
+
+If the upstream CONTEXT-LOCK block has `design_system_ref: <name>` (e.g. `stripe`,
+`tesla`, `notion`, `revolut+wise`), also load `design-systems/<name>/DESIGN.md` —
+this is the **upstream base** that the session DESIGN.md inherits from.
+
+Resolution order for any token lookup:
+1. **Session DESIGN.md** (project-specific overrides — highest priority)
+2. **Library DESIGN.md** (`design-systems/<name>/DESIGN.md` — base values)
+3. **Manifesto** (`references/style-manifesto.md` — fallback defaults)
+4. **Inline visual_contract** (last-resort fallback)
+
+If `design_system_ref` is a blend (e.g. `stripe+revolut`), load BOTH library files.
+The first listed name is the base; the second contributes only tokens explicitly
+mentioned in the session DESIGN.md prose under "Inherited from" or "Blend".
+
+Announce:
+```
+📚 LIBRARY DESIGN SYSTEM LOADED
+   Source: design-systems/<name>/DESIGN.md
+   Role: upstream base for session DESIGN.md
+   Tokens inherited: <N> colors, <N> typography, <N> components
+   Tokens overridden by session: <list of paths>
+```
+
+If the library file is missing or malformed, FAIL LOUDLY — don't silently fall back.
+Tell the user: "design_system_ref points to <name> but design-systems/<name>/DESIGN.md
+doesn't exist or won't parse. Either pick a different system, remove the ref, or fix
+the file."
+
 #### Source 2 — Inline `visual_contract` JSON (legacy / direct-invocation)
 
 If only `visual_contract` exists in upstream context (no DESIGN.md path),
@@ -785,6 +815,7 @@ screens_exported: [N]
 viewport: mobile|desktop|both
 dark_mode: included|light-only
 design_system: [name|ad-hoc|inferred]
+design_system_ref: <name>|<name1>+<name2>|none   # echoed from CONTEXT-LOCK if used
 visual_contract_enforced: true|false
 references_used: [list of reference IDs, or "none-available"]
 manifesto_rules_applied: [N or "no-manifesto"]
@@ -820,6 +851,7 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 13. **Hi-fi means filled.** Real numbers, real names, color-coded categories, ≥1 data viz, ≥1 decorative element. Blank `$0.00` + gray chips = wireframe, not hi-fi.
 14. **References anchor the output.** For mobile-app, always run Step 2.5 Reference Lookup. If the library is empty, flag it — don't silently default to generic patterns.
 15. **DESIGN.md is law when present.** Token values bind, prose constrains, Do's/Don'ts are hard rules. Never invent a color/font outside the token map without flagging. WCAG AA contrast failures block export — fix the tokens, don't ship inaccessible UI. Spec at `skills/design-lock/design-md-spec.md`.
+16. **Library design systems are upstream, not ceiling.** When `design_system_ref` points to `design-systems/<name>/DESIGN.md`, those tokens are the BASE — the session DESIGN.md is allowed (and expected) to override them for project fit. Never copy a library system verbatim and ship it as the user's product; that's plagiarism, not inspiration.
 
 ---
 
