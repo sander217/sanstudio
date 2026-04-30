@@ -593,6 +593,27 @@
     ensureOverlay().hideHover();
     postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_SELECTED", pending });
   }
+  let viewportRaf = 0;
+  function refreshSelectionOverlay() {
+    if (!selected || !overlay) return;
+    if (!document.contains(selected)) {
+      overlay.hideSelection();
+      return;
+    }
+    const rect = selected.getBoundingClientRect();
+    const state = inlineTextActive ? "editing" : "locked";
+    overlay.showSelection(rect, (activePending == null ? void 0 : activePending.target.label) ?? "", state);
+  }
+  function onViewportChange() {
+    if (viewportRaf) return;
+    viewportRaf = window.requestAnimationFrame(() => {
+      viewportRaf = 0;
+      if (refineEnabled && overlay && currentHover && document.contains(currentHover)) {
+        overlay.showHover(currentHover.getBoundingClientRect());
+      }
+      refreshSelectionOverlay();
+    });
+  }
   function onMouseMove(ev) {
     if (!refineEnabled) return;
     const el = document.elementFromPoint(ev.clientX, ev.clientY);
@@ -622,7 +643,16 @@
       broadcastRefineMode(false);
     }
   }
+  function attachViewportListenersOnce() {
+    document.addEventListener("scroll", onViewportChange, { capture: true, passive: true });
+    window.addEventListener("resize", onViewportChange, { passive: true });
+  }
+  let viewportListenersAttached = false;
   function setRefineMode(enabled) {
+    if (!viewportListenersAttached) {
+      attachViewportListenersOnce();
+      viewportListenersAttached = true;
+    }
     if (refineEnabled === enabled) return;
     refineEnabled = enabled;
     if (enabled) {
@@ -792,10 +822,128 @@
       after: value
     };
   }
+  const TEXT_TAGS = /* @__PURE__ */ new Set([
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "p",
+    "span",
+    "a",
+    "em",
+    "strong",
+    "small",
+    "label",
+    "li",
+    "blockquote"
+  ]);
+  function findInnerTextTarget(root) {
+    var _a;
+    const candidates = [];
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
+    let node = walker.nextNode();
+    while (node) {
+      if (TEXT_TAGS.has(node.tagName.toLowerCase())) {
+        const text = (_a = node.innerText) == null ? void 0 : _a.trim();
+        if (text && text.length > 0) candidates.push(node);
+      }
+      node = walker.nextNode();
+    }
+    if (candidates.length === 0) return null;
+    candidates.sort((a, b) => depthOf(b) - depthOf(a));
+    return candidates[0];
+  }
+  function depthOf(el) {
+    let d = 0;
+    let n = el;
+    while (n) {
+      d++;
+      n = n.parentElement;
+    }
+    return d;
+  }
+  function attachImageReference(referenceUrl) {
+    if (!selected || !activePending) return null;
+    const img = selected.tagName.toLowerCase() === "img" ? selected : selected.querySelector("img");
+    const originalSrc = img == null ? void 0 : img.src;
+    if (img && referenceUrl) {
+      img.src = referenceUrl;
+    }
+    const existing = activePending.diffs.find(
+      (d) => d.type === "image_replace_intent"
+    );
+    if (existing) {
+      existing.referenceUrl = referenceUrl;
+      existing.appliedToDom = !!img;
+      return existing;
+    }
+    return {
+      id: diffId(),
+      type: "image_replace_intent",
+      selector: activePending.target.selector,
+      target: activePending.target.label,
+      createdAt: nowIso(),
+      originalSrc,
+      referenceKind: "url",
+      referenceUrl,
+      appliedToDom: !!img
+    };
+  }
+  function markImageRegenerate(prompt) {
+    if (!selected || !activePending) return null;
+    const img = selected.tagName.toLowerCase() === "img" ? selected : selected.querySelector("img");
+    const originalSrc = img == null ? void 0 : img.src;
+    const existing = activePending.diffs.find(
+      (d) => d.type === "image_regenerate_intent"
+    );
+    if (existing) {
+      existing.prompt = prompt;
+      return existing;
+    }
+    return {
+      id: diffId(),
+      type: "image_regenerate_intent",
+      selector: activePending.target.selector,
+      target: activePending.target.label,
+      createdAt: nowIso(),
+      originalSrc,
+      prompt
+    };
+  }
   function applyDirectEdit(action) {
     try {
       if (action.type === "start_inline_text_edit") {
         startInlineTextEdit();
+        return { ok: true, pending: activePending };
+      }
+      if (action.type === "pick_inner_text") {
+        if (!selected) return { ok: false, error: "no current selection" };
+        const inner = findInnerTextTarget(selected);
+        if (!inner) {
+          return { ok: false, error: "no inner text element to drill into" };
+        }
+        selectRegion(inner);
+        return { ok: true, pending: activePending };
+      }
+      if (action.type === "attach_image_reference") {
+        if (action.referenceKind !== "url" || !action.referenceUrl) {
+          return { ok: false, error: "only url-kind image references supported in v1" };
+        }
+        const diff = attachImageReference(action.referenceUrl);
+        if (diff && activePending) {
+          const idx = activePending.diffs.findIndex((d) => d.id === diff.id);
+          if (idx === -1) activePending.diffs = [...activePending.diffs, diff];
+        }
+        return { ok: true, pending: activePending };
+      }
+      if (action.type === "mark_image_regenerate") {
+        const diff = markImageRegenerate(action.prompt);
+        if (diff && activePending) {
+          const idx = activePending.diffs.findIndex((d) => d.id === diff.id);
+          if (idx === -1) activePending.diffs = [...activePending.diffs, diff];
+        }
         return { ok: true, pending: activePending };
       }
       if (action.type === "stop_inline_text_edit") {

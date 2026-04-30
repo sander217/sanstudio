@@ -59,6 +59,31 @@ function describeDiff(diff: EditDiff): string {
     const label = COLOR_LABEL[diff.role] ?? diff.role;
     return `- **${label}** in \`${diff.target}\`: ${diff.before} → ${diff.after}`;
   }
+  if (diff.type === 'image_replace_intent') {
+    const lines = [`- **Replace image** in \`${diff.target}\``];
+    if (diff.originalSrc) {
+      lines.push(`  - current src: ${truncate(diff.originalSrc, 200)}`);
+    }
+    if (diff.referenceUrl) {
+      lines.push(`  - new src: ${truncate(diff.referenceUrl, 200)}`);
+    }
+    if (diff.appliedToDom) {
+      lines.push(`  - already swapped in preview — accept as-is unless asked to override`);
+    }
+    return lines.join('\n');
+  }
+  if (diff.type === 'image_regenerate_intent') {
+    const lines = [`- **Regenerate image** in \`${diff.target}\``];
+    if (diff.originalSrc) {
+      lines.push(`  - current src: ${truncate(diff.originalSrc, 200)}`);
+    }
+    if (diff.prompt && diff.prompt.trim()) {
+      lines.push(`  - direction: ${diff.prompt.trim()}`);
+    } else {
+      lines.push(`  - direction: (none — pick a fitting replacement based on the surrounding context)`);
+    }
+    return lines.join('\n');
+  }
   // Future-proof.
   const generic = diff as unknown as { type: string; target: string };
   return `- **${generic.type}** in \`${generic.target}\``;

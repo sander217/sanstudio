@@ -15,6 +15,7 @@ import {
 } from './refineProtocol';
 import { buildIteratePrompt, type SavedRefinement } from './RefinementToPrompt';
 import { StyleControls } from './StyleControls';
+import { ImageControls } from './ImageControls';
 
 interface Props {
   iframe: HTMLIFrameElement | null;
@@ -32,7 +33,8 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
   const [saved, setSaved] = useState<SavedRefinement[]>([]);
   const [note, setNote] = useState('');
   const [editing, setEditing] = useState(false);
-  const [copied, setCopied] = useState(false);
+  /** Transient banner shown after Save → "Saved + copied. Paste in Claude Code." */
+  const [toast, setToast] = useState<string | null>(null);
 
   // Reset on new artifact.
   useEffect(() => {
@@ -111,7 +113,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
     setEditing(false);
   }
 
-  function saveCurrent() {
+  async function saveCurrent() {
     if (!pending) return;
     const item: SavedRefinement = {
       id: `r-${Date.now()}`,
@@ -120,14 +122,43 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
       diffs: pending.diffs as EditDiff[],
       createdAt: new Date().toISOString(),
     };
-    setSaved((prev) => [item, ...prev]);
-    // Clear the active selection so the user can pick another region.
-    // Don't revert — the user wants the visual changes to PERSIST in the
-    // iframe so they can keep iterating without losing state.
+    const nextSaved = [item, ...saved];
+    setSaved(nextSaved);
+
+    // Auto-copy the cumulative iterate prompt — the whole point of saving
+    // is so the user can paste into Claude Code without an extra click.
+    const promptForClipboard = buildIteratePrompt(nextSaved, {
+      artifactPath: artifactPath ?? undefined,
+      sessionSlug: sessionSlug ?? undefined,
+    });
+    try {
+      await navigator.clipboard.writeText(promptForClipboard);
+      setToast(
+        `Saved · ${nextSaved.length} refinement${nextSaved.length === 1 ? '' : 's'} copied. Paste in Claude Code (Cmd+V).`,
+      );
+    } catch (err) {
+      console.error('[shell] clipboard write failed', err);
+      setToast('Saved, but clipboard write failed. Use the "Copy" button below.');
+    }
+    setTimeout(() => setToast(null), 4500);
+
+    // Clear active selection so user can pick another region. Don't revert —
+    // visual changes persist in the iframe.
     void rpc?.applyDirectEdit({ type: 'reset_pending_selection', revert: false });
     setPending(null);
     setNote('');
     setEditing(false);
+  }
+
+  async function drillIntoText() {
+    if (!rpc) return;
+    const r = await rpc.applyDirectEdit({ type: 'pick_inner_text' });
+    if (r && !r.ok) {
+      setToast(r.error ?? 'No inner text element to drill into.');
+      setTimeout(() => setToast(null), 3000);
+    }
+    // The companion broadcasts a new TARGET_SELECTED with the inner element;
+    // RefineRpc.onTargetSelected will update `pending`. No manual update needed.
   }
 
   function deleteSaved(id: string) {
@@ -146,8 +177,8 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
   async function copyPrompt() {
     try {
       await navigator.clipboard.writeText(promptText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      setToast('Copied to clipboard.');
+      setTimeout(() => setToast(null), 2200);
     } catch (err) {
       console.error('[shell] clipboard write failed', err);
     }
@@ -165,6 +196,8 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
           {refineOn ? 'Picker ON · click iframe' : 'Start picker'}
         </button>
       </header>
+
+      {toast && <div style={toastStyle}>{toast}</div>}
 
       {!iframe && <p style={hint}>Iframe not ready — load an artifact first.</p>}
 
@@ -195,12 +228,16 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
             ) : (
               <button onClick={stopEdit} style={btnPrimary}>Done editing</button>
             )}
+            <button onClick={drillIntoText} style={btn} title="Pick the text element inside this region">
+              Pick text inside
+            </button>
             <button onClick={hide} style={btn}>Hide</button>
             <button onClick={remove} style={btn}>Remove</button>
             <button onClick={discardSelection} style={btnGhost}>Discard</button>
           </div>
 
           <StyleControls pending={pending} rpc={rpc} resetSignal={resetKey} />
+          <ImageControls pending={pending} rpc={rpc} resetSignal={resetKey} />
 
           {pending.diffs.length > 0 && (
             <ul style={diffList}>
@@ -222,8 +259,9 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
             onClick={saveCurrent}
             disabled={!note.trim() && pending.diffs.length === 0}
             style={btnPrimary}
+            title="Save this refinement and copy the cumulative iterate prompt to your clipboard"
           >
-            Save refinement
+            Save
           </button>
         </section>
       )}
@@ -251,7 +289,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
           </ul>
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
             <button onClick={copyPrompt} style={btnPrimary}>
-              {copied ? 'Copied ✓' : 'Copy iterate prompt'}
+              Copy iterate prompt
             </button>
             <details style={detailsBox}>
               <summary style={{ cursor: 'pointer', fontSize: 12, color: '#475569' }}>
@@ -368,6 +406,15 @@ const detailsBox: React.CSSProperties = {
   borderRadius: 6,
   padding: 8,
   background: '#f8fafc',
+};
+const toastStyle: React.CSSProperties = {
+  background: '#ecfdf5',
+  border: '1px solid #6ee7b7',
+  color: '#065f46',
+  padding: '10px 12px',
+  borderRadius: 6,
+  fontSize: 12,
+  lineHeight: 1.45,
 };
 const pre: React.CSSProperties = {
   whiteSpace: 'pre-wrap',

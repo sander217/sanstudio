@@ -60,18 +60,36 @@ export type ColorChangeDiff = EditDiffBase & {
   after: string;
 };
 
+export type ImageReplaceIntentDiff = EditDiffBase & {
+  type: 'image_replace_intent';
+  originalSrc?: string;
+  referenceKind: 'url' | 'figma' | 'note' | 'upload';
+  referenceUrl?: string;
+  referenceNote?: string;
+  appliedToDom?: boolean;
+};
+
+export type ImageRegenerateIntentDiff = EditDiffBase & {
+  type: 'image_regenerate_intent';
+  originalSrc?: string;
+  prompt?: string;
+};
+
 export type EditDiff =
   | TextChangeDiff
   | HideDiff
   | RemoveDiff
   | StyleChangeDiff
-  | ColorChangeDiff;
+  | ColorChangeDiff
+  | ImageReplaceIntentDiff
+  | ImageRegenerateIntentDiff;
 
 export type DirectEditAction =
   | { type: 'start_inline_text_edit' }
   | { type: 'stop_inline_text_edit' }
   | { type: 'hide_selected' }
   | { type: 'remove_selected' }
+  | { type: 'pick_inner_text' }
   | {
       type: 'set_style_value';
       property: StyleNumericProperty;
@@ -81,6 +99,15 @@ export type DirectEditAction =
       type: 'set_color_value';
       role: ColorRole;
       value: string;
+    }
+  | {
+      type: 'attach_image_reference';
+      referenceKind: 'url';
+      referenceUrl: string;
+    }
+  | {
+      type: 'mark_image_regenerate';
+      prompt?: string;
     }
   | { type: 'reset_pending_selection'; revert?: boolean };
 
