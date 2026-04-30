@@ -1,2 +1,7 @@
 figma-plugin/code.js
 figma-plugin/test-sample.json
+
+# apps/shell — Vite + React shell (Layer 0)
+apps/shell/node_modules/
+apps/shell/dist/
+apps/shell/.vite/
