@@ -954,6 +954,15 @@
         selectRegion(inner);
         return { ok: true, pending: activePending };
       }
+      if (action.type === "undo_last_diff") {
+        if (!activePending || activePending.diffs.length === 0) {
+          return { ok: false, error: "nothing to undo" };
+        }
+        const last = activePending.diffs[activePending.diffs.length - 1];
+        revertDiffs([last]);
+        activePending.diffs = activePending.diffs.slice(0, -1);
+        return { ok: true, pending: activePending };
+      }
       if (action.type === "attach_image_reference") {
         if (action.referenceKind !== "url" || !action.referenceUrl) {
           return { ok: false, error: "only url-kind image references supported in v1" };

@@ -51,6 +51,26 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     setSaved([]);
   }, [resetKey]);
 
+  // Cmd+Z / Ctrl+Z anywhere in the shell window pops the last diff off the
+  // current selection. We check pending.diffs.length inside the handler so
+  // the listener can stay attached for the lifetime of the panel — no
+  // re-binding on every diff change.
+  useEffect(() => {
+    if (!rpc) return;
+    function onKey(ev: KeyboardEvent) {
+      const isUndo = (ev.metaKey || ev.ctrlKey) && !ev.shiftKey && ev.key.toLowerCase() === 'z';
+      if (!isUndo) return;
+      // Don't fight a real text-edit undo (textarea / input has focus).
+      const target = ev.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) return;
+      ev.preventDefault();
+      void undoLastDiff();
+    }
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [rpc, pending]);
+
   // Wire the RPC each time the iframe element changes.
   useEffect(() => {
     if (!iframe) {
@@ -198,6 +218,17 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     // RefineRpc.onTargetSelected will update `pending`. No manual update needed.
   }
 
+  async function undoLastDiff() {
+    if (!rpc || !pending || pending.diffs.length === 0) return;
+    const r = await rpc.applyDirectEdit({ type: 'undo_last_diff' });
+    if (r && r.ok && r.pending) {
+      setPending(r.pending);
+    } else if (r && !r.ok) {
+      setToast(r.error ?? 'Nothing to undo.');
+      setTimeout(() => setToast(null), 2000);
+    }
+  }
+
   function deleteSaved(id: string) {
     setSaved((prev) => prev.filter((r) => r.id !== id));
   }
@@ -270,6 +301,14 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
             </button>
             <button onClick={hide} style={btn}>Hide</button>
             <button onClick={remove} style={btn}>Remove</button>
+            <button
+              onClick={undoLastDiff}
+              disabled={pending.diffs.length === 0}
+              style={pending.diffs.length === 0 ? btnGhost : btn}
+              title="Undo the most recent change (⌘Z / Ctrl+Z)"
+            >
+              ↶ Undo
+            </button>
             <button onClick={discardSelection} style={btnGhost}>Discard</button>
           </div>
 

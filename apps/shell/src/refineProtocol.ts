@@ -90,6 +90,7 @@ export type DirectEditAction =
   | { type: 'hide_selected' }
   | { type: 'remove_selected' }
   | { type: 'pick_inner_text' }
+  | { type: 'undo_last_diff' }
   | {
       type: 'set_style_value';
       property: StyleNumericProperty;
