@@ -1,97 +1,95 @@
 // Renders the latest Gate 3 artifact in an iframe and injects the
-// refinetool companion script every time a new artifact loads. Exposes the
-// loaded iframe element to the parent so RefinePanel can postMessage to it.
+// refinetool companion script every time a new artifact loads. Reports the
+// iframe element back to the parent via onIframeChange so the RefinePanel
+// can postMessage to it.
+//
+// Deliberately uses a callback ref instead of forwardRef + useImperativeHandle
+// — simpler and more predictable when the component sometimes returns an
+// iframe and sometimes returns an empty-state placeholder.
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from 'react';
-
-export interface PreviewIframeHandle {
-  /** The actual iframe element; null until first render finishes. */
-  element: HTMLIFrameElement | null;
-}
+import { useCallback, useEffect, useRef } from 'react';
 
 interface Props {
-  /** Path under /sessions/* — e.g. "/sessions/2026-04-30-fintech/html/index.html" */
+  /** Path under /sessions/* — e.g. "/sessions/<slug>/html/index.html" */
   src: string | null;
   /** URL where the companion script lives on the same origin. */
   companionUrl: string;
-  /** Notified once the companion has been injected for this src. */
+  /** Fires whenever the iframe element changes (mount, src change, unmount). */
+  onIframeChange: (el: HTMLIFrameElement | null) => void;
+  /** Fires after the companion script has been injected for this load. */
   onCompanionReady?: () => void;
 }
 
-export const PreviewIframe = forwardRef<PreviewIframeHandle, Props>(function PreviewIframe(
-  { src, companionUrl, onCompanionReady },
-  ref,
-) {
-  const iframeRef = useRef<HTMLIFrameElement | null>(null);
+export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionReady }: Props) {
   const companionTextRef = useRef<string | null>(null);
+  const onChangeRef = useRef(onIframeChange);
+  onChangeRef.current = onIframeChange;
+  const onReadyRef = useRef(onCompanionReady);
+  onReadyRef.current = onCompanionReady;
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      get element() {
-        return iframeRef.current;
-      },
-    }),
-    [],
+  // Stable callback ref: notify parent when the iframe element appears /
+  // disappears, and wire the companion-injection load handler.
+  const setIframeNode = useCallback(
+    (el: HTMLIFrameElement | null) => {
+      onChangeRef.current(el);
+      if (!el) return;
+
+      const inject = async () => {
+        try {
+          const doc = el.contentDocument;
+          if (!doc) {
+            console.warn(
+              '[shell] iframe.contentDocument unavailable — same-origin required (artifact must be served under /sessions/*)',
+            );
+            return;
+          }
+          if (doc.getElementById('ifl-companion-script')) return;
+          if (!companionTextRef.current) {
+            const res = await fetch(companionUrl);
+            if (!res.ok) throw new Error(`companion fetch ${res.status}`);
+            companionTextRef.current = await res.text();
+          }
+          const script = doc.createElement('script');
+          script.id = 'ifl-companion-script';
+          script.textContent = companionTextRef.current;
+          doc.documentElement.appendChild(script);
+          onReadyRef.current?.();
+        } catch (err) {
+          console.error('[shell] companion injection failed', err);
+        }
+      };
+
+      el.addEventListener('load', () => void inject());
+      // If the iframe is already loaded by the time React attaches us
+      // (rare but happens when iframe is reused across renders), inject now.
+      if (el.contentDocument?.readyState === 'complete') void inject();
+    },
+    [companionUrl],
   );
 
+  // Fall-through: if the iframe element gets recycled by React across src
+  // changes (same-element-different-src), the load listener was attached
+  // ONCE in setIframeNode and will refire on each `load`. No extra work
+  // needed here.
   useEffect(() => {
-    const el = iframeRef.current;
-    if (!el || !src) return;
-
-    async function loadCompanionText(): Promise<string> {
-      if (companionTextRef.current) return companionTextRef.current;
-      const res = await fetch(companionUrl);
-      if (!res.ok) throw new Error(`companion fetch ${res.status}`);
-      const text = await res.text();
-      companionTextRef.current = text;
-      return text;
-    }
-
-    async function inject() {
-      try {
-        const doc = el?.contentDocument;
-        if (!doc) {
-          console.warn(
-            '[shell] iframe.contentDocument unavailable — same-origin required (artifact must be served under /sessions/*)',
-          );
-          return;
-        }
-        if (doc.getElementById('ifl-companion-script')) return; // already injected this load
-        const text = await loadCompanionText();
-        const script = doc.createElement('script');
-        script.id = 'ifl-companion-script';
-        script.textContent = text;
-        doc.documentElement.appendChild(script);
-        onCompanionReady?.();
-      } catch (err) {
-        console.error('[shell] companion injection failed', err);
-      }
-    }
-
-    const onLoad = () => void inject();
-    el.addEventListener('load', onLoad);
-    // If the iframe is already loaded by the time this effect fires (HMR),
-    // inject immediately.
-    if (el.contentDocument?.readyState === 'complete') void inject();
-
-    return () => el.removeEventListener('load', onLoad);
-  }, [src, companionUrl, onCompanionReady]);
+    return () => onChangeRef.current(null);
+  }, []);
 
   if (!src) {
     return (
       <div style={emptyStyle}>
-        <p style={emptyTitle}>No Gate 3 artifact yet</p>
+        <div style={emptyTitle}>No Gate 3 artifact yet</div>
         <p style={emptyHint}>
           Run a sanstudio session in Claude Code. When Gate 3 emits an HTML file under
-          <code style={code}> sanstudio-ai-output/sessions/</code>, it'll show up here.
+          {' '}
+          <code style={code}>sanstudio-ai-output/sessions/</code>, it'll show up here automatically.
         </p>
       </div>
     );
   }
 
-  return <iframe ref={iframeRef} src={src} title="Gate 3 artifact" style={iframeStyle} />;
-});
+  return <iframe ref={setIframeNode} src={src} title="Gate 3 artifact" style={iframeStyle} />;
+}
 
 const iframeStyle: React.CSSProperties = {
   width: '100%',
@@ -100,6 +98,7 @@ const iframeStyle: React.CSSProperties = {
   background: '#fff',
   borderRadius: 8,
   boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
+  display: 'block',
 };
 
 const emptyStyle: React.CSSProperties = {
@@ -111,9 +110,12 @@ const emptyStyle: React.CSSProperties = {
   textAlign: 'center',
   color: '#64748b',
   padding: 32,
+  background: '#fff',
+  borderRadius: 8,
+  boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
 };
-const emptyTitle: React.CSSProperties = { fontSize: 16, fontWeight: 600, margin: 0, color: '#0f172a' };
-const emptyHint: React.CSSProperties = { fontSize: 13, lineHeight: 1.6, maxWidth: 460 };
+const emptyTitle: React.CSSProperties = { fontSize: 16, fontWeight: 600, color: '#0f172a', marginBottom: 8 };
+const emptyHint: React.CSSProperties = { fontSize: 13, lineHeight: 1.6, maxWidth: 460, margin: 0 };
 const code: React.CSSProperties = {
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
   fontSize: 12,

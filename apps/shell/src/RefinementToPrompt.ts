@@ -24,11 +24,22 @@ export interface BuildPromptOptions {
   sessionSlug?: string;
 }
 
-const DIFF_TYPE_LABEL: Record<EditDiff['type'], string> = {
-  text_change: 'Text change',
-  hide: 'Hide',
-  remove: 'Remove',
-};
+const STYLE_LABEL = {
+  fontSize: 'Font size',
+  fontWeight: 'Font weight',
+  borderRadius: 'Border radius',
+  borderWidth: 'Border width',
+  padding: 'Padding',
+  translate: 'Position',
+  width: 'Width',
+  height: 'Height',
+} as const;
+
+const COLOR_LABEL = {
+  color: 'Text color',
+  backgroundColor: 'Background color',
+  borderColor: 'Border color',
+} as const;
 
 function describeDiff(diff: EditDiff): string {
   if (diff.type === 'text_change') {
@@ -40,9 +51,17 @@ function describeDiff(diff: EditDiff): string {
   if (diff.type === 'remove') {
     return `- **Remove** \`${diff.target}\`${diff.preview ? ` — "${diff.preview}"` : ''}`;
   }
-  // Future-proof: anything we don't know, render generically.
+  if (diff.type === 'style_change') {
+    const label = STYLE_LABEL[diff.property] ?? diff.property;
+    return `- **${label}** in \`${diff.target}\`: ${diff.before} → ${diff.after}`;
+  }
+  if (diff.type === 'color_change') {
+    const label = COLOR_LABEL[diff.role] ?? diff.role;
+    return `- **${label}** in \`${diff.target}\`: ${diff.before} → ${diff.after}`;
+  }
+  // Future-proof.
   const generic = diff as unknown as { type: string; target: string };
-  return `- **${DIFF_TYPE_LABEL[generic.type as EditDiff['type']] ?? generic.type}** in \`${generic.target}\``;
+  return `- **${generic.type}** in \`${generic.target}\``;
 }
 
 function describeRegion(r: PendingSelection['target']): string {

@@ -6,7 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 
 import { PromptBar } from './PromptBar';
-import { PreviewIframe, type PreviewIframeHandle } from './PreviewIframe';
+import { PreviewIframe } from './PreviewIframe';
 import { RefinePanel } from './RefinePanel';
 import {
   EMPTY_SESSION_STATE,
@@ -21,17 +21,16 @@ export function App() {
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION_STATE);
   const [resetKey, setResetKey] = useState(0);
   const [iframeEl, setIframeEl] = useState<HTMLIFrameElement | null>(null);
-  const previewRef = useRef<PreviewIframeHandle | null>(null);
   const lastSrcRef = useRef<string | null>(null);
 
   useEffect(() => startSessionPolling(setSession, 1500), []);
 
-  // Resolve current src and bump resetKey when it changes.
   const src =
     session.latestSlug && session.latestHtml
       ? artifactUrl(session.latestSlug, session.latestHtml)
       : null;
 
+  // Reset the panel state when the artifact changes.
   useEffect(() => {
     if (src !== lastSrcRef.current) {
       lastSrcRef.current = src;
@@ -39,27 +38,19 @@ export function App() {
     }
   }, [src]);
 
-  // After the iframe mounts, expose its element to the panel.
-  useEffect(() => {
-    setIframeEl(previewRef.current?.element ?? null);
-  }, [src, resetKey]);
-
   return (
     <div style={layout}>
       <PromptBar sessionSlug={session.latestSlug} lastError={session.error} />
       <div style={body}>
         <main style={stage}>
           <PreviewIframe
-            ref={(handle) => {
-              previewRef.current = handle;
-              setIframeEl(handle?.element ?? null);
-            }}
             src={src}
             companionUrl={COMPANION_URL}
+            onIframeChange={setIframeEl}
             onCompanionReady={() => {
-              // Re-set the iframe element so RefinePanel re-attaches its RPC
-              // (the iframe was just navigated; its contentWindow is fresh).
-              setIframeEl(previewRef.current?.element ?? null);
+              // The iframe was just navigated; force the panel to re-attach
+              // the postMessage RPC against the fresh contentWindow.
+              setIframeEl((prev) => prev);
             }}
           />
         </main>
@@ -82,19 +73,29 @@ export function App() {
 
 const layout: React.CSSProperties = {
   display: 'grid',
-  gridTemplateRows: '52px 1fr',
+  gridTemplateRows: '52px minmax(0, 1fr)',
   height: '100vh',
+  width: '100vw',
   background: '#f1f5f9',
 };
 const body: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '1fr 380px',
+  gridTemplateColumns: 'minmax(0, 1fr) 380px',
   height: '100%',
+  minHeight: 0,
   overflow: 'hidden',
 };
-const stage: React.CSSProperties = { padding: 16, overflow: 'hidden' };
+const stage: React.CSSProperties = {
+  padding: 16,
+  minHeight: 0,
+  minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  overflow: 'hidden',
+};
 const sidebar: React.CSSProperties = {
   borderLeft: '1px solid #e2e8f0',
   background: '#fff',
+  minHeight: 0,
   overflow: 'hidden',
 };

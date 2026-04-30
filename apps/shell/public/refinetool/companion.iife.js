@@ -541,6 +541,7 @@
   let activePending = null;
   let inlineTextActive = false;
   let originalTextBeforeEdit = null;
+  let originalStyles = null;
   function nowIso() {
     return (/* @__PURE__ */ new Date()).toISOString();
   }
@@ -561,9 +562,23 @@
   function broadcastRefineMode(enabled) {
     postToHost({ ns: PROTOCOL_NAMESPACE, type: "REFINE_MODE_CHANGED", enabled });
   }
+  function captureOriginalStyles(el) {
+    const cs = window.getComputedStyle(el);
+    return {
+      fontSize: cs.fontSize,
+      fontWeight: cs.fontWeight,
+      borderRadius: cs.borderRadius,
+      borderWidth: cs.borderWidth,
+      padding: cs.padding,
+      color: cs.color,
+      backgroundColor: cs.backgroundColor,
+      borderColor: cs.borderColor
+    };
+  }
   function selectRegion(picked) {
     selected = picked;
     inlineTextActive = false;
+    originalStyles = captureOriginalStyles(picked);
     const target = buildSelectedTarget(picked);
     const pending = {
       tabId: -1,
@@ -707,6 +722,76 @@
       originalDisplay
     };
   }
+  function setStyleValue(property, value) {
+    if (!selected || !activePending || !(selected instanceof HTMLElement) || !originalStyles) return null;
+    const formatted = property === "fontWeight" ? String(value) : `${value}px`;
+    if (property === "fontWeight") {
+      selected.style.fontWeight = formatted;
+    } else if (property === "borderRadius") {
+      selected.style.borderRadius = formatted;
+    } else if (property === "fontSize") {
+      selected.style.fontSize = formatted;
+    } else if (property === "borderWidth") {
+      selected.style.borderWidth = formatted;
+      if (!selected.style.borderStyle && getComputedStyle(selected).borderStyle === "none") {
+        selected.style.borderStyle = "solid";
+      }
+    } else if (property === "padding") {
+      selected.style.padding = formatted;
+    }
+    const before = originalStyles[property];
+    const existing = activePending.diffs.find(
+      (d) => d.type === "style_change" && d.property === property
+    );
+    if (existing) {
+      existing.after = formatted;
+      return existing;
+    }
+    return {
+      id: diffId(),
+      type: "style_change",
+      property,
+      selector: activePending.target.selector,
+      target: activePending.target.label,
+      createdAt: nowIso(),
+      before,
+      after: formatted
+    };
+  }
+  function setColorValue(role, value) {
+    if (!selected || !activePending || !(selected instanceof HTMLElement) || !originalStyles) return null;
+    if (role === "color") {
+      selected.style.color = value;
+    } else if (role === "backgroundColor") {
+      selected.style.backgroundColor = value;
+    } else if (role === "borderColor") {
+      selected.style.borderColor = value;
+      if (!selected.style.borderStyle && getComputedStyle(selected).borderStyle === "none") {
+        selected.style.borderStyle = "solid";
+      }
+      if (!selected.style.borderWidth && getComputedStyle(selected).borderWidth === "0px") {
+        selected.style.borderWidth = "1px";
+      }
+    }
+    const before = originalStyles[role];
+    const existing = activePending.diffs.find(
+      (d) => d.type === "color_change" && d.role === role
+    );
+    if (existing) {
+      existing.after = value;
+      return existing;
+    }
+    return {
+      id: diffId(),
+      type: "color_change",
+      role,
+      selector: activePending.target.selector,
+      target: activePending.target.label,
+      createdAt: nowIso(),
+      before,
+      after: value
+    };
+  }
   function applyDirectEdit(action) {
     try {
       if (action.type === "start_inline_text_edit") {
@@ -728,10 +813,27 @@
         if (activePending) activePending.diffs = [...activePending.diffs, diff];
         return { ok: true, pending: activePending };
       }
+      if (action.type === "set_style_value") {
+        const diff = setStyleValue(action.property, action.value);
+        if (diff && activePending) {
+          const idx = activePending.diffs.findIndex((d) => d.id === diff.id);
+          if (idx === -1) activePending.diffs = [...activePending.diffs, diff];
+        }
+        return { ok: true, pending: activePending };
+      }
+      if (action.type === "set_color_value") {
+        const diff = setColorValue(action.role, action.value);
+        if (diff && activePending) {
+          const idx = activePending.diffs.findIndex((d) => d.id === diff.id);
+          if (idx === -1) activePending.diffs = [...activePending.diffs, diff];
+        }
+        return { ok: true, pending: activePending };
+      }
       if (action.type === "reset_pending_selection") {
         if (action.revert && activePending) revertDiffs(activePending.diffs);
         selected = null;
         activePending = null;
+        originalStyles = null;
         overlay == null ? void 0 : overlay.hideSelection();
         return { ok: true, pending: null };
       }
@@ -753,6 +855,18 @@
           if (node instanceof HTMLElement) node.innerText = diff.before;
         } else if (diff.type === "hide" || diff.type === "remove") {
           if (node instanceof HTMLElement) node.style.display = diff.originalDisplay ?? "";
+        } else if (diff.type === "style_change") {
+          if (!(node instanceof HTMLElement)) continue;
+          if (diff.property === "fontSize") node.style.fontSize = diff.before;
+          else if (diff.property === "fontWeight") node.style.fontWeight = diff.before;
+          else if (diff.property === "borderRadius") node.style.borderRadius = diff.before;
+          else if (diff.property === "borderWidth") node.style.borderWidth = diff.before;
+          else if (diff.property === "padding") node.style.padding = diff.before;
+        } else if (diff.type === "color_change") {
+          if (!(node instanceof HTMLElement)) continue;
+          if (diff.role === "color") node.style.color = diff.before;
+          else if (diff.role === "backgroundColor") node.style.backgroundColor = diff.before;
+          else if (diff.role === "borderColor") node.style.borderColor = diff.before;
         }
       } catch (err) {
         console.warn("[ifl-companion] revert failed for diff", diff, err);

@@ -36,13 +36,52 @@ export type RemoveDiff = EditDiffBase & {
   originalDisplay?: string;
 };
 
-export type EditDiff = TextChangeDiff | HideDiff | RemoveDiff;
+// Mirrors refinetool's StyleProperty subset that the panel can drive.
+export type StyleNumericProperty =
+  | 'fontSize'
+  | 'fontWeight'
+  | 'borderRadius'
+  | 'borderWidth'
+  | 'padding';
+
+export type StyleChangeDiff = EditDiffBase & {
+  type: 'style_change';
+  property: StyleNumericProperty | 'translate' | 'width' | 'height';
+  before: string;
+  after: string;
+};
+
+export type ColorRole = 'color' | 'backgroundColor' | 'borderColor';
+
+export type ColorChangeDiff = EditDiffBase & {
+  type: 'color_change';
+  role: ColorRole;
+  before: string;
+  after: string;
+};
+
+export type EditDiff =
+  | TextChangeDiff
+  | HideDiff
+  | RemoveDiff
+  | StyleChangeDiff
+  | ColorChangeDiff;
 
 export type DirectEditAction =
   | { type: 'start_inline_text_edit' }
   | { type: 'stop_inline_text_edit' }
   | { type: 'hide_selected' }
   | { type: 'remove_selected' }
+  | {
+      type: 'set_style_value';
+      property: StyleNumericProperty;
+      value: number;
+    }
+  | {
+      type: 'set_color_value';
+      role: ColorRole;
+      value: string;
+    }
   | { type: 'reset_pending_selection'; revert?: boolean };
 
 export type PendingSelection = {

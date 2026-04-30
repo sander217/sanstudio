@@ -1,0 +1,30 @@
+/* Sanstudio shell — global reset.
+ *
+ * Without this the html/body height collapse to whatever React renders, and
+ * any child using `height: 100%` (the iframe in particular) gets a 0-height
+ * container — looks "broken" but is actually just unstyled. */
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font: inherit;
+  font-family: inherit;
+}

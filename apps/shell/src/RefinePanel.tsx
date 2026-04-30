@@ -1,11 +1,12 @@
 // The right-side panel: picker toggle, current selection card with edit
-// buttons (text / hide / remove), saved-refinement list, and the
-// "Generate iterate prompt" button that builds the Claude Code paste-back.
+// buttons (text / hide / remove), style controls (sliders + color pickers),
+// saved-refinement list, and the "Generate iterate prompt" button that
+// builds the Claude Code paste-back.
 //
 // All DOM mutation happens inside the iframe via the companion + RefineRpc.
 // This component never touches iframe content directly.
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import {
   RefineRpc,
@@ -13,6 +14,7 @@ import {
   type PendingSelection,
 } from './refineProtocol';
 import { buildIteratePrompt, type SavedRefinement } from './RefinementToPrompt';
+import { StyleControls } from './StyleControls';
 
 interface Props {
   iframe: HTMLIFrameElement | null;
@@ -24,7 +26,7 @@ interface Props {
 }
 
 export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Props) {
-  const rpcRef = useRef<RefineRpc | null>(null);
+  const [rpc, setRpc] = useState<RefineRpc | null>(null);
   const [refineOn, setRefineOn] = useState(false);
   const [pending, setPending] = useState<PendingSelection | null>(null);
   const [saved, setSaved] = useState<SavedRefinement[]>([]);
@@ -46,25 +48,26 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
 
   // Wire the RPC each time the iframe element changes.
   useEffect(() => {
-    if (!iframe) return;
-    const rpc = new RefineRpc(() => iframe.contentWindow);
-    rpc.attach();
-    rpcRef.current = rpc;
-    const offMode = rpc.onModeChange((enabled) => setRefineOn(enabled));
-    const offTarget = rpc.onTargetSelected((p) => {
+    if (!iframe) {
+      setRpc(null);
+      return;
+    }
+    const next = new RefineRpc(() => iframe.contentWindow);
+    next.attach();
+    setRpc(next);
+    const offMode = next.onModeChange((enabled) => setRefineOn(enabled));
+    const offTarget = next.onTargetSelected((p) => {
       setPending(p);
       setEditing(false);
     });
     return () => {
       offMode();
       offTarget();
-      rpc.detach();
-      rpcRef.current = null;
+      next.detach();
     };
   }, [iframe]);
 
   async function togglePicker() {
-    const rpc = rpcRef.current;
     if (!rpc) return;
     const next = !refineOn;
     try {
@@ -76,7 +79,6 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
   }
 
   async function applyAndUpdatePending(action: Parameters<RefineRpc['applyDirectEdit']>[0]) {
-    const rpc = rpcRef.current;
     if (!rpc) return;
     const r = await rpc.applyDirectEdit(action);
     if (r.ok && r.pending) setPending(r.pending);
@@ -102,7 +104,6 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
   }
 
   async function discardSelection() {
-    const rpc = rpcRef.current;
     if (!rpc) return;
     await rpc.applyDirectEdit({ type: 'reset_pending_selection', revert: true });
     setPending(null);
@@ -121,7 +122,9 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
     };
     setSaved((prev) => [item, ...prev]);
     // Clear the active selection so the user can pick another region.
-    void rpcRef.current?.applyDirectEdit({ type: 'reset_pending_selection', revert: false });
+    // Don't revert — the user wants the visual changes to PERSIST in the
+    // iframe so they can keep iterating without losing state.
+    void rpc?.applyDirectEdit({ type: 'reset_pending_selection', revert: false });
     setPending(null);
     setNote('');
     setEditing(false);
@@ -196,12 +199,21 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey }: Pro
             <button onClick={remove} style={btn}>Remove</button>
             <button onClick={discardSelection} style={btnGhost}>Discard</button>
           </div>
+
+          <StyleControls pending={pending} rpc={rpc} resetSignal={resetKey} />
+
           {pending.diffs.length > 0 && (
             <ul style={diffList}>
               {pending.diffs.map((d) => (
                 <li key={d.id} style={diffItem}>
                   <span style={diffType}>{d.type.replace('_', ' ')}</span>{' '}
                   <span style={diffTarget}>{d.target}</span>
+                  {('after' in d && d.after) ? (
+                    <span style={diffValue}>
+                      {' → '}
+                      {String(d.after)}
+                    </span>
+                  ) : null}
                 </li>
               ))}
             </ul>
@@ -339,6 +351,10 @@ const diffType: React.CSSProperties = {
   letterSpacing: 0.4,
 };
 const diffTarget: React.CSSProperties = { color: '#475569' };
+const diffValue: React.CSSProperties = {
+  color: '#0f172a',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+};
 const savedList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0 };
 const savedRow: React.CSSProperties = {
   display: 'flex',
