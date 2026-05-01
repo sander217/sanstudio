@@ -6,7 +6,7 @@
 // All DOM mutation happens inside the iframe via the companion + RefineRpc.
 // This component never touches iframe content directly.
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import {
   RefineRpc,
@@ -38,6 +38,19 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
   const [editing, setEditing] = useState(false);
   /** Transient banner shown after Save → "Saved + copied. Paste in Claude Code." */
   const [toast, setToast] = useState<string | null>(null);
+  /**
+   * Tracks the previous pending so the auto-save useEffect below can decide
+   * whether to flush its diffs into the saved list when the user switches
+   * selections. Refs (vs state) so the effect can read it without becoming
+   * its own trigger.
+   */
+  const prevPendingRef = useRef<PendingSelection | null>(null);
+  /**
+   * When saveCurrent or discardSelection clear pending intentionally, we
+   * don't want the auto-save effect to also fire. Set this just before
+   * clearing pending; the effect respects it for one tick then resets.
+   */
+  const skipAutoSaveRef = useRef(false);
 
   // Reset on new artifact.
   useEffect(() => {
@@ -45,22 +58,50 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     setNote('');
     setEditing(false);
     setRefineOn(false);
-    // Saved refinements: in v0 they reset per artifact. The user generates a
-    // prompt, pastes it, gets a new artifact — saved list is no longer
-    // applicable to the new HTML.
     setSaved([]);
+    prevPendingRef.current = null;
+    skipAutoSaveRef.current = false;
   }, [resetKey]);
 
-  // Cmd+Z / Ctrl+Z anywhere in the shell window pops the last diff off the
-  // current selection. We check pending.diffs.length inside the handler so
-  // the listener can stay attached for the lifetime of the panel — no
-  // re-binding on every diff change.
+  // Auto-save: when the user picks a different element while the previous
+  // selection still has unsaved diffs, push those diffs into the saved
+  // list so they're not lost. Without this, the companion's selectRegion
+  // would overwrite activePending and the diffs would vanish from the UI.
+  useEffect(() => {
+    const previous = prevPendingRef.current;
+    prevPendingRef.current = pending;
+
+    if (skipAutoSaveRef.current) {
+      skipAutoSaveRef.current = false;
+      return;
+    }
+    if (!previous || previous.diffs.length === 0) return;
+    // Only auto-save when switching to a DIFFERENT element. Pending becoming
+    // null = explicit save/discard, handled by those code paths.
+    if (!pending) return;
+    if (previous.target.selector === pending.target.selector) return;
+
+    setSaved((prev) => [
+      {
+        id: `r-${Date.now()}-auto`,
+        region: previous.target,
+        note: '',
+        diffs: previous.diffs as EditDiff[],
+        createdAt: new Date().toISOString(),
+      },
+      ...prev,
+    ]);
+  }, [pending]);
+
+  // Cmd+Z / Ctrl+Z anywhere in the shell window: global undo. Reads the
+  // latest pending + saved state via the closure (effect re-binds when
+  // either changes), so undoLastDiff sees current state.
   useEffect(() => {
     if (!rpc) return;
     function onKey(ev: KeyboardEvent) {
       const isUndo = (ev.metaKey || ev.ctrlKey) && !ev.shiftKey && ev.key.toLowerCase() === 'z';
       if (!isUndo) return;
-      // Don't fight a real text-edit undo (textarea / input has focus).
+      // Don't fight a real text-edit undo (textarea / input / contenteditable).
       const target = ev.target as HTMLElement | null;
       const tag = target?.tagName?.toLowerCase();
       if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) return;
@@ -69,7 +110,11 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [rpc, pending]);
+  }, [rpc, pending, saved]);
+
+  // Convenience flag: drives Undo button enabled state.
+  const hasAnyDiff =
+    (pending?.diffs.length ?? 0) > 0 || saved.some((r) => r.diffs.length > 0);
 
   // Wire the RPC each time the iframe element changes.
   useEffect(() => {
@@ -131,6 +176,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
   async function discardSelection() {
     if (!rpc) return;
     await rpc.applyDirectEdit({ type: 'reset_pending_selection', revert: true });
+    skipAutoSaveRef.current = true;
     setPending(null);
     setNote('');
     setEditing(false);
@@ -156,6 +202,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     // Clear active selection BEFORE the long-running send — user can pick
     // another region while Claude works. visual changes persist (revert: false).
     void rpc?.applyDirectEdit({ type: 'reset_pending_selection', revert: false });
+    skipAutoSaveRef.current = true;
     setPending(null);
     setNote('');
     setEditing(false);
@@ -218,15 +265,60 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     // RefineRpc.onTargetSelected will update `pending`. No manual update needed.
   }
 
+  /**
+   * Global undo: pops the most recent diff regardless of whether it lives
+   * on the current pending or on a previously-saved refinement. The visual
+   * rollback always goes through the companion (DOM mutation); the shell
+   * is the single source of truth for which diff was "most recent."
+   */
   async function undoLastDiff() {
-    if (!rpc || !pending || pending.diffs.length === 0) return;
-    const r = await rpc.applyDirectEdit({ type: 'undo_last_diff' });
-    if (r && r.ok && r.pending) {
-      setPending(r.pending);
-    } else if (r && !r.ok) {
-      setToast(r.error ?? 'Nothing to undo.');
-      setTimeout(() => setToast(null), 2000);
+    if (!rpc) return;
+
+    // Case 1: current selection has diffs — companion-side pop+revert,
+    // which keeps activePending in sync atomically.
+    if (pending && pending.diffs.length > 0) {
+      const r = await rpc.applyDirectEdit({ type: 'undo_last_diff' });
+      if (r && r.ok && r.pending) setPending(r.pending);
+      else if (r && !r.ok) {
+        setToast(r.error ?? 'Nothing to undo.');
+        setTimeout(() => setToast(null), 2000);
+      }
+      return;
     }
+
+    // Case 2: no current diffs — walk back through saved refinements
+    // (newest-first since we prepend on save) and pop the latest diff
+    // from the first non-empty one.
+    const idx = saved.findIndex((r) => r.diffs.length > 0);
+    if (idx === -1) {
+      setToast('Nothing to undo.');
+      setTimeout(() => setToast(null), 1500);
+      return;
+    }
+
+    const item = saved[idx];
+    const last = item.diffs[item.diffs.length - 1];
+    const r = await rpc.revertDiffs([last]);
+    if (!r.ok) {
+      setToast(r.error ?? 'Revert failed.');
+      setTimeout(() => setToast(null), 2200);
+      return;
+    }
+
+    setSaved((prev) => {
+      const next = [...prev];
+      const updatedDiffs = next[idx].diffs.slice(0, -1);
+      // Drop the saved entry if it has no diffs left AND no user note
+      // (auto-saved entries with empty notes shouldn't linger when emptied).
+      if (updatedDiffs.length === 0 && !next[idx].note.trim()) {
+        next.splice(idx, 1);
+      } else {
+        next[idx] = { ...next[idx], diffs: updatedDiffs };
+      }
+      return next;
+    });
+    setToast(`Undone · ${item.region.label}`);
+    setTimeout(() => setToast(null), 1500);
   }
 
   function deleteSaved(id: string) {
@@ -303,9 +395,9 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
             <button onClick={remove} style={btn}>Remove</button>
             <button
               onClick={undoLastDiff}
-              disabled={pending.diffs.length === 0}
-              style={pending.diffs.length === 0 ? btnGhost : btn}
-              title="Undo the most recent change (⌘Z / Ctrl+Z)"
+              disabled={!hasAnyDiff}
+              style={!hasAnyDiff ? btnGhost : btn}
+              title="Undo the most recent change across this session (⌘Z / Ctrl+Z)"
             >
               ↶ Undo
             </button>
@@ -350,6 +442,14 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
         <section>
           <div style={sectionHeader}>
             <span>Saved ({saved.length})</span>
+            <button
+              onClick={undoLastDiff}
+              disabled={!hasAnyDiff}
+              style={!hasAnyDiff ? linkBtnGhost : linkBtn}
+              title="Undo the most recent change in this session (⌘Z / Ctrl+Z)"
+            >
+              ↶ Undo
+            </button>
           </div>
           <ul style={savedList}>
             {saved.map((r) => (
@@ -452,6 +552,19 @@ const iconBtn: React.CSSProperties = {
   fontSize: 14,
   lineHeight: '20px',
   color: '#94a3b8',
+};
+const linkBtn: React.CSSProperties = {
+  background: 'none',
+  border: 'none',
+  color: '#2563eb',
+  fontSize: 11,
+  cursor: 'pointer',
+  padding: 0,
+};
+const linkBtnGhost: React.CSSProperties = {
+  ...linkBtn,
+  color: '#cbd5e1',
+  cursor: 'not-allowed',
 };
 const hint: React.CSSProperties = { color: '#64748b', fontSize: 12, lineHeight: 1.5 };
 const meta: React.CSSProperties = { color: '#64748b', fontSize: 11 };
