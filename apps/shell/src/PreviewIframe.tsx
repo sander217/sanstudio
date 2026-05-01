@@ -21,7 +21,6 @@ interface Props {
 }
 
 export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionReady }: Props) {
-  const companionTextRef = useRef<string | null>(null);
   const onChangeRef = useRef(onIframeChange);
   onChangeRef.current = onIframeChange;
   const onReadyRef = useRef(onCompanionReady);
@@ -44,14 +43,18 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
             return;
           }
           if (doc.getElementById('ifl-companion-script')) return;
-          if (!companionTextRef.current) {
-            const res = await fetch(companionUrl);
-            if (!res.ok) throw new Error(`companion fetch ${res.status}`);
-            companionTextRef.current = await res.text();
-          }
+          // Always re-fetch with no-store + a cache-buster query so dev
+          // edits to refinetool propagate without a hard browser reload.
+          // The bundle is small (~40KB) so re-fetching per iframe load is
+          // cheap compared to confusing stale-bundle bugs.
+          const res = await fetch(`${companionUrl}?t=${Date.now()}`, {
+            cache: 'no-store',
+          });
+          if (!res.ok) throw new Error(`companion fetch ${res.status}`);
+          const text = await res.text();
           const script = doc.createElement('script');
           script.id = 'ifl-companion-script';
-          script.textContent = companionTextRef.current;
+          script.textContent = text;
           doc.documentElement.appendChild(script);
           onReadyRef.current?.();
         } catch (err) {
