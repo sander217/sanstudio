@@ -28,3 +28,24 @@ button {
   font: inherit;
   font-family: inherit;
 }
+
+/* Drag handle between iframe stage and refine sidebar. Subtle in idle
+ * state, more prominent on hover / while dragging. The body class
+ * is toggled while a drag is active so the handle stays highlighted
+ * even when the cursor moves off the 6px strip. */
+.shell-resize-handle {
+  cursor: col-resize;
+  background: #e2e8f0;
+  border-left: 1px solid #cbd5e1;
+  border-right: 1px solid #cbd5e1;
+  transition: background 120ms ease;
+}
+.shell-resize-handle:hover,
+body.shell-resizing .shell-resize-handle {
+  background: #94a3b8;
+}
+body.shell-resizing,
+body.shell-resizing * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}

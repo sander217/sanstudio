@@ -19,6 +19,25 @@ import {
 import { getHealth, type DaemonHealth } from './DaemonClient';
 
 const COMPANION_URL = '/refinetool/companion.iife.js';
+const SIDEBAR_KEY = 'shell.sidebarWidth';
+const SIDEBAR_MIN = 280;
+const SIDEBAR_MAX = 720;
+const SIDEBAR_DEFAULT = 380;
+
+function readStoredWidth(): number {
+  if (typeof window === 'undefined') return SIDEBAR_DEFAULT;
+  const raw = window.localStorage.getItem(SIDEBAR_KEY);
+  const n = raw ? parseInt(raw, 10) : NaN;
+  if (!Number.isFinite(n)) return SIDEBAR_DEFAULT;
+  return Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, n));
+}
+
+function maxAllowedWidth(): number {
+  // Leave at least 480px for the iframe stage so the user can't drag the
+  // sidebar past the entire viewport and lose the preview.
+  if (typeof window === 'undefined') return SIDEBAR_MAX;
+  return Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, window.innerWidth - 480));
+}
 
 export function App() {
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION_STATE);
@@ -31,7 +50,9 @@ export function App() {
   // null = use the primary HTML (index/home/first). Setting to a file pins
   // that file inside whichever session is currently active.
   const [pinnedHtml, setPinnedHtml] = useState<string | null>(null);
+  const [sidebarWidth, setSidebarWidth] = useState<number>(readStoredWidth);
   const lastSrcRef = useRef<string | null>(null);
+  const dragStartRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   useEffect(() => startSessionPolling(setSession, 1500), []);
 
@@ -70,6 +91,51 @@ export function App() {
     }
   }, [src]);
 
+  // Persist sidebar width across reloads.
+  useEffect(() => {
+    window.localStorage.setItem(SIDEBAR_KEY, String(sidebarWidth));
+  }, [sidebarWidth]);
+
+  // Re-clamp to the new max if the window shrinks below what the current
+  // sidebar width allows for a 480px iframe stage.
+  useEffect(() => {
+    function onResize() {
+      setSidebarWidth((w) => Math.min(maxAllowedWidth(), Math.max(SIDEBAR_MIN, w)));
+    }
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
+  function onResizeHandleMouseDown(ev: React.MouseEvent) {
+    ev.preventDefault();
+    dragStartRef.current = { startX: ev.clientX, startWidth: sidebarWidth };
+    document.body.classList.add('shell-resizing');
+    function onMove(e: MouseEvent) {
+      const start = dragStartRef.current;
+      if (!start) return;
+      // Cursor moves right → sidebar shrinks; left → sidebar grows.
+      const next = start.startWidth - (e.clientX - start.startX);
+      setSidebarWidth(Math.min(maxAllowedWidth(), Math.max(SIDEBAR_MIN, next)));
+    }
+    function onUp() {
+      dragStartRef.current = null;
+      document.body.classList.remove('shell-resizing');
+      window.removeEventListener('mousemove', onMove);
+      window.removeEventListener('mouseup', onUp);
+    }
+    window.addEventListener('mousemove', onMove);
+    window.addEventListener('mouseup', onUp);
+  }
+
+  function onResizeHandleDoubleClick() {
+    setSidebarWidth(SIDEBAR_DEFAULT);
+  }
+
+  const bodyStyle: React.CSSProperties = {
+    ...body,
+    gridTemplateColumns: `minmax(0, 1fr) 6px ${sidebarWidth}px`,
+  };
+
   return (
     <div style={layout}>
       <PromptBar
@@ -77,7 +143,7 @@ export function App() {
         lastError={session.error}
         daemon={daemon}
       />
-      <div style={body}>
+      <div style={bodyStyle}>
         <main style={stage}>
           <SessionPicker
             sessions={session.all}
@@ -99,6 +165,12 @@ export function App() {
             }}
           />
         </main>
+        <div
+          className="shell-resize-handle"
+          onMouseDown={onResizeHandleMouseDown}
+          onDoubleClick={onResizeHandleDoubleClick}
+          title={`Drag to resize · double-click to reset (${SIDEBAR_DEFAULT}px)`}
+        />
         <aside style={sidebar}>
           <RefinePanel
             iframe={iframeEl}
@@ -126,7 +198,7 @@ const layout: React.CSSProperties = {
 };
 const body: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: 'minmax(0, 1fr) 380px',
+  // gridTemplateColumns is set per-render based on the dragged sidebar width.
   height: '100%',
   minHeight: 0,
   overflow: 'hidden',
