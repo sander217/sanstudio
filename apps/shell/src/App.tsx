@@ -133,7 +133,7 @@ export function App() {
 
   const bodyStyle: React.CSSProperties = {
     ...body,
-    gridTemplateColumns: `minmax(0, 1fr) 6px ${sidebarWidth}px`,
+    gridTemplateColumns: `minmax(0, 1fr) 8px ${sidebarWidth}px`,
   };
 
   return (

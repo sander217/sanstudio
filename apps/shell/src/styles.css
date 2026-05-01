@@ -29,20 +29,34 @@ button {
   font-family: inherit;
 }
 
-/* Drag handle between iframe stage and refine sidebar. Subtle in idle
- * state, more prominent on hover / while dragging. The body class
- * is toggled while a drag is active so the handle stays highlighted
- * even when the cursor moves off the 6px strip. */
+/* Drag handle between iframe stage and refine sidebar. Visible by default
+ * (the original near-transparent slate-200 on slate-100 body was
+ * indistinguishable from background — users couldn't find it).
+ * Body class toggles during drag so cursor + select-none span the whole
+ * window even when the pointer leaves the 8px strip. */
 .shell-resize-handle {
   cursor: col-resize;
-  background: #e2e8f0;
-  border-left: 1px solid #cbd5e1;
-  border-right: 1px solid #cbd5e1;
+  background: #94a3b8; /* slate-400 — clearly visible bar */
+  position: relative;
   transition: background 120ms ease;
+}
+.shell-resize-handle::after {
+  /* Center grip dots so it reads as a draggable affordance, not a border. */
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 32px;
+  border-radius: 2px;
+  background: #f8fafc;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 8px 0 #f8fafc, 0 -8px 0 #f8fafc;
+  pointer-events: none;
 }
 .shell-resize-handle:hover,
 body.shell-resizing .shell-resize-handle {
-  background: #94a3b8;
+  background: #475569; /* slate-600 — darker on hover/drag */
 }
 body.shell-resizing,
 body.shell-resizing * {
