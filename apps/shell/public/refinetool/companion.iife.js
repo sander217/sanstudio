@@ -720,16 +720,21 @@
   }
   function onKey(ev) {
     if (!refineEnabled) return;
-    if (ev.key !== "Escape") return;
     if (inlineTextActive) {
-      ev.preventDefault();
-      const diff = stopInlineTextEdit();
-      if (diff && activePending) {
-        activePending.diffs = [...activePending.diffs, diff];
-        postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_SELECTED", pending: activePending });
+      if (ev.key === "Escape") {
+        ev.preventDefault();
+        ev.stopPropagation();
+        const diff = stopInlineTextEdit();
+        if (diff && activePending) {
+          activePending.diffs = [...activePending.diffs, diff];
+          postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_SELECTED", pending: activePending });
+        }
+        return;
       }
+      ev.stopPropagation();
       return;
     }
+    if (ev.key !== "Escape") return;
     setRefineMode(false);
     broadcastRefineMode(false);
   }
