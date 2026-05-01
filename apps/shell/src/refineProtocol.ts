@@ -139,7 +139,8 @@ export type RefineResponse = {
 
 export type RefineBroadcast =
   | { ns: typeof REFINE_NS; type: 'REFINE_MODE_CHANGED'; enabled: boolean }
-  | { ns: typeof REFINE_NS; type: 'TARGET_SELECTED'; pending: PendingSelection };
+  | { ns: typeof REFINE_NS; type: 'TARGET_SELECTED'; pending: PendingSelection }
+  | { ns: typeof REFINE_NS; type: 'TARGET_CLEARED' };
 
 // ---- typed RPC helper ----
 
@@ -149,6 +150,7 @@ export class RefineRpc {
   private pending = new Map<string, { resolve: (v: unknown) => void; reject: (e: Error) => void }>();
   private modeListeners = new Set<(enabled: boolean) => void>();
   private selectionListeners = new Set<(p: PendingSelection) => void>();
+  private clearListeners = new Set<() => void>();
   private listener: ((ev: MessageEvent) => void) | null = null;
 
   constructor(private getTarget: () => Window | null) {}
@@ -164,6 +166,7 @@ export class RefineRpc {
     this.pending.clear();
     this.modeListeners.clear();
     this.selectionListeners.clear();
+    this.clearListeners.clear();
   }
 
   onModeChange(handler: (enabled: boolean) => void): () => void {
@@ -174,6 +177,11 @@ export class RefineRpc {
   onTargetSelected(handler: (p: PendingSelection) => void): () => void {
     this.selectionListeners.add(handler);
     return () => this.selectionListeners.delete(handler);
+  }
+
+  onTargetCleared(handler: () => void): () => void {
+    this.clearListeners.add(handler);
+    return () => this.clearListeners.delete(handler);
   }
 
   async setRefineMode(enabled: boolean): Promise<void> {
@@ -231,6 +239,8 @@ export class RefineRpc {
       for (const fn of this.modeListeners) fn(data.enabled);
     } else if (data.type === 'TARGET_SELECTED') {
       for (const fn of this.selectionListeners) fn(data.pending);
+    } else if (data.type === 'TARGET_CLEARED') {
+      for (const fn of this.clearListeners) fn();
     }
   }
 }

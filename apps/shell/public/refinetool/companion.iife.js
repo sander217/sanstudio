@@ -51,16 +51,33 @@
     "u",
     "kbd"
   ]);
+  const BLOCK_TEXT_TAGS = /* @__PURE__ */ new Set([
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "p",
+    "blockquote",
+    "li",
+    "dt",
+    "dd",
+    "figcaption"
+  ]);
   const MAX_WALK = 8;
   const SIZE_FALLBACK_MIN_WIDTH = 260;
   const SIZE_FALLBACK_MIN_HEIGHT = 140;
   function pickMeaningfulTarget(start) {
-    var _a;
+    var _a, _b;
     if (!start) return null;
     if (isRootContainer(start)) return null;
     const startTag = start.tagName.toLowerCase();
     if (LEAF_TAGS.has(startTag)) return start;
     if (INLINE_EMPHASIS_TAGS.has(startTag) && readClassName(start) && ((_a = start.textContent) == null ? void 0 : _a.trim()) && isSelectableCandidate(start)) {
+      return start;
+    }
+    if (BLOCK_TEXT_TAGS.has(startTag) && ((_b = start.textContent) == null ? void 0 : _b.trim()) && isSelectableCandidate(start)) {
       return start;
     }
     let current = start;
@@ -611,6 +628,16 @@
     ensureOverlay().hideHover();
     postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_SELECTED", pending });
   }
+  function clearSelectionAndBroadcast() {
+    if (!selected && !activePending && !overlay) return;
+    selected = null;
+    activePending = null;
+    originalStyles = null;
+    currentHover = null;
+    overlay == null ? void 0 : overlay.hideSelection();
+    overlay == null ? void 0 : overlay.hideHover();
+    postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_CLEARED" });
+  }
   let viewportRaf = 0;
   function refreshSelectionOverlay() {
     if (!selected || !overlay) return;
@@ -660,7 +687,10 @@
     ev.preventDefault();
     ev.stopPropagation();
     const picked = pickMeaningfulTarget(el);
-    if (!picked) return;
+    if (!picked) {
+      clearSelectionAndBroadcast();
+      return;
+    }
     selectRegion(picked);
   }
   function onDblClick(ev) {

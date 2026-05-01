@@ -63,10 +63,12 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     skipAutoSaveRef.current = false;
   }, [resetKey]);
 
-  // Auto-save: when the user picks a different element while the previous
-  // selection still has unsaved diffs, push those diffs into the saved
-  // list so they're not lost. Without this, the companion's selectRegion
-  // would overwrite activePending and the diffs would vanish from the UI.
+  // Auto-save: when pending changes and the previous one had unsaved diffs,
+  // archive them into the saved list so the user doesn't lose work.
+  // - Switching elements (pending → different pending) → save previous.
+  // - Pending → null via TARGET_CLEARED (clicked empty space) → save previous.
+  // - Pending → null via saveCurrent / discardSelection → those code paths
+  //   pre-set skipAutoSaveRef so we don't double-handle.
   useEffect(() => {
     const previous = prevPendingRef.current;
     prevPendingRef.current = pending;
@@ -76,10 +78,9 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
       return;
     }
     if (!previous || previous.diffs.length === 0) return;
-    // Only auto-save when switching to a DIFFERENT element. Pending becoming
-    // null = explicit save/discard, handled by those code paths.
-    if (!pending) return;
-    if (previous.target.selector === pending.target.selector) return;
+    // Re-selecting the same element (companion broadcasts on every click) —
+    // no save needed.
+    if (pending && previous.target.selector === pending.target.selector) return;
 
     setSaved((prev) => [
       {
@@ -130,9 +131,18 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
       setPending(p);
       setEditing(false);
     });
+    // Iframe broadcasts TARGET_CLEARED when the user clicks empty space.
+    // Drop the pending; the auto-save effect will preserve any unsaved
+    // diffs into the Saved list automatically (we deliberately do NOT
+    // set skipAutoSaveRef here).
+    const offCleared = next.onTargetCleared(() => {
+      setPending(null);
+      setEditing(false);
+    });
     return () => {
       offMode();
       offTarget();
+      offCleared();
       next.detach();
     };
   }, [iframe]);
