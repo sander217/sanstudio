@@ -639,14 +639,16 @@
         postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_SELECTED", pending: activePending });
       }
     }
-    const picked = pickMeaningfulTarget(el);
-    if (!picked) return;
     ev.preventDefault();
     ev.stopPropagation();
+    const picked = pickMeaningfulTarget(el);
+    if (!picked) return;
     selectRegion(picked);
   }
   function onDblClick(ev) {
     if (!refineEnabled) return;
+    ev.preventDefault();
+    ev.stopPropagation();
     if (inlineTextActive) return;
     if (!selected) return;
     const el = document.elementFromPoint(ev.clientX, ev.clientY);
@@ -658,8 +660,6 @@
       const inner = findInnerTextTarget(selected);
       if (inner) target = inner;
     }
-    ev.preventDefault();
-    ev.stopPropagation();
     if (target !== selected) selectRegion(target);
     try {
       startInlineTextEdit();
