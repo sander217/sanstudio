@@ -37,14 +37,32 @@
     "canvas"
   ]);
   const MEANINGFUL_CLASS_REGEX = /\b(card|hero|cta|panel|container|block|section|modal|dialog|pricing|feature|sidebar|navbar|banner|grid|list|toolbar|drawer|popover|tooltip|tab|row|col|stack|cluster|wrapper|layout|group|item|actions|media|testimonial|footer|header|field-group|btn-group|controls|figure)\b/i;
+  const INLINE_EMPHASIS_TAGS = /* @__PURE__ */ new Set([
+    "span",
+    "em",
+    "strong",
+    "i",
+    "b",
+    "mark",
+    "code",
+    "sup",
+    "sub",
+    "small",
+    "u",
+    "kbd"
+  ]);
   const MAX_WALK = 8;
   const SIZE_FALLBACK_MIN_WIDTH = 260;
   const SIZE_FALLBACK_MIN_HEIGHT = 140;
   function pickMeaningfulTarget(start) {
+    var _a;
     if (!start) return null;
     if (isRootContainer(start)) return null;
     const startTag = start.tagName.toLowerCase();
     if (LEAF_TAGS.has(startTag)) return start;
+    if (INLINE_EMPHASIS_TAGS.has(startTag) && readClassName(start) && ((_a = start.textContent) == null ? void 0 : _a.trim()) && isSelectableCandidate(start)) {
+      return start;
+    }
     let current = start;
     for (let i = 0; i < MAX_WALK && current && current !== document.body && current !== document.documentElement; i++) {
       const tag = current.tagName.toLowerCase();
