@@ -8,9 +8,11 @@ import { useEffect, useRef, useState } from 'react';
 import { PromptBar } from './PromptBar';
 import { PreviewIframe } from './PreviewIframe';
 import { RefinePanel } from './RefinePanel';
+import { SessionPicker } from './SessionPicker';
 import {
   EMPTY_SESSION_STATE,
   artifactUrl,
+  pickPrimaryHtml,
   startSessionPolling,
   type SessionState,
 } from './SessionWatcher';
@@ -23,6 +25,12 @@ export function App() {
   const [resetKey, setResetKey] = useState(0);
   const [iframeEl, setIframeEl] = useState<HTMLIFrameElement | null>(null);
   const [daemon, setDaemon] = useState<DaemonHealth | null>(null);
+  // null = auto-follow latest by mtime. Setting to a slug pins the iframe
+  // to that session even when newer ones arrive.
+  const [pinnedSlug, setPinnedSlug] = useState<string | null>(null);
+  // null = use the primary HTML (index/home/first). Setting to a file pins
+  // that file inside whichever session is currently active.
+  const [pinnedHtml, setPinnedHtml] = useState<string | null>(null);
   const lastSrcRef = useRef<string | null>(null);
 
   useEffect(() => startSessionPolling(setSession, 1500), []);
@@ -35,12 +43,26 @@ export function App() {
     return () => ac.abort();
   }, []);
 
-  const src =
-    session.latestSlug && session.latestHtml
-      ? artifactUrl(session.latestSlug, session.latestHtml)
-      : null;
+  // Resolve which session + file the iframe should actually load.
+  const effectiveSlug = pinnedSlug ?? session.latestSlug;
+  const effectiveSession = session.all.find((s) => s.slug === effectiveSlug);
+  const effectiveHtml =
+    pinnedHtml && effectiveSession?.htmlFiles.includes(pinnedHtml)
+      ? pinnedHtml
+      : pickPrimaryHtml(effectiveSession?.htmlFiles ?? []);
 
-  // Reset the panel state when the artifact changes.
+  // If the user pinned a slug that no longer exists (e.g. they deleted the
+  // session folder), fall back to auto-follow rather than showing nothing.
+  useEffect(() => {
+    if (pinnedSlug && session.all.length > 0 && !session.all.some((s) => s.slug === pinnedSlug)) {
+      setPinnedSlug(null);
+      setPinnedHtml(null);
+    }
+  }, [pinnedSlug, session.all]);
+
+  const src = effectiveSlug && effectiveHtml ? artifactUrl(effectiveSlug, effectiveHtml) : null;
+
+  // Reset the panel state when the artifact changes (auto-switch OR pin change).
   useEffect(() => {
     if (src !== lastSrcRef.current) {
       lastSrcRef.current = src;
@@ -51,12 +73,21 @@ export function App() {
   return (
     <div style={layout}>
       <PromptBar
-        sessionSlug={session.latestSlug}
+        sessionSlug={effectiveSlug}
         lastError={session.error}
         daemon={daemon}
       />
       <div style={body}>
         <main style={stage}>
+          <SessionPicker
+            sessions={session.all}
+            effectiveSlug={effectiveSlug}
+            effectiveHtml={effectiveHtml}
+            selectedSlug={pinnedSlug}
+            onPickSession={setPinnedSlug}
+            selectedHtml={pinnedHtml}
+            onPickHtml={setPinnedHtml}
+          />
           <PreviewIframe
             src={src}
             companionUrl={COMPANION_URL}
@@ -72,11 +103,11 @@ export function App() {
           <RefinePanel
             iframe={iframeEl}
             artifactPath={
-              session.latestSlug && session.latestHtml
-                ? `sessions/${session.latestSlug}/html/${session.latestHtml}`
+              effectiveSlug && effectiveHtml
+                ? `sessions/${effectiveSlug}/html/${effectiveHtml}`
                 : null
             }
-            sessionSlug={session.latestSlug}
+            sessionSlug={effectiveSlug}
             resetKey={resetKey}
             daemon={daemon}
           />

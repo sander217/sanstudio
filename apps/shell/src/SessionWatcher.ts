@@ -40,7 +40,7 @@ export const EMPTY_SESSION_STATE: SessionState = {
   error: null,
 };
 
-function pickPrimaryHtml(files: string[]): string | null {
+export function pickPrimaryHtml(files: string[]): string | null {
   if (files.length === 0) return null;
   // Preference order: index.html > home.html > first alphabetically.
   if (files.includes('index.html')) return 'index.html';
