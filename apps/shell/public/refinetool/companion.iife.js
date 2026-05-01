@@ -627,9 +627,18 @@
   }
   function onClick(ev) {
     if (!refineEnabled) return;
-    if (inlineTextActive) return;
     const el = document.elementFromPoint(ev.clientX, ev.clientY);
     if (!el || !(el instanceof Element)) return;
+    if (inlineTextActive) {
+      if (selected && (selected === el || selected.contains(el))) {
+        return;
+      }
+      const diff = stopInlineTextEdit();
+      if (diff && activePending) {
+        activePending.diffs = [...activePending.diffs, diff];
+        postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_SELECTED", pending: activePending });
+      }
+    }
     const picked = pickMeaningfulTarget(el);
     if (!picked) return;
     ev.preventDefault();
@@ -663,10 +672,18 @@
   }
   function onKey(ev) {
     if (!refineEnabled) return;
-    if (ev.key === "Escape") {
-      setRefineMode(false);
-      broadcastRefineMode(false);
+    if (ev.key !== "Escape") return;
+    if (inlineTextActive) {
+      ev.preventDefault();
+      const diff = stopInlineTextEdit();
+      if (diff && activePending) {
+        activePending.diffs = [...activePending.diffs, diff];
+        postToHost({ ns: PROTOCOL_NAMESPACE, type: "TARGET_SELECTED", pending: activePending });
+      }
+      return;
     }
+    setRefineMode(false);
+    broadcastRefineMode(false);
   }
   function attachViewportListenersOnce() {
     document.addEventListener("scroll", onViewportChange, { capture: true, passive: true });
