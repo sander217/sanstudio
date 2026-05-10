@@ -15,7 +15,10 @@ export interface SessionEntry {
 }
 
 export interface SessionsManifest {
-  root: string;
+  /** Backwards-compat — older server returned `root`, newer returns `sessionsRoot`. */
+  root?: string;
+  sessionsRoot?: string;
+  project?: { id: string; name: string; root: string };
   sessions: SessionEntry[];
 }
 
@@ -62,6 +65,7 @@ function manifestToState(m: SessionsManifest, lastPolledMs: number): SessionStat
 export function startSessionPolling(
   setState: Dispatch<SetStateAction<SessionState>>,
   intervalMs = 1500,
+  projectId: string | null = null,
 ): () => void {
   let cancelled = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -72,7 +76,10 @@ export function startSessionPolling(
   async function tick() {
     if (cancelled) return;
     try {
-      const res = await fetch('/sessions.json', { cache: 'no-store' });
+      const url = projectId
+        ? `/sessions.json?project=${encodeURIComponent(projectId)}`
+        : '/sessions.json';
+      const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const manifest = (await res.json()) as SessionsManifest;
       const next = manifestToState(manifest, Date.now());
@@ -110,7 +117,11 @@ export function startSessionPolling(
   };
 }
 
-export function artifactUrl(slug: string, htmlFile: string): string {
-  // Encoded so slugs with timestamps and dashes stay clean.
-  return `/sessions/${encodeURIComponent(slug)}/html/${encodeURIComponent(htmlFile)}`;
+export function artifactUrl(
+  slug: string,
+  htmlFile: string,
+  projectId: string | null = null,
+): string {
+  const base = `/sessions/${encodeURIComponent(slug)}/html/${encodeURIComponent(htmlFile)}`;
+  return projectId ? `${base}?project=${encodeURIComponent(projectId)}` : base;
 }

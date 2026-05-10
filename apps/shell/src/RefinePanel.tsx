@@ -27,9 +27,11 @@ interface Props {
   resetKey: number;
   /** Daemon health from /api/claude/health. null = still probing. */
   daemon: DaemonHealth | null;
+  /** Project ID — passed to runIterate so claude spawns with the right cwd. */
+  projectId: string | null;
 }
 
-export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemon }: Props) {
+export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemon, projectId }: Props) {
   const [rpc, setRpc] = useState<RefineRpc | null>(null);
   const [refineOn, setRefineOn] = useState(false);
   const [pending, setPending] = useState<PendingSelection | null>(null);
@@ -223,7 +225,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
       setToast(`Sending to Claude — ${nextSaved.length} refinement${nextSaved.length === 1 ? '' : 's'}…`);
       try {
         const startedAt = Date.now();
-        for await (const evt of runIterate({ prompt: promptText })) {
+        for await (const evt of runIterate({ prompt: promptText, projectId })) {
           if (evt.type === 'started') {
             setToast(`Claude is iterating Gate 3…`);
           } else if (evt.type === 'stdout' || evt.type === 'stderr') {

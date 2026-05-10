@@ -37,6 +37,8 @@ export async function getHealth(signal?: AbortSignal): Promise<DaemonHealth> {
 
 export interface RunIterateOptions {
   prompt: string;
+  /** Optional project ID — backend spawns claude with that project's root as cwd. */
+  projectId?: string | null;
   signal?: AbortSignal;
 }
 
@@ -44,7 +46,7 @@ export async function* runIterate(opts: RunIterateOptions): AsyncGenerator<RunEv
   const res = await fetch('/api/claude/iterate', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ prompt: opts.prompt }),
+    body: JSON.stringify({ prompt: opts.prompt, projectId: opts.projectId ?? undefined }),
     signal: opts.signal,
   });
   if (!res.ok || !res.body) {

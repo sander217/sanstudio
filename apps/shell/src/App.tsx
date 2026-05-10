@@ -9,6 +9,7 @@ import { PromptBar } from './PromptBar';
 import { PreviewIframe } from './PreviewIframe';
 import { RefinePanel } from './RefinePanel';
 import { SessionPicker } from './SessionPicker';
+import { ProjectPicker } from './ProjectPicker';
 import {
   EMPTY_SESSION_STATE,
   artifactUrl,
@@ -16,6 +17,12 @@ import {
   startSessionPolling,
   type SessionState,
 } from './SessionWatcher';
+import {
+  listProjects,
+  readSelectedProjectId,
+  writeSelectedProjectId,
+  type Project,
+} from './ProjectStore';
 import { getHealth, type DaemonHealth } from './DaemonClient';
 
 const COMPANION_URL = '/refinetool/companion.iife.js';
@@ -44,6 +51,10 @@ export function App() {
   const [resetKey, setResetKey] = useState(0);
   const [iframeEl, setIframeEl] = useState<HTMLIFrameElement | null>(null);
   const [daemon, setDaemon] = useState<DaemonHealth | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    readSelectedProjectId(),
+  );
   // null = auto-follow latest by mtime. Setting to a slug pins the iframe
   // to that session even when newer ones arrive.
   const [pinnedSlug, setPinnedSlug] = useState<string | null>(null);
@@ -54,7 +65,44 @@ export function App() {
   const lastSrcRef = useRef<string | null>(null);
   const dragStartRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
-  useEffect(() => startSessionPolling(setSession, 1500), []);
+  // Initial project list fetch + reconciliation: if the stored selection no
+  // longer exists (e.g. user removed the project), fall back to the first.
+  async function refreshProjects() {
+    try {
+      const list = await listProjects();
+      setProjects(list);
+      setSelectedProjectId((cur) => {
+        if (cur && list.some((p) => p.id === cur)) return cur;
+        const fallback = list[0]?.id ?? null;
+        writeSelectedProjectId(fallback);
+        return fallback;
+      });
+    } catch (err) {
+      console.warn('[shell] listProjects failed', err);
+    }
+  }
+
+  useEffect(() => {
+    void refreshProjects();
+  }, []);
+
+  function handleSelectProject(id: string) {
+    setSelectedProjectId(id);
+    writeSelectedProjectId(id);
+    // Clear pinned session/html when switching projects — pins are per-
+    // project and don't make sense across project boundaries.
+    setPinnedSlug(null);
+    setPinnedHtml(null);
+    setSession(EMPTY_SESSION_STATE);
+  }
+
+  // Re-poll sessions when the selected project changes. Wait until we have
+  // a project ID — the very first render before /api/projects responds has
+  // none, and we don't want to fetch the wrong project's sessions.
+  useEffect(() => {
+    if (!selectedProjectId) return;
+    return startSessionPolling(setSession, 1500, selectedProjectId);
+  }, [selectedProjectId]);
 
   // Probe the daemon at boot. We don't poll — if Claude becomes available
   // mid-session, the user can refresh; that's fine for Layer 1.
@@ -81,7 +129,10 @@ export function App() {
     }
   }, [pinnedSlug, session.all]);
 
-  const src = effectiveSlug && effectiveHtml ? artifactUrl(effectiveSlug, effectiveHtml) : null;
+  const src =
+    effectiveSlug && effectiveHtml
+      ? artifactUrl(effectiveSlug, effectiveHtml, selectedProjectId)
+      : null;
 
   // Reset the panel state when the artifact changes (auto-switch OR pin change).
   useEffect(() => {
@@ -138,11 +189,22 @@ export function App() {
 
   return (
     <div style={layout}>
-      <PromptBar
-        sessionSlug={effectiveSlug}
-        lastError={session.error}
-        daemon={daemon}
-      />
+      <header style={headerBar}>
+        <ProjectPicker
+          projects={projects}
+          selectedId={selectedProjectId}
+          onSelect={handleSelectProject}
+          onProjectsChanged={() => void refreshProjects()}
+        />
+        <div style={headerPromptWrap}>
+          <PromptBar
+            sessionSlug={effectiveSlug}
+            lastError={session.error}
+            daemon={daemon}
+            projectId={selectedProjectId}
+          />
+        </div>
+      </header>
       <div style={bodyStyle}>
         <main style={stage}>
           <SessionPicker
@@ -182,6 +244,7 @@ export function App() {
             sessionSlug={effectiveSlug}
             resetKey={resetKey}
             daemon={daemon}
+            projectId={selectedProjectId}
           />
         </aside>
       </div>
@@ -191,10 +254,28 @@ export function App() {
 
 const layout: React.CSSProperties = {
   display: 'grid',
-  gridTemplateRows: '52px minmax(0, 1fr)',
+  gridTemplateRows: '56px minmax(0, 1fr)',
   height: '100vh',
   width: '100vw',
   background: '#f1f5f9',
+};
+const headerBar: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '0 12px',
+  background: '#fff',
+  borderBottom: '1px solid #e2e8f0',
+  height: '100%',
+  minWidth: 0,
+};
+const headerPromptWrap: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  // Reset the PromptBar's outer padding so it sits inline with the picker.
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
 };
 const body: React.CSSProperties = {
   display: 'grid',
