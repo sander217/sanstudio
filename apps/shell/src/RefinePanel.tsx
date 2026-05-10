@@ -196,22 +196,80 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     setEditing(false);
   }
 
-  async function saveCurrent() {
-    if (!pending) return;
-    const item: SavedRefinement = {
-      id: `r-${Date.now()}`,
-      region: pending.target,
-      note: note.trim(),
-      diffs: pending.diffs as EditDiff[],
-      createdAt: new Date().toISOString(),
-    };
-    const nextSaved = [item, ...saved];
-    setSaved(nextSaved);
-
-    const promptText = buildIteratePrompt(nextSaved, {
+  /** Stream the cumulative iterate prompt to Claude. Toasts progress. */
+  async function streamToClaude(refinements: SavedRefinement[]) {
+    if (refinements.length === 0) {
+      setToast('Nothing to send — make a refinement first.');
+      setTimeout(() => setToast(null), 2500);
+      return;
+    }
+    const promptText = buildIteratePrompt(refinements, {
       artifactPath: artifactPath ?? undefined,
       sessionSlug: sessionSlug ?? undefined,
     });
+    if (!daemon?.ok) {
+      // Layer 0 fallback: copy and tell the user to paste.
+      try {
+        await navigator.clipboard.writeText(promptText);
+        setToast(
+          `Daemon offline · ${refinements.length} refinement${refinements.length === 1 ? '' : 's'} copied. Paste in Claude Code (Cmd+V).`,
+        );
+      } catch (err) {
+        console.error('[shell] clipboard write failed', err);
+        setToast('Daemon offline AND clipboard write failed — see terminal.');
+      }
+      setTimeout(() => setToast(null), 4500);
+      return;
+    }
+    setToast(`Sending to Claude — ${refinements.length} refinement${refinements.length === 1 ? '' : 's'}…`);
+    try {
+      const startedAt = Date.now();
+      for await (const evt of runIterate({ prompt: promptText, projectId })) {
+        if (evt.type === 'started') {
+          setToast(`Claude is iterating Gate 3…`);
+        } else if (evt.type === 'stdout' || evt.type === 'stderr') {
+          const last = evt.chunk.split('\n').reverse().find((l) => l.trim());
+          if (last) setToast(last.slice(0, 100));
+        } else if (evt.type === 'done') {
+          const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
+          setToast(
+            evt.code === 0
+              ? `✓ Iterate done in ${seconds}s — preview should refresh shortly`
+              : `✗ Claude exited ${evt.code} after ${seconds}s — see terminal`,
+          );
+          setTimeout(() => setToast(null), 5000);
+        } else if (evt.type === 'error') {
+          setToast(`✗ ${evt.message}`);
+          setTimeout(() => setToast(null), 5000);
+        }
+      }
+    } catch (err) {
+      console.error('[shell] daemon send failed', err);
+      setToast(`✗ daemon send failed: ${err instanceof Error ? err.message : String(err)}`);
+      setTimeout(() => setToast(null), 5000);
+    }
+  }
+
+  async function saveCurrent() {
+    if (!pending) return;
+    // Only push a "pending → saved" record when the pending selection
+    // actually carries content (text/style/color edits via the companion,
+    // OR a note from the user). Slider-driven Position/Padding edits go
+    // straight into `saved` via upsertSaved, so without this guard we'd
+    // append an empty SavedRefinement that adds noise to the prompt.
+    const pendingHasContent = !!note.trim() || pending.diffs.length > 0;
+    let nextSaved = saved;
+    if (pendingHasContent) {
+      const item: SavedRefinement = {
+        id: `r-${Date.now()}`,
+        region: pending.target,
+        note: note.trim(),
+        diffs: pending.diffs as EditDiff[],
+        createdAt: new Date().toISOString(),
+      };
+      nextSaved = [item, ...saved];
+      setSaved(nextSaved);
+    }
 
     // Clear active selection BEFORE the long-running send — user can pick
     // another region while Claude works. visual changes persist (revert: false).
@@ -221,51 +279,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     setNote('');
     setEditing(false);
 
-    if (daemon?.ok) {
-      // Layer 1: stream to Claude directly. iframe auto-reloads when files
-      // change so we don't need to do anything special after `done`.
-      setToast(`Sending to Claude — ${nextSaved.length} refinement${nextSaved.length === 1 ? '' : 's'}…`);
-      try {
-        const startedAt = Date.now();
-        for await (const evt of runIterate({ prompt: promptText, projectId })) {
-          if (evt.type === 'started') {
-            setToast(`Claude is iterating Gate 3…`);
-          } else if (evt.type === 'stdout' || evt.type === 'stderr') {
-            const last = evt.chunk.split('\n').reverse().find((l) => l.trim());
-            if (last) setToast(last.slice(0, 100));
-          } else if (evt.type === 'done') {
-            const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
-            setToast(
-              evt.code === 0
-                ? `✓ Iterate done in ${seconds}s — preview should refresh shortly`
-                : `✗ Claude exited ${evt.code} after ${seconds}s — see terminal`,
-            );
-            // Keep the success toast around longer than the streaming chatter
-            setTimeout(() => setToast(null), 5000);
-          } else if (evt.type === 'error') {
-            setToast(`✗ ${evt.message}`);
-            setTimeout(() => setToast(null), 5000);
-          }
-        }
-      } catch (err) {
-        console.error('[shell] daemon send failed', err);
-        setToast(`✗ daemon send failed: ${err instanceof Error ? err.message : String(err)}`);
-        setTimeout(() => setToast(null), 5000);
-      }
-      return;
-    }
-
-    // Layer 0 fallback: copy to clipboard, user pastes manually.
-    try {
-      await navigator.clipboard.writeText(promptText);
-      setToast(
-        `Saved · ${nextSaved.length} refinement${nextSaved.length === 1 ? '' : 's'} copied. Paste in Claude Code (Cmd+V).`,
-      );
-    } catch (err) {
-      console.error('[shell] clipboard write failed', err);
-      setToast('Saved, but clipboard write failed. Use the "Copy" button below.');
-    }
-    setTimeout(() => setToast(null), 4500);
+    await streamToClaude(nextSaved);
   }
 
   async function drillIntoText() {
@@ -473,15 +487,21 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
           )}
           <button
             onClick={saveCurrent}
-            disabled={!note.trim() && pending.diffs.length === 0}
+            disabled={
+              !note.trim() &&
+              pending.diffs.length === 0 &&
+              saved.length === 0
+            }
             style={btnPrimary}
             title={
               daemon?.ok
-                ? 'Send refinement to Claude Code (live iterate)'
+                ? 'Send all refinements (this selection + previously saved) to Claude'
                 : 'Save this refinement and copy the cumulative iterate prompt to your clipboard'
             }
           >
-            {daemon?.ok ? 'Send to Claude' : 'Save'}
+            {daemon?.ok
+              ? `Send to Claude${saved.length > 0 ? ` (${saved.length + (pending.diffs.length > 0 || note.trim() ? 1 : 0)})` : ''}`
+              : 'Save'}
           </button>
         </section>
       )}
@@ -516,7 +536,16 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
             ))}
           </ul>
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <button onClick={copyPrompt} style={btnPrimary}>
+            {daemon?.ok && (
+              <button
+                onClick={() => void streamToClaude(saved)}
+                style={btnPrimary}
+                title="Send all saved refinements to Claude (no pending selection needed)"
+              >
+                Send saved to Claude ({saved.length})
+              </button>
+            )}
+            <button onClick={copyPrompt} style={daemon?.ok ? btn : btnPrimary}>
               Copy iterate prompt
             </button>
             <details style={detailsBox}>
