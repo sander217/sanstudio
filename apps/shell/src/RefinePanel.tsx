@@ -16,6 +16,7 @@ import {
 import { buildIteratePrompt, type SavedRefinement } from './RefinementToPrompt';
 import { StyleControls } from './StyleControls';
 import { ImageControls } from './ImageControls';
+import { ChildPaddingControls } from './ChildPaddingControls';
 import { runIterate, type DaemonHealth } from './DaemonClient';
 
 interface Props {
@@ -418,6 +419,23 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
 
           <StyleControls pending={pending} rpc={rpc} resetSignal={resetKey} />
           <ImageControls pending={pending} rpc={rpc} resetSignal={resetKey} />
+
+          <ChildPaddingControls
+            pending={pending}
+            iframe={iframe}
+            resetSignal={resetKey}
+            upsertSaved={(item) => {
+              // Replace if a refinement with the same id already exists
+              // (slider drag = many calls); else prepend so newest is on top.
+              setSaved((prev) => {
+                const idx = prev.findIndex((s) => s.id === item.id);
+                if (idx === -1) return [item, ...prev];
+                const next = [...prev];
+                next[idx] = item;
+                return next;
+              });
+            }}
+          />
 
           {pending.diffs.length > 0 && (
             <ul style={diffList}>
