@@ -29,6 +29,17 @@ import { useEffect, useMemo, useState } from 'react';
 
 import type { PendingSelection, SelectedTarget, StyleChangeDiff } from './refineProtocol';
 import type { SavedRefinement } from './RefinementToPrompt';
+import {
+  buildAiRestructurePrompt,
+  clampInput,
+  detectParentConstraints,
+  isContainerCandidate,
+  paddingShorthand,
+  readNumericStyle,
+  readTranslateFromMatrix,
+  shortSnippet,
+  type ParentConstraint,
+} from './layoutHelpers';
 
 interface Props {
   pending: PendingSelection;
@@ -59,13 +70,6 @@ interface ChildInfo {
   originalPaddingCss: string;
 }
 
-interface ParentConstraint {
-  /** Reason text shown in the warning banner. */
-  reason: string;
-  /** True when the constraint truly limits free positioning (vs. cosmetic). */
-  blocking: boolean;
-}
-
 const POS_SLIDER_MIN = -200;
 const POS_SLIDER_MAX = 200;
 const POS_INPUT_MIN = -1000;
@@ -74,116 +78,6 @@ const PAD_SLIDER_MIN = 0;
 const PAD_SLIDER_MAX = 80;
 const PAD_INPUT_MIN = 0;
 const PAD_INPUT_MAX = 400;
-
-function readNumericStyle(el: Element, prop: string): number {
-  const raw = (el.ownerDocument?.defaultView ?? window).getComputedStyle(el).getPropertyValue(prop);
-  const m = raw.match(/-?\d+(?:\.\d+)?/);
-  return m ? Math.round(Number(m[0])) : 0;
-}
-
-/** Parse the translate(X, Y) values out of getComputedStyle's matrix form. */
-function readTranslateFromMatrix(el: Element): { x: number; y: number } {
-  const view = el.ownerDocument?.defaultView ?? window;
-  const transform = view.getComputedStyle(el).transform;
-  if (!transform || transform === 'none') return { x: 0, y: 0 };
-  // `matrix(a, b, c, d, tx, ty)` or `matrix3d(...)` — last two of 6 are tx/ty
-  const m2d = transform.match(/^matrix\(([^)]+)\)$/);
-  if (m2d) {
-    const parts = m2d[1].split(',').map((s) => Number(s.trim()));
-    if (parts.length === 6) {
-      return { x: Math.round(parts[4]), y: Math.round(parts[5]) };
-    }
-  }
-  const m3d = transform.match(/^matrix3d\(([^)]+)\)$/);
-  if (m3d) {
-    const parts = m3d[1].split(',').map((s) => Number(s.trim()));
-    if (parts.length === 16) {
-      return { x: Math.round(parts[12]), y: Math.round(parts[13]) };
-    }
-  }
-  return { x: 0, y: 0 };
-}
-
-function shortSnippet(el: Element): string {
-  const text = (el.textContent ?? '').trim().replace(/\s+/g, ' ');
-  if (text) return text.length > 40 ? text.slice(0, 37) + '…' : text;
-  if (el.tagName === 'IMG') return `<img src="${(el as HTMLImageElement).getAttribute('src') ?? ''}">`;
-  const cls = (el as HTMLElement).className;
-  if (typeof cls === 'string' && cls) return `.${cls.split(/\s+/).slice(0, 2).join('.')}`;
-  return '(empty)';
-}
-
-function isContainerCandidate(tag: string): boolean {
-  const containerTags = new Set([
-    'DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'ASIDE', 'NAV',
-    'UL', 'OL', 'FORM', 'FIELDSET', 'FIGURE', 'PICTURE',
-  ]);
-  return containerTags.has(tag.toUpperCase());
-}
-
-function paddingShorthand(y: number, x: number): string {
-  return y === x ? `${y}px` : `${y}px ${x}px`;
-}
-
-function clampInput(raw: string, min: number, max: number): number | null {
-  if (raw.trim() === '' || raw.trim() === '-') return null;
-  const n = Number(raw);
-  if (!Number.isFinite(n)) return null;
-  return Math.max(min, Math.min(max, Math.round(n)));
-}
-
-/** Detect parent CSS that may limit free positioning of children. */
-function detectParentConstraints(parent: Element): ParentConstraint | null {
-  const cs = (parent.ownerDocument?.defaultView ?? window).getComputedStyle(parent);
-  const reasons: string[] = [];
-  let blocking = false;
-
-  if (cs.overflow === 'hidden' || cs.overflowX === 'hidden' || cs.overflowY === 'hidden') {
-    reasons.push('overflow: hidden — children translated outside the parent box will be clipped');
-    blocking = true;
-  }
-  if (cs.display === 'grid' || cs.display === 'inline-grid') {
-    reasons.push('display: grid — children sit in fixed grid slots; translate offsets visually but slot anchor stays put');
-  }
-  if (cs.display === 'flex' || cs.display === 'inline-flex') {
-    const justify = cs.justifyContent;
-    if (justify && justify !== 'flex-start' && justify !== 'normal') {
-      reasons.push(`flex with justify-content: ${justify} — siblings may rebalance around translated child`);
-    }
-  }
-  if (cs.contain === 'strict' || cs.contain === 'layout' || cs.contain === 'size') {
-    reasons.push(`contain: ${cs.contain} — layout effects don't propagate; visual shifts may look isolated`);
-    blocking = true;
-  }
-  if (reasons.length === 0) return null;
-  return { reason: reasons.join(' · '), blocking };
-}
-
-function buildAiRestructurePrompt(
-  containerLabel: string,
-  containerSelector: string,
-  artifactPath: string | null,
-  reason: string,
-): string {
-  const file = artifactPath ?? '<artifact path>';
-  return [
-    `Refactor \`${containerSelector}\` (${containerLabel}) so each child can be repositioned`,
-    `independently of its siblings — Figma-style free-form positioning.`,
-    ``,
-    `Current constraint: ${reason}`,
-    ``,
-    `Apply one of these strategies, whichever preserves the visual intent best:`,
-    `  1. Give the container \`position: relative\` and convert children to`,
-    `     \`position: absolute\` with explicit top/left in px, anchored to`,
-    `     their current visual positions.`,
-    `  2. If the layout truly needs flow, replace tight constraints (overflow:`,
-    `     hidden, strict justify-content) with looser rules that allow per-`,
-    `     child margin/transform tweaks.`,
-    ``,
-    `Apply to: ${file}`,
-    `Keep all other styling (typography, colors, hierarchy) intact.`,
-  ].join('\n');
-}
 
 export function ChildLayoutControls({
   pending,
@@ -632,6 +526,7 @@ function AxisRow({
         step={1}
         value={inputValue}
         onChange={(e) => onInputChange(e.target.value)}
+        onFocus={(e) => e.currentTarget.select()}
         onBlur={onInputCommit}
         onKeyDown={(e) => {
           if (e.key === 'Enter') (e.target as HTMLInputElement).blur();

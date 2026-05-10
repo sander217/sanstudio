@@ -17,6 +17,7 @@ import { buildIteratePrompt, type SavedRefinement } from './RefinementToPrompt';
 import { StyleControls } from './StyleControls';
 import { ImageControls } from './ImageControls';
 import { ChildLayoutControls } from './ChildLayoutControls';
+import { SelfPositionControls } from './SelfPositionControls';
 import { runIterate, type DaemonHealth } from './DaemonClient';
 
 interface Props {
@@ -418,6 +419,22 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
           </div>
 
           <StyleControls pending={pending} rpc={rpc} resetSignal={resetKey} />
+
+          <SelfPositionControls
+            pending={pending}
+            iframe={iframe}
+            artifactPath={artifactPath}
+            resetSignal={resetKey}
+            upsertSaved={(item) => {
+              setSaved((prev) => {
+                const idx = prev.findIndex((s) => s.id === item.id);
+                if (idx === -1) return [item, ...prev];
+                const next = [...prev];
+                next[idx] = item;
+                return next;
+              });
+            }}
+          />
           <ImageControls pending={pending} rpc={rpc} resetSignal={resetKey} />
 
           <ChildLayoutControls
