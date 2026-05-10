@@ -1,10 +1,29 @@
-// The right-side panel: picker toggle, current selection card with edit
-// buttons (text / hide / remove), style controls (sliders + color pickers),
-// saved-refinement list, and the "Generate iterate prompt" button that
-// builds the Claude Code paste-back.
+// Refine sidebar — restructured around a "shopping cart" model.
 //
-// All DOM mutation happens inside the iframe via the companion + RefineRpc.
-// This component never touches iframe content directly.
+//   Header        : Refine title · Picker toggle · Send to Claude (when
+//                   the cart has anything to send).
+//   Selected card : current pending selection (target, position, border
+//                   radius, action buttons, advanced details). Shown only
+//                   when the user has clicked an element.
+//   Cart          : list of saved refinements with expand / edit / delete.
+//                   Like an e-commerce cart — every entry is a discrete
+//                   thing the user committed.
+//   Output        : streaming claude --print output (when iterate is
+//                   active or recently finished).
+//
+// Selection-side actions:
+//   - Voice / Text buttons open a modal where the user dictates or types
+//     a refinement note. Save lands a SavedRefinement in the cart.
+//   - Edit text uses the companion's inline-text-edit RPC (existing flow);
+//     when active, the panel + the floating ContextualToolbar show a
+//     "Done" affordance and other buttons hide.
+//   - Position is keyboard-driven: ↑↓→← nudges by 1px, Shift = 10px. The
+//     useKeyboardNudge hook applies inline transform: translate() and
+//     upserts a `keyboard-translate:<sel>` cart entry.
+//
+// Color, font, padding, border-width adjustments live inside an Advanced
+// <details> so the primary surface stays focused on the common moves
+// (text edit, position, radius).
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 
@@ -12,93 +31,96 @@ import {
   RefineRpc,
   type EditDiff,
   type PendingSelection,
+  type SelectedTarget,
+  type StyleChangeDiff,
 } from './refineProtocol';
 import { buildIteratePrompt, type SavedRefinement } from './RefinementToPrompt';
 import { StyleControls } from './StyleControls';
 import { ImageControls } from './ImageControls';
-import { ChildLayoutControls } from './ChildLayoutControls';
-import { SelfPositionControls } from './SelfPositionControls';
+import { ContextualToolbar } from './ContextualToolbar';
+import { TextInputModal } from './TextInputModal';
+import { VoiceInputModal } from './VoiceInputModal';
+import { useKeyboardNudge, resetKeyboardNudge } from './useKeyboardNudge';
 import { runIterate, type DaemonHealth } from './DaemonClient';
+import { readTranslateFromMatrix } from './layoutHelpers';
 
 interface Props {
   iframe: HTMLIFrameElement | null;
-  /** Slug + path of the current artifact (for prompt context). */
   artifactPath: string | null;
   sessionSlug: string | null;
-  /** Bumped each time the user wants the panel to reset (e.g. new artifact loaded). */
   resetKey: number;
-  /** Daemon health from /api/claude/health. null = still probing. */
   daemon: DaemonHealth | null;
-  /** Project ID — passed to runIterate so claude spawns with the right cwd. */
   projectId: string | null;
 }
 
-export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemon, projectId }: Props) {
+type ModalKind = null | 'text' | 'voice';
+interface ModalState {
+  kind: ModalKind;
+  /** When editing an existing cart item, its id; null for a new note. */
+  editingId: string | null;
+  initialNote: string;
+  /** Captured at modal-open time so target stays stable even after the
+   * underlying pending selection clears. */
+  target: SelectedTarget | null;
+}
+
+export function RefinePanel({
+  iframe,
+  artifactPath,
+  sessionSlug,
+  resetKey,
+  daemon,
+  projectId,
+}: Props) {
   const [rpc, setRpc] = useState<RefineRpc | null>(null);
   const [refineOn, setRefineOn] = useState(false);
   const [pending, setPending] = useState<PendingSelection | null>(null);
   const [saved, setSaved] = useState<SavedRefinement[]>([]);
-  const [note, setNote] = useState('');
   const [editing, setEditing] = useState(false);
-  /** Transient banner shown after Save → "Saved + copied. Paste in Claude Code." */
   const [toast, setToast] = useState<string | null>(null);
-  /** Live streaming output from claude --print. Populated by streamToClaude. */
+  const [modal, setModal] = useState<ModalState>({
+    kind: null,
+    editingId: null,
+    initialNote: '',
+    target: null,
+  });
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
   const [stream, setStream] = useState<{
-    /** All lines from stdout/stderr in order, capped at MAX_STREAM_LINES. */
     lines: string[];
-    /** "running" while claude is alive; "ok"/"err" once done. null = no stream yet. */
     status: 'running' | 'ok' | 'err' | null;
-    /** Final summary line shown next to the title. */
     summary: string;
-    /** Wall-clock duration in ms once status flips off "running". */
     durationMs: number;
   }>({ lines: [], status: null, summary: '', durationMs: 0 });
   const streamCancelRef = useRef<AbortController | null>(null);
   const streamScrollRef = useRef<HTMLPreElement | null>(null);
-  /**
-   * Tracks the previous pending so the auto-save useEffect below can decide
-   * whether to flush its diffs into the saved list when the user switches
-   * selections. Refs (vs state) so the effect can read it without becoming
-   * its own trigger.
-   */
+
   const prevPendingRef = useRef<PendingSelection | null>(null);
-  /**
-   * When saveCurrent or discardSelection clear pending intentionally, we
-   * don't want the auto-save effect to also fire. Set this just before
-   * clearing pending; the effect respects it for one tick then resets.
-   */
   const skipAutoSaveRef = useRef(false);
 
-  // Reset on new artifact.
+  // ---- effects ---------------------------------------------------------
+
   useEffect(() => {
     setPending(null);
-    setNote('');
     setEditing(false);
     setRefineOn(false);
     setSaved([]);
+    setExpanded(new Set());
     prevPendingRef.current = null;
     skipAutoSaveRef.current = false;
+    setModal({ kind: null, editingId: null, initialNote: '', target: null });
   }, [resetKey]);
 
-  // Auto-save: when pending changes and the previous one had unsaved diffs,
-  // archive them into the saved list so the user doesn't lose work.
-  // - Switching elements (pending → different pending) → save previous.
-  // - Pending → null via TARGET_CLEARED (clicked empty space) → save previous.
-  // - Pending → null via saveCurrent / discardSelection → those code paths
-  //   pre-set skipAutoSaveRef so we don't double-handle.
+  // Auto-save: when pending switches, archive any previous diffs into cart.
   useEffect(() => {
     const previous = prevPendingRef.current;
     prevPendingRef.current = pending;
-
     if (skipAutoSaveRef.current) {
       skipAutoSaveRef.current = false;
       return;
     }
     if (!previous || previous.diffs.length === 0) return;
-    // Re-selecting the same element (companion broadcasts on every click) —
-    // no save needed.
     if (pending && previous.target.selector === pending.target.selector) return;
-
     setSaved((prev) => [
       {
         id: `r-${Date.now()}-auto`,
@@ -111,15 +133,12 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     ]);
   }, [pending]);
 
-  // Cmd+Z / Ctrl+Z anywhere in the shell window: global undo. Reads the
-  // latest pending + saved state via the closure (effect re-binds when
-  // either changes), so undoLastDiff sees current state.
+  // Cmd+Z / Ctrl+Z global undo (only when not in a text input).
   useEffect(() => {
     if (!rpc) return;
     function onKey(ev: KeyboardEvent) {
       const isUndo = (ev.metaKey || ev.ctrlKey) && !ev.shiftKey && ev.key.toLowerCase() === 'z';
       if (!isUndo) return;
-      // Don't fight a real text-edit undo (textarea / input / contenteditable).
       const target = ev.target as HTMLElement | null;
       const tag = target?.tagName?.toLowerCase();
       if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) return;
@@ -130,11 +149,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     return () => window.removeEventListener('keydown', onKey);
   }, [rpc, pending, saved]);
 
-  // Convenience flag: drives Undo button enabled state.
-  const hasAnyDiff =
-    (pending?.diffs.length ?? 0) > 0 || saved.some((r) => r.diffs.length > 0);
-
-  // Wire the RPC each time the iframe element changes.
+  // Wire RPC.
   useEffect(() => {
     if (!iframe) {
       setRpc(null);
@@ -148,10 +163,6 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
       setPending(p);
       setEditing(false);
     });
-    // Iframe broadcasts TARGET_CLEARED when the user clicks empty space.
-    // Drop the pending; the auto-save effect will preserve any unsaved
-    // diffs into the Saved list automatically (we deliberately do NOT
-    // set skipAutoSaveRef here).
     const offCleared = next.onTargetCleared(() => {
       setPending(null);
       setEditing(false);
@@ -163,6 +174,57 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
       next.detach();
     };
   }, [iframe]);
+
+  // ---- helpers (saved/cart) -------------------------------------------
+
+  function upsertSaved(item: SavedRefinement) {
+    setSaved((prev) => {
+      const idx = prev.findIndex((s) => s.id === item.id);
+      if (idx === -1) return [item, ...prev];
+      const next = [...prev];
+      next[idx] = item;
+      return next;
+    });
+  }
+
+  function removeSaved(id: string) {
+    setSaved((prev) => prev.filter((s) => s.id !== id));
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  function toggleExpand(id: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  // Keyboard nudge for Position — replaces SelfPositionControls slider.
+  useKeyboardNudge({ pending, iframe, upsertSaved, resetSignal: resetKey });
+
+  // Live position display — read on every selection / nudge so the panel
+  // shows the actual current translate, not a stale snapshot.
+  const livePosition = useMemo(() => {
+    if (!pending || !iframe?.contentDocument) return { x: 0, y: 0 };
+    let el: Element | null = null;
+    try {
+      el = iframe.contentDocument.querySelector(pending.target.selector);
+    } catch {
+      return { x: 0, y: 0 };
+    }
+    if (!el) return { x: 0, y: 0 };
+    return readTranslateFromMatrix(el);
+    // saved.length is intentionally a dep so the position re-reads after a
+    // keyboard nudge upserts a cart entry.
+  }, [pending?.target.selector, iframe, resetKey, saved.length]);
+
+  // ---- helpers (RPC) --------------------------------------------------
 
   async function togglePicker() {
     if (!rpc) return;
@@ -205,16 +267,88 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     await rpc.applyDirectEdit({ type: 'reset_pending_selection', revert: true });
     skipAutoSaveRef.current = true;
     setPending(null);
-    setNote('');
     setEditing(false);
   }
 
-  /** Stream the cumulative iterate prompt to Claude. Pipes ALL output into
-   * the inline Output panel; toast becomes a one-line status. Cancellable
-   * mid-stream via the AbortController stashed in streamCancelRef. */
+  async function undoLastDiff() {
+    if (!rpc) return;
+    const r = await rpc.applyDirectEdit({ type: 'undo_last_diff' });
+    if (r.ok && r.pending) setPending(r.pending);
+  }
+
+  function resetPosition() {
+    if (!pending) return;
+    const removed = resetKeyboardNudge(pending, iframe, removeSaved);
+    if (removed) setToast('Position reset to original');
+    setTimeout(() => setToast(null), 1800);
+  }
+
+  // ---- modals ---------------------------------------------------------
+
+  function openTextModal(opts: { editingId?: string; initialNote?: string; target: SelectedTarget }) {
+    setModal({
+      kind: 'text',
+      editingId: opts.editingId ?? null,
+      initialNote: opts.initialNote ?? '',
+      target: opts.target,
+    });
+  }
+
+  function openVoiceModal(opts: { editingId?: string; initialNote?: string; target: SelectedTarget }) {
+    setModal({
+      kind: 'voice',
+      editingId: opts.editingId ?? null,
+      initialNote: opts.initialNote ?? '',
+      target: opts.target,
+    });
+  }
+
+  function closeModal() {
+    setModal({ kind: null, editingId: null, initialNote: '', target: null });
+  }
+
+  function saveModalNote(note: string) {
+    if (!modal.target || !note.trim()) return;
+    const id = modal.editingId ?? `note-${Date.now()}`;
+    const existing = modal.editingId ? saved.find((s) => s.id === modal.editingId) : null;
+    upsertSaved({
+      id,
+      region: existing?.region ?? modal.target,
+      note: note.trim(),
+      diffs: existing?.diffs ?? [],
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
+    });
+    closeModal();
+    setToast(modal.editingId ? 'Updated in cart' : 'Added to cart');
+    setTimeout(() => setToast(null), 1800);
+  }
+
+  function saveAndSendModalNote(note: string) {
+    if (!modal.target || !note.trim()) return;
+    const id = modal.editingId ?? `note-${Date.now()}`;
+    const existing = modal.editingId ? saved.find((s) => s.id === modal.editingId) : null;
+    const newItem: SavedRefinement = {
+      id,
+      region: existing?.region ?? modal.target,
+      note: note.trim(),
+      diffs: existing?.diffs ?? [],
+      createdAt: existing?.createdAt ?? new Date().toISOString(),
+    };
+    // Optimistic upsert + close — then send the full cart including the new item.
+    setSaved((prev) => {
+      const idx = prev.findIndex((s) => s.id === newItem.id);
+      const nextList = idx === -1 ? [newItem, ...prev] : prev.map((s, i) => (i === idx ? newItem : s));
+      void streamToClaude(nextList);
+      return nextList;
+    });
+    closeModal();
+  }
+
+  // ---- claude streaming ------------------------------------------------
+
   async function streamToClaude(refinements: SavedRefinement[]) {
     if (refinements.length === 0) {
-      setToast('Nothing to send — make a refinement first.');
+      setToast('Cart is empty — add a refinement first.');
       setTimeout(() => setToast(null), 2500);
       return;
     }
@@ -230,54 +364,41 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
         );
       } catch (err) {
         console.error('[shell] clipboard write failed', err);
-        setToast('Daemon offline AND clipboard write failed — see terminal.');
+        setToast('Daemon offline AND clipboard write failed.');
       }
       setTimeout(() => setToast(null), 4500);
       return;
     }
 
-    // Refuse a second concurrent send — cancel the prior first.
     if (streamCancelRef.current) streamCancelRef.current.abort();
     const ac = new AbortController();
     streamCancelRef.current = ac;
-
     const startedAt = Date.now();
+
     setStream({
       lines: [
         `── Sending ${refinements.length} refinement${refinements.length === 1 ? '' : 's'} to Claude ──`,
-        `cwd: project ${projectId ?? '(default)'}`,
         ``,
       ],
       status: 'running',
       summary: 'running…',
       durationMs: 0,
     });
-    setToast(`Claude running — see Output panel below`);
+    setToast('Claude running — see Output panel');
 
     function appendChunk(chunk: string) {
-      // Split on newlines, keep order; cap total lines so a runaway log
-      // doesn't unbound memory.
       setStream((prev) => {
         if (prev.status !== 'running' && prev.status !== null) return prev;
-        const newLines = chunk.split('\n');
-        const next = [...prev.lines, ...newLines];
-        const MAX = 2000;
-        return {
-          ...prev,
-          lines: next.length > MAX ? next.slice(-MAX) : next,
-        };
+        const next = [...prev.lines, ...chunk.split('\n')];
+        return { ...prev, lines: next.length > 2000 ? next.slice(-2000) : next };
       });
     }
 
     try {
       for await (const evt of runIterate({ prompt: promptText, projectId, signal: ac.signal })) {
-        if (evt.type === 'started') {
-          appendChunk('▸ claude --print started');
-        } else if (evt.type === 'stdout') {
-          appendChunk(evt.chunk);
-        } else if (evt.type === 'stderr') {
-          appendChunk(evt.chunk);
-        } else if (evt.type === 'done') {
+        if (evt.type === 'started') appendChunk('▸ claude --print started');
+        else if (evt.type === 'stdout' || evt.type === 'stderr') appendChunk(evt.chunk);
+        else if (evt.type === 'done') {
           const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
           const ok = evt.code === 0;
           appendChunk(`\n── ${ok ? '✓ done' : `✗ exit ${evt.code}`} in ${seconds}s ──`);
@@ -287,7 +408,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
             summary: ok ? `✓ done in ${seconds}s` : `✗ exit ${evt.code} (${seconds}s)`,
             durationMs: Date.now() - startedAt,
           }));
-          setToast(ok ? `✓ Iterate done — preview should refresh shortly` : `✗ Claude exited ${evt.code} — see Output panel`);
+          setToast(ok ? `✓ Iterate done — preview should refresh` : `✗ Claude exited ${evt.code}`);
           setTimeout(() => setToast(null), 4000);
         } else if (evt.type === 'error') {
           appendChunk(`\n── ✗ error: ${evt.message} ──`);
@@ -297,32 +418,17 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
             summary: `✗ ${evt.message}`,
             durationMs: Date.now() - startedAt,
           }));
-          setToast(`✗ ${evt.message}`);
-          setTimeout(() => setToast(null), 5000);
         }
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
-      // Aborts surface as DOMException AbortError — don't treat that as a failure.
       if (ac.signal.aborted) {
-        appendChunk(`\n── ⏹ cancelled by user ──`);
-        setStream((prev) => ({
-          ...prev,
-          status: 'err',
-          summary: 'cancelled',
-          durationMs: Date.now() - startedAt,
-        }));
+        appendChunk(`\n── ⏹ cancelled ──`);
+        setStream((prev) => ({ ...prev, status: 'err', summary: 'cancelled', durationMs: Date.now() - startedAt }));
       } else {
         console.error('[shell] daemon send failed', err);
         appendChunk(`\n── ✗ ${msg} ──`);
-        setStream((prev) => ({
-          ...prev,
-          status: 'err',
-          summary: `✗ ${msg}`,
-          durationMs: Date.now() - startedAt,
-        }));
-        setToast(`✗ daemon send failed: ${msg}`);
-        setTimeout(() => setToast(null), 5000);
+        setStream((prev) => ({ ...prev, status: 'err', summary: `✗ ${msg}`, durationMs: Date.now() - startedAt }));
       }
     } finally {
       if (streamCancelRef.current === ac) streamCancelRef.current = null;
@@ -332,13 +438,10 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
   function cancelStream() {
     streamCancelRef.current?.abort();
   }
-
   function clearStream() {
     setStream({ lines: [], status: null, summary: '', durationMs: 0 });
   }
 
-  // Auto-scroll the output panel as new lines arrive — only when the user
-  // is already at the bottom, so manual scroll-up isn't fought.
   useEffect(() => {
     const el = streamScrollRef.current;
     if (!el) return;
@@ -346,108 +449,7 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     if (nearBottom) el.scrollTop = el.scrollHeight;
   }, [stream.lines]);
 
-  async function saveCurrent() {
-    if (!pending) return;
-    // Only push a "pending → saved" record when the pending selection
-    // actually carries content (text/style/color edits via the companion,
-    // OR a note from the user). Slider-driven Position/Padding edits go
-    // straight into `saved` via upsertSaved, so without this guard we'd
-    // append an empty SavedRefinement that adds noise to the prompt.
-    const pendingHasContent = !!note.trim() || pending.diffs.length > 0;
-    let nextSaved = saved;
-    if (pendingHasContent) {
-      const item: SavedRefinement = {
-        id: `r-${Date.now()}`,
-        region: pending.target,
-        note: note.trim(),
-        diffs: pending.diffs as EditDiff[],
-        createdAt: new Date().toISOString(),
-      };
-      nextSaved = [item, ...saved];
-      setSaved(nextSaved);
-    }
-
-    // Clear active selection BEFORE the long-running send — user can pick
-    // another region while Claude works. visual changes persist (revert: false).
-    void rpc?.applyDirectEdit({ type: 'reset_pending_selection', revert: false });
-    skipAutoSaveRef.current = true;
-    setPending(null);
-    setNote('');
-    setEditing(false);
-
-    await streamToClaude(nextSaved);
-  }
-
-  async function drillIntoText() {
-    if (!rpc) return;
-    const r = await rpc.applyDirectEdit({ type: 'pick_inner_text' });
-    if (r && !r.ok) {
-      setToast(r.error ?? 'No inner text element to drill into.');
-      setTimeout(() => setToast(null), 3000);
-    }
-    // The companion broadcasts a new TARGET_SELECTED with the inner element;
-    // RefineRpc.onTargetSelected will update `pending`. No manual update needed.
-  }
-
-  /**
-   * Global undo: pops the most recent diff regardless of whether it lives
-   * on the current pending or on a previously-saved refinement. The visual
-   * rollback always goes through the companion (DOM mutation); the shell
-   * is the single source of truth for which diff was "most recent."
-   */
-  async function undoLastDiff() {
-    if (!rpc) return;
-
-    // Case 1: current selection has diffs — companion-side pop+revert,
-    // which keeps activePending in sync atomically.
-    if (pending && pending.diffs.length > 0) {
-      const r = await rpc.applyDirectEdit({ type: 'undo_last_diff' });
-      if (r && r.ok && r.pending) setPending(r.pending);
-      else if (r && !r.ok) {
-        setToast(r.error ?? 'Nothing to undo.');
-        setTimeout(() => setToast(null), 2000);
-      }
-      return;
-    }
-
-    // Case 2: no current diffs — walk back through saved refinements
-    // (newest-first since we prepend on save) and pop the latest diff
-    // from the first non-empty one.
-    const idx = saved.findIndex((r) => r.diffs.length > 0);
-    if (idx === -1) {
-      setToast('Nothing to undo.');
-      setTimeout(() => setToast(null), 1500);
-      return;
-    }
-
-    const item = saved[idx];
-    const last = item.diffs[item.diffs.length - 1];
-    const r = await rpc.revertDiffs([last]);
-    if (!r.ok) {
-      setToast(r.error ?? 'Revert failed.');
-      setTimeout(() => setToast(null), 2200);
-      return;
-    }
-
-    setSaved((prev) => {
-      const next = [...prev];
-      const updatedDiffs = next[idx].diffs.slice(0, -1);
-      // Drop the saved entry if it has no diffs left AND no user note
-      // (auto-saved entries with empty notes shouldn't linger when emptied).
-      if (updatedDiffs.length === 0 && !next[idx].note.trim()) {
-        next.splice(idx, 1);
-      } else {
-        next[idx] = { ...next[idx], diffs: updatedDiffs };
-      }
-      return next;
-    });
-    setToast(`Undone · ${item.region.label}`);
-    setTimeout(() => setToast(null), 1500);
-  }
-
-  function deleteSaved(id: string) {
-    setSaved((prev) => prev.filter((r) => r.id !== id));
-  }
+  // ---- prompt preview --------------------------------------------------
 
   const promptText = useMemo(
     () =>
@@ -461,200 +463,222 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
   async function copyPrompt() {
     try {
       await navigator.clipboard.writeText(promptText);
-      setToast('Copied to clipboard.');
+      setToast('Prompt copied to clipboard.');
       setTimeout(() => setToast(null), 2200);
     } catch (err) {
       console.error('[shell] clipboard write failed', err);
     }
   }
 
+  // ---- derived ---------------------------------------------------------
+
+  const cartCount = saved.length;
+  const sendDisabled = cartCount === 0 || stream.status === 'running';
+
+  // ---- render ----------------------------------------------------------
+
   return (
     <div style={panel}>
       <header style={panelHeader}>
         <strong style={{ fontSize: 13 }}>Refine</strong>
-        <button
-          onClick={togglePicker}
-          disabled={!iframe}
-          style={refineOn ? btnPrimary : btn}
-        >
-          {refineOn ? 'Picker ON · click iframe' : 'Start picker'}
-        </button>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <button
+            onClick={togglePicker}
+            disabled={!iframe}
+            style={refineOn ? btnPrimary : btn}
+            title="Toggle picker — click iframe regions to select"
+          >
+            {refineOn ? '● Picker on' : 'Picker off'}
+          </button>
+          <button
+            onClick={() => void streamToClaude(saved)}
+            disabled={sendDisabled}
+            style={sendDisabled ? btnPrimaryDisabled : btnSendPrimary}
+            title={
+              sendDisabled
+                ? cartCount === 0
+                  ? 'Cart is empty — add a refinement first'
+                  : 'Already sending — wait or cancel below'
+                : `Send ${cartCount} refinement${cartCount === 1 ? '' : 's'} to Claude`
+            }
+          >
+            {daemon?.ok
+              ? cartCount > 0
+                ? `Send (${cartCount})`
+                : 'Send'
+              : 'Copy'}
+          </button>
+        </div>
       </header>
 
       {toast && <div style={toastStyle}>{toast}</div>}
 
       {!iframe && <p style={hint}>Iframe not ready — load an artifact first.</p>}
 
-      {iframe && !pending && !refineOn && saved.length === 0 && (
+      {iframe && !pending && cartCount === 0 && !refineOn && (
         <p style={hint}>
-          Click <em>Start picker</em>, then click any region in the artifact iframe to select it.
+          Click <em>Picker off</em> to enable, then click any region in the iframe to select it.
         </p>
       )}
 
+      {/* SELECTED CARD */}
       {pending && (
-        <section style={card}>
+        <section style={selectedCard}>
           <div>
-            <strong style={{ fontSize: 13 }}>{pending.target.label}</strong>
-            <div style={meta}>
-              {pending.target.tag} · {pending.diffs.length} edit{pending.diffs.length === 1 ? '' : 's'}
+            <div style={selectedHeader}>
+              <span style={tagBadge}>{pending.target.tag}</span>
+              <strong style={{ fontSize: 13, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {pending.target.label}
+              </strong>
+              <button onClick={discardSelection} style={iconBtn} title="Discard selection">×</button>
             </div>
-          </div>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="What should change about this region?"
-            rows={4}
-            style={textarea}
-          />
-          <div style={btnRow}>
-            {!editing ? (
-              <button onClick={startEdit} style={btn}>Edit text</button>
-            ) : (
-              <button onClick={stopEdit} style={btnPrimary}>Done editing</button>
-            )}
-            <button onClick={drillIntoText} style={btn} title="Pick the text element inside this region">
-              Pick text inside
-            </button>
-            <button onClick={hide} style={btn}>Hide</button>
-            <button onClick={remove} style={btn}>Remove</button>
-            <button
-              onClick={undoLastDiff}
-              disabled={!hasAnyDiff}
-              style={!hasAnyDiff ? btnGhost : btn}
-              title="Undo the most recent change across this session (⌘Z / Ctrl+Z)"
-            >
-              ↶ Undo
-            </button>
-            <button onClick={discardSelection} style={btnGhost}>Discard</button>
+            <div style={selectorMeta} title={pending.target.selector}>{pending.target.selector}</div>
           </div>
 
-          <StyleControls pending={pending} rpc={rpc} resetSignal={resetKey} />
+          {!editing && (
+            <>
+              {/* Position — keyboard-driven */}
+              <div style={miniRow}>
+                <span style={miniLabel}>Position</span>
+                <span style={miniValue}>
+                  X: <strong>{livePosition.x}</strong>px &nbsp;·&nbsp;
+                  Y: <strong>{livePosition.y}</strong>px
+                </span>
+                <button onClick={resetPosition} style={iconBtn} title="Reset to original position">↺</button>
+              </div>
+              <div style={kbHint}>
+                ↑↓→← to nudge · <strong>Shift</strong> = 10px (click iframe area first if keys don't respond)
+              </div>
 
-          <SelfPositionControls
-            pending={pending}
-            iframe={iframe}
-            artifactPath={artifactPath}
-            resetSignal={resetKey}
-            upsertSaved={(item) => {
-              setSaved((prev) => {
-                const idx = prev.findIndex((s) => s.id === item.id);
-                if (idx === -1) return [item, ...prev];
-                const next = [...prev];
-                next[idx] = item;
-                return next;
-              });
-            }}
-          />
-          <ImageControls pending={pending} rpc={rpc} resetSignal={resetKey} />
+              {/* Border radius — primary control */}
+              <BorderRadiusInline pending={pending} iframe={iframe} upsertSaved={upsertSaved} />
 
-          <ChildLayoutControls
-            pending={pending}
-            iframe={iframe}
-            artifactPath={artifactPath}
-            resetSignal={resetKey}
-            upsertSaved={(item) => {
-              // Replace if a refinement with the same id already exists
-              // (slider drag = many calls); else prepend so newest is on top.
-              setSaved((prev) => {
-                const idx = prev.findIndex((s) => s.id === item.id);
-                if (idx === -1) return [item, ...prev];
-                const next = [...prev];
-                next[idx] = item;
-                return next;
-              });
-            }}
-          />
+              {/* Action buttons */}
+              <div style={btnRow}>
+                <button onClick={() => openVoiceModal({ target: pending.target })} style={btnAction} title="Voice input — record a refinement note">
+                  🎤 Voice
+                </button>
+                <button onClick={() => openTextModal({ target: pending.target })} style={btnAction} title="Text input — type a refinement note">
+                  ✏️ Text
+                </button>
+                <button onClick={startEdit} style={btnAction} title="Edit the element's text directly in the iframe">
+                  📝 Edit text
+                </button>
+              </div>
+              <div style={btnRow}>
+                <button onClick={hide} style={btnGhost}>Hide</button>
+                <button onClick={remove} style={btnGhost}>Remove</button>
+                <button
+                  onClick={undoLastDiff}
+                  disabled={!pending.diffs.length && !saved.some((r) => r.diffs.length)}
+                  style={btnGhost}
+                  title="Undo last edit (⌘Z)"
+                >
+                  ↶ Undo
+                </button>
+              </div>
 
-          {pending.diffs.length > 0 && (
-            <ul style={diffList}>
-              {pending.diffs.map((d) => (
-                <li key={d.id} style={diffItem}>
-                  <span style={diffType}>{d.type.replace('_', ' ')}</span>{' '}
-                  <span style={diffTarget}>{d.target}</span>
-                  {('after' in d && d.after) ? (
-                    <span style={diffValue}>
-                      {' → '}
-                      {String(d.after)}
-                    </span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+              {/* Advanced — colors / fonts / etc. */}
+              <details style={advancedBox}>
+                <summary style={advancedSummary}>Advanced (color, font, padding…)</summary>
+                <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  <StyleControls pending={pending} rpc={rpc} resetSignal={resetKey} />
+                  <ImageControls pending={pending} rpc={rpc} resetSignal={resetKey} />
+                </div>
+              </details>
+            </>
           )}
-          {(() => {
-            // Count what would actually go in the iterate prompt:
-            //   saved entries + 1 if pending currently has note/diffs to flush.
-            const pendingHasContent = !!note.trim() || pending.diffs.length > 0;
-            const totalCount = saved.length + (pendingHasContent ? 1 : 0);
-            const disabled = totalCount === 0;
-            return (
-              <button
-                onClick={saveCurrent}
-                disabled={disabled}
-                style={disabled ? btnPrimaryDisabled : btnPrimary}
-                title={
-                  disabled
-                    ? 'Nothing to send — write a note, edit text, or use Position/Padding sliders first.'
-                    : daemon?.ok
-                      ? `Send ${totalCount} refinement${totalCount === 1 ? '' : 's'} to Claude (this selection + saved)`
-                      : `Save and copy iterate prompt for ${totalCount} refinement${totalCount === 1 ? '' : 's'}`
-                }
-              >
-                {daemon?.ok
-                  ? totalCount > 0
-                    ? `Send to Claude (${totalCount})`
-                    : 'Send to Claude'
-                  : 'Save'}
-              </button>
-            );
-          })()}
+
+          {editing && (
+            <div style={editingBlock}>
+              <span>📝 Editing text inline — type in the iframe element.</span>
+              <button onClick={stopEdit} style={btnPrimary}>Done editing</button>
+            </div>
+          )}
         </section>
       )}
 
-      {saved.length > 0 && (
+      {/* CART */}
+      {cartCount > 0 && (
         <section>
           <div style={sectionHeader}>
-            <span>Saved ({saved.length})</span>
+            <span>Cart ({cartCount})</span>
             <button
-              onClick={undoLastDiff}
-              disabled={!hasAnyDiff}
-              style={!hasAnyDiff ? linkBtnGhost : linkBtn}
-              title="Undo the most recent change in this session (⌘Z / Ctrl+Z)"
+              onClick={() => {
+                if (confirm(`Clear all ${cartCount} refinements from the cart?`)) {
+                  setSaved([]);
+                  setExpanded(new Set());
+                }
+              }}
+              style={linkBtn}
+              title="Remove every refinement"
             >
-              ↶ Undo
+              Clear all
             </button>
           </div>
-          <ul style={savedList}>
-            {saved.map((r) => (
-              <li key={r.id} style={savedRow}>
-                <div style={{ flex: 1 }}>
-                  <strong style={{ fontSize: 12 }}>{r.region.label}</strong>
-                  <div style={meta}>{r.note || '_(no note)_'}</div>
-                  <div style={metaSmall}>
-                    {r.diffs.length} diff{r.diffs.length === 1 ? '' : 's'}
+          <ul style={cartList}>
+            {saved.map((r) => {
+              const open = expanded.has(r.id);
+              return (
+                <li key={r.id} style={cartItem}>
+                  <div style={cartItemHeader} onClick={() => toggleExpand(r.id)}>
+                    <span style={cartCaret}>{open ? '▾' : '▸'}</span>
+                    <span style={tagBadgeSm}>{r.region.tag}</span>
+                    <span style={cartLabel} title={r.region.label}>{r.region.label}</span>
+                    <span style={cartCount_}>
+                      {r.diffs.length > 0 ? `${r.diffs.length} edit${r.diffs.length === 1 ? '' : 's'}` : 'note'}
+                    </span>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openTextModal({ editingId: r.id, initialNote: r.note, target: r.region });
+                      }}
+                      style={iconBtnInline}
+                      title="Edit note"
+                    >
+                      ✏️
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeSaved(r.id);
+                      }}
+                      style={iconBtnInline}
+                      title="Remove from cart"
+                    >
+                      ✕
+                    </button>
                   </div>
-                </div>
-                <button onClick={() => deleteSaved(r.id)} style={iconBtn} title="delete">
-                  ×
-                </button>
-              </li>
-            ))}
+                  {(open || r.note) && (
+                    <div style={cartItemBody}>
+                      {r.note ? (
+                        <div style={cartNote}>{r.note}</div>
+                      ) : (
+                        <div style={cartNoteMuted}>(no note — applied edits only)</div>
+                      )}
+                      {open && r.diffs.length > 0 && (
+                        <ul style={diffList}>
+                          {r.diffs.map((d) => (
+                            <li key={d.id} style={diffItem}>
+                              <span style={diffType}>{d.type.replace('_', ' ')}</span>{' '}
+                              <span style={diffTarget}>{d.target}</span>
+                              {('after' in d && d.after) ? (
+                                <span style={diffValue}> → {String(d.after)}</span>
+                              ) : null}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
-          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {daemon?.ok && (
-              <button
-                onClick={() => void streamToClaude(saved)}
-                style={btnPrimary}
-                title="Send all saved refinements to Claude (no pending selection needed)"
-              >
-                Send saved to Claude ({saved.length})
-              </button>
-            )}
-            <button onClick={copyPrompt} style={daemon?.ok ? btn : btnPrimary}>
-              Copy iterate prompt
-            </button>
-            <details style={detailsBox}>
-              <summary style={{ cursor: 'pointer', fontSize: 12, color: '#475569' }}>
+          <div style={{ marginTop: 10, display: 'flex', gap: 8 }}>
+            <button onClick={copyPrompt} style={btn}>📋 Copy prompt</button>
+            <details style={{ flex: 1 }}>
+              <summary style={{ cursor: 'pointer', fontSize: 11, color: '#475569' }}>
                 Preview prompt
               </summary>
               <pre style={pre}>{promptText}</pre>
@@ -671,32 +695,161 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
               <strong style={{ fontSize: 12 }}>Claude output</strong>
               <span style={outputSummary}>{stream.summary}</span>
             </div>
-            <div style={outputActions}>
+            <div style={{ display: 'flex', gap: 6 }}>
               {stream.status === 'running' ? (
                 <button onClick={cancelStream} style={cancelBtn} title="Stop the running claude process">
                   ⏹ Cancel
                 </button>
               ) : (
-                <button onClick={clearStream} style={linkBtn} title="Clear the output panel">
-                  Clear
-                </button>
+                <button onClick={clearStream} style={linkBtn}>Clear</button>
               )}
             </div>
           </div>
-          <pre ref={streamScrollRef} style={streamPre}>
-            {stream.lines.join('\n')}
-          </pre>
+          <pre ref={streamScrollRef} style={streamPre}>{stream.lines.join('\n')}</pre>
         </section>
       )}
+
+      <ContextualToolbar
+        pending={pending}
+        iframe={iframe}
+        isEditing={editing}
+        onVoice={() => pending && openVoiceModal({ target: pending.target })}
+        onText={() => pending && openTextModal({ target: pending.target })}
+        onEdit={startEdit}
+        onStopEdit={stopEdit}
+      />
+
+      <TextInputModal
+        open={modal.kind === 'text'}
+        target={modal.target}
+        initialNote={modal.initialNote}
+        onSave={saveModalNote}
+        onCancel={closeModal}
+      />
+      <VoiceInputModal
+        open={modal.kind === 'voice'}
+        target={modal.target}
+        initialNote={modal.initialNote}
+        onSave={saveModalNote}
+        onSaveAndSend={daemon?.ok ? saveAndSendModalNote : undefined}
+        onCancel={closeModal}
+      />
     </div>
   );
 }
 
+// Inline border-radius slider — separate from StyleControls so the primary
+// surface of the panel stays focused on the most common moves.
+function BorderRadiusInline({
+  pending,
+  iframe,
+  upsertSaved,
+}: {
+  pending: PendingSelection;
+  iframe: HTMLIFrameElement | null;
+  upsertSaved: (item: SavedRefinement) => void;
+}) {
+  const [original, setOriginal] = useState<{ value: number; inline: string } | null>(null);
+  const [value, setValue] = useState(0);
+  const [draft, setDraft] = useState('');
+
+  useEffect(() => {
+    if (!iframe?.contentDocument) return;
+    let el: Element | null = null;
+    try {
+      el = iframe.contentDocument.querySelector(pending.target.selector);
+    } catch {
+      return;
+    }
+    if (!el) return;
+    const cs = (el.ownerDocument?.defaultView ?? window).getComputedStyle(el);
+    const m = cs.borderTopLeftRadius.match(/-?\d+(?:\.\d+)?/);
+    const v = m ? Math.round(Number(m[0])) : 0;
+    setOriginal({ value: v, inline: (el as HTMLElement).style.borderRadius });
+    setValue(v);
+    setDraft('');
+  }, [pending.target.selector, iframe]);
+
+  function apply(next: number) {
+    setValue(next);
+    if (!iframe?.contentDocument) return;
+    let el: Element | null = null;
+    try {
+      el = iframe.contentDocument.querySelector(pending.target.selector);
+    } catch {
+      return;
+    }
+    if (!el) return;
+    (el as HTMLElement).style.borderRadius = `${next}px`;
+    if (!original) return;
+    const id = `border-radius:${pending.target.selector}`;
+    const diff: StyleChangeDiff = {
+      id,
+      selector: pending.target.selector,
+      target: pending.target.label,
+      createdAt: new Date().toISOString(),
+      type: 'style_change',
+      property: 'borderRadius',
+      before: `${original.value}px`,
+      after: `${next}px`,
+    };
+    upsertSaved({
+      id,
+      region: pending.target,
+      note: 'Adjust border radius',
+      diffs: [diff],
+      createdAt: diff.createdAt,
+    });
+  }
+
+  function commitDraft() {
+    if (draft.trim() === '') {
+      setDraft('');
+      return;
+    }
+    const n = Math.max(0, Math.min(400, Math.round(Number(draft))));
+    if (Number.isFinite(n)) apply(n);
+    setDraft('');
+  }
+
+  return (
+    <div style={miniRow}>
+      <span style={miniLabel}>Radius</span>
+      <input
+        type="range"
+        min={0}
+        max={80}
+        step={1}
+        value={Math.min(80, value)}
+        onChange={(e) => apply(Number(e.target.value))}
+        style={{ flex: 1, accentColor: '#2563eb' }}
+      />
+      <input
+        type="number"
+        min={0}
+        max={400}
+        step={1}
+        value={draft === '' ? String(value) : draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onFocus={(e) => e.currentTarget.select()}
+        onBlur={commitDraft}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+        }}
+        style={numInputInline}
+      />
+      <span style={miniUnit}>px</span>
+    </div>
+  );
+}
+
+// ---- styles ---------------------------------------------------------
+
 const panel: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 16,
-  padding: 16,
+  gap: 12,
+  padding: 14,
   fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
   fontSize: 13,
   color: '#0f172a',
@@ -708,19 +861,29 @@ const panelHeader: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
+  gap: 8,
+  position: 'sticky',
+  top: -14,
+  background: '#fff',
+  paddingTop: 4,
+  paddingBottom: 8,
+  marginTop: -4,
+  zIndex: 2,
+  borderBottom: '1px solid #e2e8f0',
 };
 const sectionHeader: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  margin: '12px 0 6px',
+  margin: '4px 0 6px',
   color: '#475569',
-  fontSize: 12,
+  fontSize: 11,
   textTransform: 'uppercase',
   letterSpacing: 0.5,
+  fontWeight: 600,
 };
-const card: React.CSSProperties = {
-  border: '1px solid #e2e8f0',
+const selectedCard: React.CSSProperties = {
+  border: '1px solid #cbd5e1',
   borderRadius: 8,
   padding: 12,
   display: 'flex',
@@ -728,16 +891,179 @@ const card: React.CSSProperties = {
   gap: 10,
   background: '#f8fafc',
 };
-const textarea: React.CSSProperties = {
-  width: '100%',
-  resize: 'vertical',
-  border: '1px solid #cbd5e1',
-  borderRadius: 6,
-  padding: 8,
-  fontFamily: 'inherit',
-  fontSize: 13,
+const selectedHeader: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
 };
-const btnRow: React.CSSProperties = { display: 'flex', gap: 6, flexWrap: 'wrap' };
+const selectorMeta: React.CSSProperties = {
+  fontSize: 10,
+  color: '#94a3b8',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  marginTop: 4,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+};
+const tagBadge: React.CSSProperties = {
+  fontSize: 9,
+  fontWeight: 700,
+  letterSpacing: 0.4,
+  textTransform: 'uppercase',
+  background: '#e0e7ff',
+  color: '#3730a3',
+  padding: '2px 5px',
+  borderRadius: 3,
+  flex: '0 0 auto',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+};
+const tagBadgeSm: React.CSSProperties = {
+  ...tagBadge,
+  fontSize: 9,
+};
+const miniRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+};
+const miniLabel: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 600,
+  color: '#64748b',
+  textTransform: 'uppercase',
+  letterSpacing: 0.4,
+  width: 56,
+};
+const miniValue: React.CSSProperties = {
+  fontSize: 12,
+  color: '#0f172a',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  flex: 1,
+};
+const miniUnit: React.CSSProperties = {
+  fontSize: 10,
+  color: '#94a3b8',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+};
+const kbHint: React.CSSProperties = {
+  fontSize: 10,
+  color: '#64748b',
+  background: '#f1f5f9',
+  padding: '4px 8px',
+  borderRadius: 4,
+};
+const numInputInline: React.CSSProperties = {
+  width: 56,
+  padding: '3px 6px',
+  border: '1px solid #cbd5e1',
+  borderRadius: 4,
+  background: '#fff',
+  fontSize: 11,
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  color: '#0f172a',
+  textAlign: 'right',
+  boxSizing: 'border-box',
+};
+const advancedBox: React.CSSProperties = {
+  padding: '6px 10px',
+  background: '#fff',
+  border: '1px solid #e2e8f0',
+  borderRadius: 6,
+};
+const advancedSummary: React.CSSProperties = {
+  cursor: 'pointer',
+  fontSize: 11,
+  fontWeight: 600,
+  color: '#475569',
+  letterSpacing: 0.3,
+};
+const editingBlock: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  gap: 10,
+  padding: 10,
+  background: '#fef3c7',
+  border: '1px solid #fbbf24',
+  borderRadius: 6,
+  fontSize: 12,
+  color: '#78350f',
+};
+const cartList: React.CSSProperties = {
+  listStyle: 'none',
+  padding: 0,
+  margin: 0,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 6,
+};
+const cartItem: React.CSSProperties = {
+  border: '1px solid #e2e8f0',
+  borderRadius: 6,
+  background: '#fff',
+};
+const cartItemHeader: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
+  padding: '8px 10px',
+  cursor: 'pointer',
+};
+const cartCaret: React.CSSProperties = {
+  width: 12,
+  color: '#94a3b8',
+  fontSize: 10,
+};
+const cartLabel: React.CSSProperties = {
+  flex: 1,
+  fontSize: 12,
+  fontWeight: 500,
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  minWidth: 0,
+};
+const cartCount_: React.CSSProperties = {
+  fontSize: 10,
+  color: '#94a3b8',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+};
+const cartItemBody: React.CSSProperties = {
+  padding: '0 10px 10px',
+  borderTop: '1px solid #f1f5f9',
+};
+const cartNote: React.CSSProperties = {
+  fontSize: 12,
+  color: '#0f172a',
+  padding: '8px 0',
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+};
+const cartNoteMuted: React.CSSProperties = {
+  ...cartNote,
+  color: '#94a3b8',
+  fontStyle: 'italic',
+};
+const iconBtn: React.CSSProperties = {
+  width: 24,
+  height: 24,
+  border: '1px solid #e2e8f0',
+  borderRadius: 4,
+  background: '#fff',
+  cursor: 'pointer',
+  fontSize: 12,
+  color: '#64748b',
+  padding: 0,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+};
+const iconBtnInline: React.CSSProperties = {
+  ...iconBtn,
+  width: 22,
+  height: 22,
+  fontSize: 11,
+};
 const btn: React.CSSProperties = {
   padding: '6px 10px',
   borderRadius: 6,
@@ -745,14 +1071,22 @@ const btn: React.CSSProperties = {
   background: '#fff',
   cursor: 'pointer',
   fontSize: 12,
+  fontFamily: 'inherit',
+  color: '#0f172a',
 };
 const btnPrimary: React.CSSProperties = {
   ...btn,
   background: '#2563eb',
   color: '#fff',
   borderColor: '#2563eb',
+  fontWeight: 600,
 };
-const btnGhost: React.CSSProperties = { ...btn, color: '#64748b', borderColor: '#e2e8f0' };
+const btnSendPrimary: React.CSSProperties = {
+  ...btnPrimary,
+  background: '#16a34a',
+  borderColor: '#16a34a',
+};
+const btnGhost: React.CSSProperties = { ...btn, color: '#64748b' };
 const btnPrimaryDisabled: React.CSSProperties = {
   ...btn,
   background: '#cbd5e1',
@@ -760,35 +1094,26 @@ const btnPrimaryDisabled: React.CSSProperties = {
   borderColor: '#cbd5e1',
   cursor: 'not-allowed',
 };
-const iconBtn: React.CSSProperties = {
+const btnAction: React.CSSProperties = {
   ...btn,
-  width: 24,
-  padding: 0,
-  fontSize: 14,
-  lineHeight: '20px',
-  color: '#94a3b8',
+  fontWeight: 500,
 };
+const btnRow: React.CSSProperties = { display: 'flex', gap: 6, flexWrap: 'wrap' };
 const linkBtn: React.CSSProperties = {
   background: 'none',
   border: 'none',
-  color: '#2563eb',
+  color: '#dc2626',
   fontSize: 11,
   cursor: 'pointer',
   padding: 0,
-};
-const linkBtnGhost: React.CSSProperties = {
-  ...linkBtn,
-  color: '#cbd5e1',
-  cursor: 'not-allowed',
+  fontFamily: 'inherit',
 };
 const hint: React.CSSProperties = { color: '#64748b', fontSize: 12, lineHeight: 1.5 };
-const meta: React.CSSProperties = { color: '#64748b', fontSize: 11 };
-const metaSmall: React.CSSProperties = { color: '#94a3b8', fontSize: 10, marginTop: 2 };
-const diffList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0 };
+const diffList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: '6px 0 0' };
 const diffItem: React.CSSProperties = {
   fontSize: 11,
   padding: '4px 0',
-  borderTop: '1px solid #e2e8f0',
+  borderTop: '1px solid #f1f5f9',
 };
 const diffType: React.CSSProperties = {
   textTransform: 'uppercase',
@@ -800,20 +1125,6 @@ const diffTarget: React.CSSProperties = { color: '#475569' };
 const diffValue: React.CSSProperties = {
   color: '#0f172a',
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
-};
-const savedList: React.CSSProperties = { listStyle: 'none', padding: 0, margin: 0 };
-const savedRow: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: 8,
-  borderBottom: '1px solid #f1f5f9',
-  padding: '8px 0',
-};
-const detailsBox: React.CSSProperties = {
-  border: '1px solid #e2e8f0',
-  borderRadius: 6,
-  padding: 8,
-  background: '#f8fafc',
 };
 const toastStyle: React.CSSProperties = {
   background: '#ecfdf5',
@@ -833,7 +1144,7 @@ const pre: React.CSSProperties = {
   color: '#1e293b',
 };
 const outputSection: React.CSSProperties = {
-  marginTop: 12,
+  marginTop: 4,
   border: '1px solid #cbd5e1',
   borderRadius: 8,
   background: '#0f172a',
@@ -862,11 +1173,6 @@ const outputSummary: React.CSSProperties = {
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
   maxWidth: 220,
-};
-const outputActions: React.CSSProperties = {
-  display: 'flex',
-  gap: 6,
-  flex: '0 0 auto',
 };
 const cancelBtn: React.CSSProperties = {
   padding: '4px 10px',
