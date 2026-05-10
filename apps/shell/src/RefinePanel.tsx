@@ -581,24 +581,33 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
               ))}
             </ul>
           )}
-          <button
-            onClick={saveCurrent}
-            disabled={
-              !note.trim() &&
-              pending.diffs.length === 0 &&
-              saved.length === 0
-            }
-            style={btnPrimary}
-            title={
-              daemon?.ok
-                ? 'Send all refinements (this selection + previously saved) to Claude'
-                : 'Save this refinement and copy the cumulative iterate prompt to your clipboard'
-            }
-          >
-            {daemon?.ok
-              ? `Send to Claude${saved.length > 0 ? ` (${saved.length + (pending.diffs.length > 0 || note.trim() ? 1 : 0)})` : ''}`
-              : 'Save'}
-          </button>
+          {(() => {
+            // Count what would actually go in the iterate prompt:
+            //   saved entries + 1 if pending currently has note/diffs to flush.
+            const pendingHasContent = !!note.trim() || pending.diffs.length > 0;
+            const totalCount = saved.length + (pendingHasContent ? 1 : 0);
+            const disabled = totalCount === 0;
+            return (
+              <button
+                onClick={saveCurrent}
+                disabled={disabled}
+                style={disabled ? btnPrimaryDisabled : btnPrimary}
+                title={
+                  disabled
+                    ? 'Nothing to send — write a note, edit text, or use Position/Padding sliders first.'
+                    : daemon?.ok
+                      ? `Send ${totalCount} refinement${totalCount === 1 ? '' : 's'} to Claude (this selection + saved)`
+                      : `Save and copy iterate prompt for ${totalCount} refinement${totalCount === 1 ? '' : 's'}`
+                }
+              >
+                {daemon?.ok
+                  ? totalCount > 0
+                    ? `Send to Claude (${totalCount})`
+                    : 'Send to Claude'
+                  : 'Save'}
+              </button>
+            );
+          })()}
         </section>
       )}
 
@@ -744,6 +753,13 @@ const btnPrimary: React.CSSProperties = {
   borderColor: '#2563eb',
 };
 const btnGhost: React.CSSProperties = { ...btn, color: '#64748b', borderColor: '#e2e8f0' };
+const btnPrimaryDisabled: React.CSSProperties = {
+  ...btn,
+  background: '#cbd5e1',
+  color: '#fff',
+  borderColor: '#cbd5e1',
+  cursor: 'not-allowed',
+};
 const iconBtn: React.CSSProperties = {
   ...btn,
   width: 24,
