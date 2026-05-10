@@ -42,6 +42,19 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
   const [editing, setEditing] = useState(false);
   /** Transient banner shown after Save → "Saved + copied. Paste in Claude Code." */
   const [toast, setToast] = useState<string | null>(null);
+  /** Live streaming output from claude --print. Populated by streamToClaude. */
+  const [stream, setStream] = useState<{
+    /** All lines from stdout/stderr in order, capped at MAX_STREAM_LINES. */
+    lines: string[];
+    /** "running" while claude is alive; "ok"/"err" once done. null = no stream yet. */
+    status: 'running' | 'ok' | 'err' | null;
+    /** Final summary line shown next to the title. */
+    summary: string;
+    /** Wall-clock duration in ms once status flips off "running". */
+    durationMs: number;
+  }>({ lines: [], status: null, summary: '', durationMs: 0 });
+  const streamCancelRef = useRef<AbortController | null>(null);
+  const streamScrollRef = useRef<HTMLPreElement | null>(null);
   /**
    * Tracks the previous pending so the auto-save useEffect below can decide
    * whether to flush its diffs into the saved list when the user switches
@@ -196,7 +209,9 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
     setEditing(false);
   }
 
-  /** Stream the cumulative iterate prompt to Claude. Toasts progress. */
+  /** Stream the cumulative iterate prompt to Claude. Pipes ALL output into
+   * the inline Output panel; toast becomes a one-line status. Cancellable
+   * mid-stream via the AbortController stashed in streamCancelRef. */
   async function streamToClaude(refinements: SavedRefinement[]) {
     if (refinements.length === 0) {
       setToast('Nothing to send — make a refinement first.');
@@ -208,7 +223,6 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
       sessionSlug: sessionSlug ?? undefined,
     });
     if (!daemon?.ok) {
-      // Layer 0 fallback: copy and tell the user to paste.
       try {
         await navigator.clipboard.writeText(promptText);
         setToast(
@@ -221,34 +235,116 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
       setTimeout(() => setToast(null), 4500);
       return;
     }
-    setToast(`Sending to Claude — ${refinements.length} refinement${refinements.length === 1 ? '' : 's'}…`);
+
+    // Refuse a second concurrent send — cancel the prior first.
+    if (streamCancelRef.current) streamCancelRef.current.abort();
+    const ac = new AbortController();
+    streamCancelRef.current = ac;
+
+    const startedAt = Date.now();
+    setStream({
+      lines: [
+        `── Sending ${refinements.length} refinement${refinements.length === 1 ? '' : 's'} to Claude ──`,
+        `cwd: project ${projectId ?? '(default)'}`,
+        ``,
+      ],
+      status: 'running',
+      summary: 'running…',
+      durationMs: 0,
+    });
+    setToast(`Claude running — see Output panel below`);
+
+    function appendChunk(chunk: string) {
+      // Split on newlines, keep order; cap total lines so a runaway log
+      // doesn't unbound memory.
+      setStream((prev) => {
+        if (prev.status !== 'running' && prev.status !== null) return prev;
+        const newLines = chunk.split('\n');
+        const next = [...prev.lines, ...newLines];
+        const MAX = 2000;
+        return {
+          ...prev,
+          lines: next.length > MAX ? next.slice(-MAX) : next,
+        };
+      });
+    }
+
     try {
-      const startedAt = Date.now();
-      for await (const evt of runIterate({ prompt: promptText, projectId })) {
+      for await (const evt of runIterate({ prompt: promptText, projectId, signal: ac.signal })) {
         if (evt.type === 'started') {
-          setToast(`Claude is iterating Gate 3…`);
-        } else if (evt.type === 'stdout' || evt.type === 'stderr') {
-          const last = evt.chunk.split('\n').reverse().find((l) => l.trim());
-          if (last) setToast(last.slice(0, 100));
+          appendChunk('▸ claude --print started');
+        } else if (evt.type === 'stdout') {
+          appendChunk(evt.chunk);
+        } else if (evt.type === 'stderr') {
+          appendChunk(evt.chunk);
         } else if (evt.type === 'done') {
           const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
-          setToast(
-            evt.code === 0
-              ? `✓ Iterate done in ${seconds}s — preview should refresh shortly`
-              : `✗ Claude exited ${evt.code} after ${seconds}s — see terminal`,
-          );
-          setTimeout(() => setToast(null), 5000);
+          const ok = evt.code === 0;
+          appendChunk(`\n── ${ok ? '✓ done' : `✗ exit ${evt.code}`} in ${seconds}s ──`);
+          setStream((prev) => ({
+            ...prev,
+            status: ok ? 'ok' : 'err',
+            summary: ok ? `✓ done in ${seconds}s` : `✗ exit ${evt.code} (${seconds}s)`,
+            durationMs: Date.now() - startedAt,
+          }));
+          setToast(ok ? `✓ Iterate done — preview should refresh shortly` : `✗ Claude exited ${evt.code} — see Output panel`);
+          setTimeout(() => setToast(null), 4000);
         } else if (evt.type === 'error') {
+          appendChunk(`\n── ✗ error: ${evt.message} ──`);
+          setStream((prev) => ({
+            ...prev,
+            status: 'err',
+            summary: `✗ ${evt.message}`,
+            durationMs: Date.now() - startedAt,
+          }));
           setToast(`✗ ${evt.message}`);
           setTimeout(() => setToast(null), 5000);
         }
       }
     } catch (err) {
-      console.error('[shell] daemon send failed', err);
-      setToast(`✗ daemon send failed: ${err instanceof Error ? err.message : String(err)}`);
-      setTimeout(() => setToast(null), 5000);
+      const msg = err instanceof Error ? err.message : String(err);
+      // Aborts surface as DOMException AbortError — don't treat that as a failure.
+      if (ac.signal.aborted) {
+        appendChunk(`\n── ⏹ cancelled by user ──`);
+        setStream((prev) => ({
+          ...prev,
+          status: 'err',
+          summary: 'cancelled',
+          durationMs: Date.now() - startedAt,
+        }));
+      } else {
+        console.error('[shell] daemon send failed', err);
+        appendChunk(`\n── ✗ ${msg} ──`);
+        setStream((prev) => ({
+          ...prev,
+          status: 'err',
+          summary: `✗ ${msg}`,
+          durationMs: Date.now() - startedAt,
+        }));
+        setToast(`✗ daemon send failed: ${msg}`);
+        setTimeout(() => setToast(null), 5000);
+      }
+    } finally {
+      if (streamCancelRef.current === ac) streamCancelRef.current = null;
     }
   }
+
+  function cancelStream() {
+    streamCancelRef.current?.abort();
+  }
+
+  function clearStream() {
+    setStream({ lines: [], status: null, summary: '', durationMs: 0 });
+  }
+
+  // Auto-scroll the output panel as new lines arrive — only when the user
+  // is already at the bottom, so manual scroll-up isn't fought.
+  useEffect(() => {
+    const el = streamScrollRef.current;
+    if (!el) return;
+    const nearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    if (nearBottom) el.scrollTop = el.scrollHeight;
+  }, [stream.lines]);
 
   async function saveCurrent() {
     if (!pending) return;
@@ -557,6 +653,32 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
           </div>
         </section>
       )}
+
+      {stream.status !== null && (
+        <section style={outputSection}>
+          <div style={outputHeader}>
+            <div style={outputTitleRow}>
+              <span style={outputDot(stream.status)} />
+              <strong style={{ fontSize: 12 }}>Claude output</strong>
+              <span style={outputSummary}>{stream.summary}</span>
+            </div>
+            <div style={outputActions}>
+              {stream.status === 'running' ? (
+                <button onClick={cancelStream} style={cancelBtn} title="Stop the running claude process">
+                  ⏹ Cancel
+                </button>
+              ) : (
+                <button onClick={clearStream} style={linkBtn} title="Clear the output panel">
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+          <pre ref={streamScrollRef} style={streamPre}>
+            {stream.lines.join('\n')}
+          </pre>
+        </section>
+      )}
     </div>
   );
 }
@@ -694,3 +816,75 @@ const pre: React.CSSProperties = {
   margin: '8px 0 0',
   color: '#1e293b',
 };
+const outputSection: React.CSSProperties = {
+  marginTop: 12,
+  border: '1px solid #cbd5e1',
+  borderRadius: 8,
+  background: '#0f172a',
+  overflow: 'hidden',
+};
+const outputHeader: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  padding: '8px 10px',
+  background: '#1e293b',
+  borderBottom: '1px solid #334155',
+};
+const outputTitleRow: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
+  color: '#f8fafc',
+  minWidth: 0,
+};
+const outputSummary: React.CSSProperties = {
+  fontSize: 11,
+  color: '#94a3b8',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap',
+  maxWidth: 220,
+};
+const outputActions: React.CSSProperties = {
+  display: 'flex',
+  gap: 6,
+  flex: '0 0 auto',
+};
+const cancelBtn: React.CSSProperties = {
+  padding: '4px 10px',
+  fontSize: 11,
+  fontWeight: 600,
+  border: '1px solid #dc2626',
+  borderRadius: 4,
+  background: '#dc2626',
+  color: '#fff',
+  cursor: 'pointer',
+};
+const streamPre: React.CSSProperties = {
+  margin: 0,
+  padding: 12,
+  maxHeight: 320,
+  overflowY: 'auto',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  fontSize: 11,
+  lineHeight: 1.45,
+  color: '#e2e8f0',
+  background: '#0f172a',
+  whiteSpace: 'pre-wrap',
+  wordBreak: 'break-word',
+};
+
+function outputDot(status: 'running' | 'ok' | 'err' | null): React.CSSProperties {
+  const color =
+    status === 'running' ? '#fbbf24' : status === 'ok' ? '#22c55e' : status === 'err' ? '#dc2626' : '#475569';
+  return {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    background: color,
+    boxShadow: status === 'running' ? '0 0 0 3px rgba(251,191,36,0.25)' : 'none',
+    flex: '0 0 auto',
+  };
+}
