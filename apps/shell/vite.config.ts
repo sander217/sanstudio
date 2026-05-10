@@ -534,12 +534,26 @@ function claudeRunnerPlugin(): Plugin {
           req.on('end', async () => {
             let prompt = '';
             let cwd = SANSTUDIO_ROOT;
+            // Sessions root for the requested project — passed to claude as
+            // --add-dir so it can read/write the artifact files. Without
+            // this, claude refuses tool access to anything outside cwd.
+            let outputDir: string | null = null;
             try {
               const parsed = JSON.parse(body || '{}') as { prompt?: string; projectId?: string };
               prompt = parsed.prompt ?? '';
               if (parsed.projectId) {
                 const project = await getProjectById(parsed.projectId);
-                if (project) cwd = project.root;
+                if (project) {
+                  cwd = project.root;
+                  // Pass the parent of sessions root (e.g. sanstudio-ai-output/)
+                  // so claude can navigate the whole output tree, not just one
+                  // session's html dir.
+                  const sessionsRoot = resolveSessionsRoot(project);
+                  outputDir = dirname(sessionsRoot);
+                }
+              } else {
+                // No project specified — fall back to default sanstudio output.
+                outputDir = dirname(DEFAULT_SESSIONS_ROOT);
               }
             } catch {
               res.statusCode = 400;
@@ -558,11 +572,25 @@ function claudeRunnerPlugin(): Plugin {
             const writeEvent = (event: object): void => {
               res.write(JSON.stringify(event) + '\n');
             };
-            writeEvent({ type: 'started', at: Date.now(), cwd });
+            writeEvent({ type: 'started', at: Date.now(), cwd, outputDir });
+
+            // Build the args:
+            //   --print               : non-interactive, stdin-driven
+            //   --add-dir <output>    : grant Read/Edit access to the output tree
+            //                           (sessions live outside cwd per CLAUDE.md)
+            //   --permission-mode acceptEdits
+            //                         : auto-accept Edit prompts on files we
+            //                           already granted via --add-dir, so the
+            //                           iterate doesn't pause halfway waiting
+            //                           for the user
+            const args = ['--print', '--permission-mode', 'acceptEdits'];
+            if (outputDir && existsSync(outputDir)) {
+              args.push('--add-dir', outputDir);
+            }
 
             let proc: ChildProcessWithoutNullStreams;
             try {
-              proc = spawn(CLAUDE_BIN, ['--print'], {
+              proc = spawn(CLAUDE_BIN, args, {
                 cwd,
                 stdio: ['pipe', 'pipe', 'pipe'],
               }) as ChildProcessWithoutNullStreams;
