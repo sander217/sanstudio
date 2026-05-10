@@ -129,9 +129,16 @@ export function App() {
     }
   }, [pinnedSlug, session.all]);
 
+  // Pass mtime so the iframe's src changes (and reloads) when claude
+  // rewrites the same file path during iterate.
   const src =
     effectiveSlug && effectiveHtml
-      ? artifactUrl(effectiveSlug, effectiveHtml, selectedProjectId)
+      ? artifactUrl(
+          effectiveSlug,
+          effectiveHtml,
+          selectedProjectId,
+          effectiveSession?.modifiedMs,
+        )
       : null;
 
   // Reset the panel state when the artifact changes (auto-switch OR pin change).

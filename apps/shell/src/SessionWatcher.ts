@@ -121,7 +121,14 @@ export function artifactUrl(
   slug: string,
   htmlFile: string,
   projectId: string | null = null,
+  /** Last-modified ms — appended as a cache-bust query so the iframe
+   * actually navigates when claude rewrites the same file path. */
+  mtimeMs: number = 0,
 ): string {
   const base = `/sessions/${encodeURIComponent(slug)}/html/${encodeURIComponent(htmlFile)}`;
-  return projectId ? `${base}?project=${encodeURIComponent(projectId)}` : base;
+  const params = new URLSearchParams();
+  if (projectId) params.set('project', projectId);
+  if (mtimeMs > 0) params.set('t', String(mtimeMs));
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
 }
