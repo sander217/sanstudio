@@ -71,7 +71,10 @@ export function useKeyboardNudge({ pending, iframe, upsertSaved, resetSignal }: 
       const state = stateRef.current;
       if (!state || !pending || !iframe?.contentDocument) return;
 
-      // Don't fight a real form input or text editor focus.
+      // Don't fight a real form input or text editor focus — but only check
+      // when the event came from inside this document. Cross-document
+      // checks (e.g. ev.target from the iframe doc) wouldn't reliably
+      // identify shell-side inputs anyway.
       const target = ev.target as HTMLElement | null;
       const tag = target?.tagName?.toLowerCase();
       if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) return;
@@ -126,8 +129,18 @@ export function useKeyboardNudge({ pending, iframe, upsertSaved, resetSignal }: 
       });
     }
 
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    // Critical: when the user clicks an element inside the iframe to select
+    // it, focus moves into the iframe document. Subsequent keydowns then
+    // fire on iframe.contentDocument, NOT on window — the shell never sees
+    // them unless we listen on both. Use capture phase so we beat any
+    // page-level handlers (e.g. carousel keyboard nav).
+    window.addEventListener('keydown', onKeyDown, true);
+    const doc = iframe?.contentDocument;
+    doc?.addEventListener('keydown', onKeyDown, true);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown, true);
+      doc?.removeEventListener('keydown', onKeyDown, true);
+    };
   }, [pending, iframe, upsertSaved]);
 }
 

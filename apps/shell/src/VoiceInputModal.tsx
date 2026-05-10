@@ -77,9 +77,19 @@ export function VoiceInputModal({
       setFinalText(initialNote);
       setInterimText('');
       setEdited(initialNote || null);
-      setState(getRecognitionCtor() ? 'idle' : 'unsupported');
+      const ctor = getRecognitionCtor();
+      setState(ctor ? 'idle' : 'unsupported');
+      if (ctor) {
+        // Auto-start recording — user opened the modal because they want
+        // to talk, not because they want to choose a button. Defer to next
+        // frame so the modal is fully mounted (Chrome rejects start()
+        // calls during the same tick as a state change in some cases).
+        // Mic permission prompt may pop up here on first use; subsequent
+        // opens are immediate.
+        const t = setTimeout(() => startRecording(), 50);
+        return () => clearTimeout(t);
+      }
     } else {
-      // Stop any active recording when the modal closes.
       try {
         recRef.current?.abort();
       } catch {
