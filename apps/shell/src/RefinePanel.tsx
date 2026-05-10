@@ -16,7 +16,7 @@ import {
 import { buildIteratePrompt, type SavedRefinement } from './RefinementToPrompt';
 import { StyleControls } from './StyleControls';
 import { ImageControls } from './ImageControls';
-import { ChildPaddingControls } from './ChildPaddingControls';
+import { ChildLayoutControls } from './ChildLayoutControls';
 import { runIterate, type DaemonHealth } from './DaemonClient';
 
 interface Props {
@@ -420,9 +420,10 @@ export function RefinePanel({ iframe, artifactPath, sessionSlug, resetKey, daemo
           <StyleControls pending={pending} rpc={rpc} resetSignal={resetKey} />
           <ImageControls pending={pending} rpc={rpc} resetSignal={resetKey} />
 
-          <ChildPaddingControls
+          <ChildLayoutControls
             pending={pending}
             iframe={iframe}
+            artifactPath={artifactPath}
             resetSignal={resetKey}
             upsertSaved={(item) => {
               // Replace if a refinement with the same id already exists
