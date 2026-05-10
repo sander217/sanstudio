@@ -1,7 +1,8 @@
 // Per-child padding controls — shown when the user selects a container
 // element (a <div> or similar with >0 element children). Lists each child
-// with a padding slider so the user can tighten / loosen spacing without
-// having to re-pick each child individually.
+// with TWO axis sliders so vertical (top+bottom) and horizontal (left+right)
+// padding can be tuned independently. Each axis has both a slider and an
+// editable number input, so users can scrub OR type an exact value.
 //
 // Why this lives here and not inside the refinetool companion:
 //   The vendored companion's RPC (`set_style_value`) only targets the
@@ -16,7 +17,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import type { EditDiff, PendingSelection, SelectedTarget, StyleChangeDiff } from './refineProtocol';
+import type { PendingSelection, SelectedTarget, StyleChangeDiff } from './refineProtocol';
 import type { SavedRefinement } from './RefinementToPrompt';
 
 interface Props {
@@ -36,17 +37,24 @@ interface ChildInfo {
   selector: string;
   tag: string;
   snippet: string;
-  /** Computed padding in px AT MOUNT TIME — captured so slider drags can
-   * compose a `before`/`after` diff and so reset returns to truth. */
-  originalPx: number;
+  /** Computed padding-top in px AT MOUNT TIME — captured for diff `before` and reset. */
+  originalY: number;
+  /** Computed padding-left in px AT MOUNT TIME. */
+  originalX: number;
+  /** CSS-shorthand form of the original (e.g. "24px" or "40px 16px") for the diff `before`. */
+  originalCss: string;
   /** Inline-style padding present when we mounted, if any — restored on
    * reset so we don't strip the original author's choice. */
   originalInline: string;
 }
 
-const PADDING_MIN = 0;
-const PADDING_MAX = 80;
-const PADDING_STEP = 1;
+// Slider stays at 0–80 (designer-friendly default range), but the number
+// input accepts up to 400 for the rare case of a hero section that needs
+// more — slider position clamps at the upper edge when value exceeds it.
+const SLIDER_MIN = 0;
+const SLIDER_MAX = 80;
+const INPUT_MIN = 0;
+const INPUT_MAX = 400;
 
 function readNumericStyle(el: Element, prop: string): number {
   const raw = (el.ownerDocument?.defaultView ?? window).getComputedStyle(el).getPropertyValue(prop);
@@ -57,7 +65,6 @@ function readNumericStyle(el: Element, prop: string): number {
 function shortSnippet(el: Element): string {
   const text = (el.textContent ?? '').trim().replace(/\s+/g, ' ');
   if (text) return text.length > 40 ? text.slice(0, 37) + '…' : text;
-  // Fallback for empty (icon, image, etc.) — show the className or src
   if (el.tagName === 'IMG') return `<img src="${(el as HTMLImageElement).getAttribute('src') ?? ''}">`;
   const cls = (el as HTMLElement).className;
   if (typeof cls === 'string' && cls) return `.${cls.split(/\s+/).slice(0, 2).join('.')}`;
@@ -65,13 +72,23 @@ function shortSnippet(el: Element): string {
 }
 
 function isContainerCandidate(tag: string): boolean {
-  // We only show the picker for elements that typically wrap other
-  // elements. Inline emphasis tags and leaf text tags don't qualify.
   const containerTags = new Set([
     'DIV', 'SECTION', 'ARTICLE', 'HEADER', 'FOOTER', 'MAIN', 'ASIDE', 'NAV',
     'UL', 'OL', 'FORM', 'FIELDSET', 'FIGURE', 'PICTURE',
   ]);
   return containerTags.has(tag.toUpperCase());
+}
+
+/** CSS shorthand: omit the second value when V === H so the diff is concise. */
+function paddingShorthand(y: number, x: number): string {
+  return y === x ? `${y}px` : `${y}px ${x}px`;
+}
+
+function clampInput(raw: string): number | null {
+  if (raw.trim() === '') return null;
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(INPUT_MIN, Math.min(INPUT_MAX, Math.round(n)));
 }
 
 export function ChildPaddingControls({ pending, iframe, upsertSaved, resetSignal }: Props) {
@@ -94,49 +111,71 @@ export function ChildPaddingControls({ pending, iframe, upsertSaved, resetSignal
     const out: ChildInfo[] = [];
     for (let i = 0; i < parent.children.length; i++) {
       const child = parent.children[i];
-      // nth-child is 1-indexed and survives sibling shuffles for stable
-      // pointers within the iterate prompt.
       const sel = `${containerSelector} > :nth-child(${i + 1})`;
+      const y = readNumericStyle(child, 'padding-top');
+      const x = readNumericStyle(child, 'padding-left');
       out.push({
         selector: sel,
         tag: child.tagName.toLowerCase(),
         snippet: shortSnippet(child),
-        originalPx: readNumericStyle(child, 'padding'),
+        originalY: y,
+        originalX: x,
+        originalCss: paddingShorthand(y, x),
         originalInline: (child as HTMLElement).style.padding,
       });
     }
     return out;
   }, [containerSelector, containerTag, iframe, resetSignal]);
 
-  // Live values per child — seeded from originalPx so slider sits at the
-  // computed value, not 0. Keyed by selector.
-  const [values, setValues] = useState<Record<string, number>>({});
+  /** Per-child {y, x} live values. Seeded from computed style so sliders
+   * sit at the right initial position. The string-typed input field reads
+   * from these too — kept as `number` here, formatted on render. */
+  const [values, setValues] = useState<Record<string, { y: number; x: number }>>({});
+  /** Per-child input drafts — separate from `values` so the user can be
+   * mid-typing (e.g. "1" → "12" → "120") without each keystroke clamping
+   * to a number. Empty string means "follow values". */
+  const [drafts, setDrafts] = useState<Record<string, { y: string; x: string }>>({});
+
   useEffect(() => {
-    const seed: Record<string, number> = {};
-    for (const c of children) seed[c.selector] = c.originalPx;
-    setValues(seed);
+    const seedV: Record<string, { y: number; x: number }> = {};
+    const seedD: Record<string, { y: string; x: string }> = {};
+    for (const c of children) {
+      seedV[c.selector] = { y: c.originalY, x: c.originalX };
+      seedD[c.selector] = { y: '', x: '' };
+    }
+    setValues(seedV);
+    setDrafts(seedD);
   }, [children]);
 
   if (children.length === 0) return null;
 
-  function applyPadding(child: ChildInfo, next: number) {
-    setValues((prev) => ({ ...prev, [child.selector]: next }));
+  function applyAxis(child: ChildInfo, axis: 'y' | 'x', next: number) {
+    const cur = values[child.selector] ?? { y: child.originalY, x: child.originalX };
+    const updated = { ...cur, [axis]: next };
+    setValues((prev) => ({ ...prev, [child.selector]: updated }));
+
     if (!iframe?.contentDocument) return;
     let el: Element | null = null;
     try {
       el = iframe.contentDocument.querySelector(child.selector);
     } catch {
-      // Selector got invalidated — bail silently rather than crash.
       return;
     }
     if (!el) return;
-    (el as HTMLElement).style.padding = `${next}px`;
+    // Apply each axis to BOTH sides — keeps top/bottom symmetric and
+    // left/right symmetric. (Per-side asymmetric padding is uncommon
+    // enough that we don't expose it in v1.)
+    const target = el as HTMLElement;
+    target.style.paddingTop = `${updated.y}px`;
+    target.style.paddingBottom = `${updated.y}px`;
+    target.style.paddingLeft = `${updated.x}px`;
+    target.style.paddingRight = `${updated.x}px`;
 
     // Push (or update) a saved refinement so the change makes it into
-    // the iterate prompt. ID is stable per (container, child) so we
-    // overwrite instead of piling up while dragging.
+    // the iterate prompt. ID is stable per child so we overwrite while
+    // the user fiddles, instead of piling up.
     const id = `child-padding:${child.selector}`;
-    const target: SelectedTarget = {
+    const region: SelectedTarget = {
       selector: child.selector,
       label: `${child.tag}${child.snippet ? ` "${child.snippet}"` : ''}`,
       boundingBox: { x: 0, y: 0, width: 0, height: 0 },
@@ -150,20 +189,38 @@ export function ChildPaddingControls({ pending, iframe, upsertSaved, resetSignal
     const diff: StyleChangeDiff = {
       id,
       selector: child.selector,
-      target: target.label,
+      target: region.label,
       createdAt: new Date().toISOString(),
       type: 'style_change',
       property: 'padding',
-      before: `${child.originalPx}px`,
-      after: `${next}px`,
+      before: child.originalCss,
+      after: paddingShorthand(updated.y, updated.x),
     };
     upsertSaved({
       id,
-      region: target,
+      region,
       note: `Adjust padding of child inside ${containerTag.toLowerCase()}`,
       diffs: [diff],
       createdAt: diff.createdAt,
     });
+  }
+
+  function commitDraft(child: ChildInfo, axis: 'y' | 'x') {
+    const draft = drafts[child.selector]?.[axis] ?? '';
+    const n = clampInput(draft);
+    // Empty / invalid draft → revert input to the live value (no apply).
+    if (n === null) {
+      setDrafts((prev) => ({
+        ...prev,
+        [child.selector]: { ...(prev[child.selector] ?? { y: '', x: '' }), [axis]: '' },
+      }));
+      return;
+    }
+    setDrafts((prev) => ({
+      ...prev,
+      [child.selector]: { ...(prev[child.selector] ?? { y: '', x: '' }), [axis]: '' },
+    }));
+    applyAxis(child, axis, n);
   }
 
   function resetChild(child: ChildInfo) {
@@ -176,12 +233,23 @@ export function ChildPaddingControls({ pending, iframe, upsertSaved, resetSignal
     }
     if (!el) return;
     // Restore the original inline padding (which may be empty — that
-    // re-exposes the stylesheet rule the page originally used).
-    (el as HTMLElement).style.padding = child.originalInline;
-    setValues((prev) => ({ ...prev, [child.selector]: child.originalPx }));
-    // Note: we don't remove the saved diff — the user can drop it from
-    // the saved list manually. Keeping a "reset to original" record
-    // lets the iterate prompt explicitly say "this was reverted".
+    // re-exposes the stylesheet rule the page originally used). Unlike
+    // applyAxis, we wipe per-side properties so the shorthand can take
+    // hold; otherwise stale paddingTop/paddingBottom would override it.
+    const target = el as HTMLElement;
+    target.style.paddingTop = '';
+    target.style.paddingBottom = '';
+    target.style.paddingLeft = '';
+    target.style.paddingRight = '';
+    target.style.padding = child.originalInline;
+    setValues((prev) => ({
+      ...prev,
+      [child.selector]: { y: child.originalY, x: child.originalX },
+    }));
+    setDrafts((prev) => ({
+      ...prev,
+      [child.selector]: { y: '', x: '' },
+    }));
   }
 
   return (
@@ -190,36 +258,110 @@ export function ChildPaddingControls({ pending, iframe, upsertSaved, resetSignal
         Child padding · {children.length} child{children.length === 1 ? '' : 'ren'}
       </summary>
       <div style={listWrap}>
-        {children.map((c) => (
-          <div key={c.selector} style={row}>
-            <div style={labelCol}>
-              <span style={tagBadge}>{c.tag}</span>
-              <span style={snippetText} title={c.snippet}>{c.snippet}</span>
+        {children.map((c) => {
+          const v = values[c.selector] ?? { y: c.originalY, x: c.originalX };
+          const d = drafts[c.selector] ?? { y: '', x: '' };
+          return (
+            <div key={c.selector} style={childBlock}>
+              <div style={childHeader}>
+                <span style={tagBadge}>{c.tag}</span>
+                <span style={snippetText} title={c.snippet}>{c.snippet}</span>
+                <button
+                  type="button"
+                  onClick={() => resetChild(c)}
+                  style={resetBtn}
+                  title={`Reset to ${c.originalCss}`}
+                >
+                  ↺
+                </button>
+              </div>
+              <AxisRow
+                axis="y"
+                label="V"
+                title="Vertical padding (top + bottom)"
+                sliderValue={Math.min(SLIDER_MAX, v.y)}
+                inputValue={d.y === '' ? String(v.y) : d.y}
+                onSlider={(n) => applyAxis(c, 'y', n)}
+                onInputChange={(s) =>
+                  setDrafts((prev) => ({
+                    ...prev,
+                    [c.selector]: { ...(prev[c.selector] ?? { y: '', x: '' }), y: s },
+                  }))
+                }
+                onInputCommit={() => commitDraft(c, 'y')}
+              />
+              <AxisRow
+                axis="x"
+                label="H"
+                title="Horizontal padding (left + right)"
+                sliderValue={Math.min(SLIDER_MAX, v.x)}
+                inputValue={d.x === '' ? String(v.x) : d.x}
+                onSlider={(n) => applyAxis(c, 'x', n)}
+                onInputChange={(s) =>
+                  setDrafts((prev) => ({
+                    ...prev,
+                    [c.selector]: { ...(prev[c.selector] ?? { y: '', x: '' }), x: s },
+                  }))
+                }
+                onInputCommit={() => commitDraft(c, 'x')}
+              />
             </div>
-            <input
-              type="range"
-              min={PADDING_MIN}
-              max={PADDING_MAX}
-              step={PADDING_STEP}
-              value={values[c.selector] ?? c.originalPx}
-              onChange={(e) => applyPadding(c, Number(e.target.value))}
-              style={slider}
-            />
-            <span style={valueText}>
-              {(values[c.selector] ?? c.originalPx)}px
-            </span>
-            <button
-              type="button"
-              onClick={() => resetChild(c)}
-              style={resetBtn}
-              title={`Reset to ${c.originalPx}px`}
-            >
-              ↺
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </details>
+  );
+}
+
+interface AxisRowProps {
+  axis: 'y' | 'x';
+  label: string;
+  title: string;
+  sliderValue: number;
+  inputValue: string;
+  onSlider: (n: number) => void;
+  onInputChange: (s: string) => void;
+  onInputCommit: () => void;
+}
+
+function AxisRow({
+  label,
+  title,
+  sliderValue,
+  inputValue,
+  onSlider,
+  onInputChange,
+  onInputCommit,
+}: AxisRowProps) {
+  return (
+    <div style={axisRow} title={title}>
+      <span style={axisLabel}>{label}</span>
+      <input
+        type="range"
+        min={SLIDER_MIN}
+        max={SLIDER_MAX}
+        step={1}
+        value={sliderValue}
+        onChange={(e) => onSlider(Number(e.target.value))}
+        style={slider}
+      />
+      <input
+        type="number"
+        min={INPUT_MIN}
+        max={INPUT_MAX}
+        step={1}
+        value={inputValue}
+        onChange={(e) => onInputChange(e.target.value)}
+        onBlur={onInputCommit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') {
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        style={numInput}
+      />
+      <span style={unitLabel}>px</span>
+    </div>
   );
 }
 
@@ -239,23 +381,26 @@ const summary: React.CSSProperties = {
 const listWrap: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 8,
+  gap: 12,
   marginTop: 10,
-  maxHeight: 280,
+  maxHeight: 360,
   overflowY: 'auto',
   paddingRight: 4,
 };
-const row: React.CSSProperties = {
-  display: 'grid',
-  gridTemplateColumns: '120px 1fr 48px 24px',
-  alignItems: 'center',
-  gap: 8,
+const childBlock: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 4,
+  padding: '8px 8px 10px',
+  background: '#f8fafc',
+  borderRadius: 6,
+  border: '1px solid #e2e8f0',
 };
-const labelCol: React.CSSProperties = {
+const childHeader: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 6,
-  minWidth: 0,
+  marginBottom: 2,
 };
 const tagBadge: React.CSSProperties = {
   fontSize: 9,
@@ -275,23 +420,49 @@ const snippetText: React.CSSProperties = {
   overflow: 'hidden',
   textOverflow: 'ellipsis',
   whiteSpace: 'nowrap',
+  flex: 1,
+  minWidth: 0,
+};
+const axisRow: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '20px 1fr 56px 18px',
+  alignItems: 'center',
+  gap: 8,
+};
+const axisLabel: React.CSSProperties = {
+  fontSize: 10,
+  fontWeight: 700,
+  color: '#64748b',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  textAlign: 'center',
 };
 const slider: React.CSSProperties = {
   width: '100%',
   accentColor: '#2563eb',
 };
-const valueText: React.CSSProperties = {
+const numInput: React.CSSProperties = {
+  width: '100%',
+  padding: '3px 6px',
+  border: '1px solid #cbd5e1',
+  borderRadius: 4,
+  background: '#fff',
   fontSize: 11,
   fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
   color: '#0f172a',
   textAlign: 'right',
+  boxSizing: 'border-box',
+};
+const unitLabel: React.CSSProperties = {
+  fontSize: 10,
+  color: '#94a3b8',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
 };
 const resetBtn: React.CSSProperties = {
   width: 24,
   height: 24,
   border: '1px solid #e2e8f0',
   borderRadius: 4,
-  background: '#f8fafc',
+  background: '#fff',
   cursor: 'pointer',
   fontSize: 12,
   color: '#64748b',
@@ -299,4 +470,5 @@ const resetBtn: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
+  flex: '0 0 auto',
 };
