@@ -479,13 +479,16 @@ export function RefinePanel({
 
   return (
     <div style={panel}>
-      <header style={panelHeader}>
-        <strong style={{ fontSize: 13 }}>Refine</strong>
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+      {/* Top strip — sits at the same vertical row as the Session bar in
+       * main, so the two columns visually align. Stays put while the scroll
+       * area below moves; doesn't overlap content. */}
+      <header style={panelStrip}>
+        <strong style={stripTitle}>Refine</strong>
+        <div style={stripActions}>
           <button
             onClick={togglePicker}
             disabled={!iframe}
-            style={refineOn ? btnPrimary : btn}
+            style={refineOn ? stripBtnActive : stripBtn}
             title="Toggle picker — click iframe regions to select"
           >
             {refineOn ? '● Picker on' : 'Picker off'}
@@ -493,7 +496,7 @@ export function RefinePanel({
           <button
             onClick={() => void streamToClaude(saved)}
             disabled={sendDisabled}
-            style={sendDisabled ? btnPrimaryDisabled : btnSendPrimary}
+            style={sendDisabled ? stripBtnDisabled : stripBtnSend}
             title={
               sendDisabled
                 ? cartCount === 0
@@ -511,6 +514,7 @@ export function RefinePanel({
         </div>
       </header>
 
+      <div style={scrollArea}>
       {toast && <div style={toastStyle}>{toast}</div>}
 
       {!iframe && <p style={hint}>Iframe not ready — load an artifact first.</p>}
@@ -709,6 +713,8 @@ export function RefinePanel({
         </section>
       )}
 
+      </div>
+
       <ContextualToolbar
         pending={pending}
         iframe={iframe}
@@ -848,28 +854,79 @@ function BorderRadiusInline({
 const panel: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
-  gap: 12,
-  padding: 14,
   fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
   fontSize: 13,
   color: '#0f172a',
   background: '#fff',
   height: '100%',
-  overflow: 'auto',
+  overflow: 'hidden',
+  // No outer padding — the strip is flush with the sidebar's top edge so
+  // it sits at the same Y as the SessionPicker bar in main.
 };
-const panelHeader: React.CSSProperties = {
+// Top strip — height matches the SessionPicker pill in main (~32-36px) so
+// the two columns align at the eye line. This is OUTSIDE the scroll area
+// so it never overlaps cart content when the user scrolls.
+const panelStrip: React.CSSProperties = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
   gap: 8,
-  position: 'sticky',
-  top: -14,
+  padding: '8px 12px',
   background: '#fff',
-  paddingTop: 4,
-  paddingBottom: 8,
-  marginTop: -4,
-  zIndex: 2,
   borderBottom: '1px solid #e2e8f0',
+  flex: '0 0 auto',
+  minHeight: 44,
+};
+const stripTitle: React.CSSProperties = {
+  fontSize: 13,
+  color: '#0f172a',
+};
+const stripActions: React.CSSProperties = {
+  display: 'flex',
+  gap: 6,
+  alignItems: 'center',
+};
+const stripBtn: React.CSSProperties = {
+  padding: '4px 10px',
+  borderRadius: 6,
+  border: '1px solid #cbd5e1',
+  background: '#fff',
+  cursor: 'pointer',
+  fontSize: 12,
+  fontFamily: 'inherit',
+  color: '#0f172a',
+  fontWeight: 500,
+};
+const stripBtnActive: React.CSSProperties = {
+  ...stripBtn,
+  background: '#2563eb',
+  color: '#fff',
+  borderColor: '#2563eb',
+};
+const stripBtnSend: React.CSSProperties = {
+  ...stripBtn,
+  background: '#16a34a',
+  color: '#fff',
+  borderColor: '#16a34a',
+  fontWeight: 600,
+};
+const stripBtnDisabled: React.CSSProperties = {
+  ...stripBtn,
+  background: '#cbd5e1',
+  color: '#fff',
+  borderColor: '#cbd5e1',
+  cursor: 'not-allowed',
+};
+// Inner scroll area — everything below the strip lives here so the strip
+// stays put and content can grow/scroll without overlapping it.
+const scrollArea: React.CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  overflowY: 'auto',
+  padding: 12,
+  display: 'flex',
+  flexDirection: 'column',
+  gap: 12,
 };
 const sectionHeader: React.CSSProperties = {
   display: 'flex',
