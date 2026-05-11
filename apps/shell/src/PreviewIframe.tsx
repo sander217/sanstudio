@@ -43,6 +43,17 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
             return;
           }
           if (doc.getElementById('ifl-companion-script')) return;
+          // Hide the companion's "Refine Mode — click any region · ESC to
+          // exit" banner — the shell's own [● Picker on] indicator already
+          // conveys this state without overlapping artifact content. The
+          // banner is rendered by the companion as `.ifl-banner` (see
+          // refinetool/src/iframe/companion.ts overlay setup).
+          if (!doc.getElementById('ifl-shell-overrides')) {
+            const style = doc.createElement('style');
+            style.id = 'ifl-shell-overrides';
+            style.textContent = `.ifl-banner { display: none !important; }`;
+            doc.documentElement.appendChild(style);
+          }
           // Always re-fetch with no-store + a cache-buster query so dev
           // edits to refinetool propagate without a hard browser reload.
           // The bundle is small (~40KB) so re-fetching per iframe load is
