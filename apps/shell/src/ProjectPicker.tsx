@@ -21,21 +21,32 @@ interface Props {
   onSelect: (id: string) => void;
   /** Called after add/remove so the parent re-fetches the project list. */
   onProjectsChanged: () => void;
+  /** Artifact iframe — needed so clicks INSIDE it also close this menu
+   * (cross-document; iframe clicks don't reach shell's document listener). */
+  iframe?: HTMLIFrameElement | null;
 }
 
-export function ProjectPicker({ projects, selectedId, onSelect, onProjectsChanged }: Props) {
+export function ProjectPicker({ projects, selectedId, onSelect, onProjectsChanged, iframe }: Props) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
-    function onDocClick(ev: MouseEvent) {
-      if (!wrapRef.current?.contains(ev.target as Node)) setOpen(false);
+    function close() {
+      setOpen(false);
     }
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [open]);
+    function onShellClick(ev: MouseEvent) {
+      if (!wrapRef.current?.contains(ev.target as Node)) close();
+    }
+    document.addEventListener('mousedown', onShellClick);
+    const iframeDoc = iframe?.contentDocument;
+    iframeDoc?.addEventListener('mousedown', close);
+    return () => {
+      document.removeEventListener('mousedown', onShellClick);
+      iframeDoc?.removeEventListener('mousedown', close);
+    };
+  }, [open, iframe]);
 
   const selected = projects.find((p) => p.id === selectedId) ?? projects[0] ?? null;
 

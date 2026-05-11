@@ -202,6 +202,7 @@ export function App() {
           selectedId={selectedProjectId}
           onSelect={handleSelectProject}
           onProjectsChanged={() => void refreshProjects()}
+          iframe={iframeEl}
         />
         <div style={headerPromptWrap}>
           <PromptBar
@@ -222,6 +223,7 @@ export function App() {
             onPickSession={setPinnedSlug}
             selectedHtml={pinnedHtml}
             onPickHtml={setPinnedHtml}
+            iframe={iframeEl}
           />
           <PreviewIframe
             src={src}
