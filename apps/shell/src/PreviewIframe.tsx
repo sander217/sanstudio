@@ -43,15 +43,18 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
             return;
           }
           if (doc.getElementById('ifl-companion-script')) return;
-          // Hide the companion's "Refine Mode — click any region · ESC to
-          // exit" banner — the shell's own [● Picker on] indicator already
-          // conveys this state without overlapping artifact content. The
-          // banner is rendered by the companion as `.ifl-banner` (see
-          // refinetool/src/iframe/companion.ts overlay setup).
+          // Companion's "Refine Mode — click any region · ESC to exit"
+          // banner. By default it's `position: fixed; top: 16px` and
+          // floats over artifact content (covers the hero headline).
+          // Push it up 80px so it sits flush with the iframe's top edge
+          // (or clips off entirely) and stops obscuring the design. The
+          // shell's [● Picker on] strip already conveys this state.
+          //
+          // Selector is #ifl-banner (id, set by spawn() in companion).
           if (!doc.getElementById('ifl-shell-overrides')) {
             const style = doc.createElement('style');
             style.id = 'ifl-shell-overrides';
-            style.textContent = `.ifl-banner { display: none !important; }`;
+            style.textContent = `#ifl-banner { top: -64px !important; }`;
             doc.documentElement.appendChild(style);
           }
           // Always re-fetch with no-store + a cache-buster query so dev
