@@ -1,17 +1,30 @@
-// Arrow-key nudge: when an element is selected, the user can fine-tune its
-// position via ↑↓→← (Shift = 10× step). Replaces the SelfPositionControls
-// sliders — keyboard is more direct for designers and frees the panel.
+// Keyboard interactions on the selected iframe element:
 //
-// Applies inline `transform: translate(x, y)` on the selected iframe element
-// (visual move only — siblings don't yield space, no reflow). Each nudge
-// updates an upsert in the cart so the iterate prompt carries the final
-// translate(...) value.
+//   ↑ ↓ ← →           — nudge position by 1px (Shift = 10px) via inline
+//                       transform: translate(...). Visual only, no flow
+//                       change. Cart entry upserts so the iterate prompt
+//                       carries the final translate(x, y).
+//
+//   Delete / Backspace — mark the element for removal. Hides it locally via
+//                       display:none and adds a RemoveDiff to the cart so
+//                       Claude rewrites the artifact without that element.
+//                       (Borrowed from open-design v0.8.0's "remove-element
+//                       patch" — keyboard delete is the universal idiom for
+//                       "get this off my canvas".)
+//
+// Both interactions guard against firing inside text inputs / textareas /
+// contenteditable so the user can still type in the cart and modals.
 
 import { useEffect, useRef } from 'react';
 
-import type { PendingSelection, SelectedTarget, StyleChangeDiff } from './refineProtocol';
+import type { PendingSelection, RemoveDiff, SelectedTarget, StyleChangeDiff } from './refineProtocol';
 import type { SavedRefinement } from './RefinementToPrompt';
 import { readTranslateFromMatrix } from './layoutHelpers';
+
+function truncate(s: string, max: number): string {
+  if (s.length <= max) return s;
+  return s.slice(0, max - 1) + '…';
+}
 
 interface Args {
   pending: PendingSelection | null;
@@ -29,6 +42,7 @@ const STEP_LARGE = 10;
 export function useKeyboardNudge({ pending, iframe, upsertSaved, resetSignal }: Args) {
   // Live (x, y) for the selected element, kept in a ref so the keydown
   // handler reads the latest values without re-binding on every nudge.
+  // originalDisplay is captured here too so Delete can restore it on reset.
   const stateRef = useRef<{
     selector: string;
     originalX: number;
@@ -36,6 +50,7 @@ export function useKeyboardNudge({ pending, iframe, upsertSaved, resetSignal }: 
     x: number;
     y: number;
     originalTransformInline: string;
+    originalDisplayInline: string;
   } | null>(null);
 
   // Snapshot the original on selection / reset.
@@ -63,6 +78,7 @@ export function useKeyboardNudge({ pending, iframe, upsertSaved, resetSignal }: 
       x: t.x,
       y: t.y,
       originalTransformInline: (el as HTMLElement).style.transform,
+      originalDisplayInline: (el as HTMLElement).style.display,
     };
   }, [pending?.target.selector, iframe, resetSignal]);
 
@@ -79,6 +95,39 @@ export function useKeyboardNudge({ pending, iframe, upsertSaved, resetSignal }: 
       const tag = target?.tagName?.toLowerCase();
       if (tag === 'textarea' || tag === 'input' || target?.isContentEditable) return;
 
+      // --- Delete / Backspace → remove element -----------------------
+      if (ev.key === 'Delete' || ev.key === 'Backspace') {
+        ev.preventDefault();
+        let el: Element | null = null;
+        try {
+          el = iframe.contentDocument.querySelector(state.selector);
+        } catch {
+          return;
+        }
+        if (!el) return;
+        (el as HTMLElement).style.display = 'none';
+        const id = `keyboard-remove:${state.selector}`;
+        const region: SelectedTarget = pending.target;
+        const diff: RemoveDiff = {
+          id,
+          selector: state.selector,
+          target: pending.target.label,
+          createdAt: new Date().toISOString(),
+          type: 'remove',
+          preview: truncate(pending.target.snippet, 80),
+          originalDisplay: state.originalDisplayInline || undefined,
+        };
+        upsertSaved({
+          id,
+          region,
+          note: 'Remove this element from the artifact (deleted via keyboard).',
+          diffs: [diff],
+          createdAt: diff.createdAt,
+        });
+        return;
+      }
+
+      // --- Arrow keys → nudge translate -----------------------------
       const isArrow =
         ev.key === 'ArrowUp' ||
         ev.key === 'ArrowDown' ||
@@ -144,9 +193,9 @@ export function useKeyboardNudge({ pending, iframe, upsertSaved, resetSignal }: 
   }, [pending, iframe, upsertSaved]);
 }
 
-/** Reset the selected element's translate back to its original inline value
- * AND clear the keyboard-nudge cart entry. Returns true if anything was
- * reset, false if there was nothing to reset. */
+/** Reset the selected element's translate AND display back to their
+ * original inline values AND clear both cart entries (nudge + remove).
+ * Returns true if anything was reset. */
 export function resetKeyboardNudge(
   pending: PendingSelection | null,
   iframe: HTMLIFrameElement | null,
@@ -160,8 +209,10 @@ export function resetKeyboardNudge(
     return false;
   }
   if (!el) return false;
-  // Strip the inline transform — let any stylesheet rule take over again.
+  // Strip the inline transform + display — let any stylesheet rule take over again.
   (el as HTMLElement).style.transform = '';
+  (el as HTMLElement).style.display = '';
   removeFromSaved(`keyboard-translate:${pending.target.selector}`);
+  removeFromSaved(`keyboard-remove:${pending.target.selector}`);
   return true;
 }

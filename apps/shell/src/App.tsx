@@ -10,6 +10,12 @@ import { PreviewIframe } from './PreviewIframe';
 import { RefinePanel } from './RefinePanel';
 import { SessionPicker } from './SessionPicker';
 import { ProjectPicker } from './ProjectPicker';
+import { ViewportPicker } from './ViewportPicker';
+import {
+  readStoredViewport,
+  writeStoredViewport,
+  type Viewport,
+} from './viewportPresets';
 import {
   EMPTY_SESSION_STATE,
   artifactUrl,
@@ -62,8 +68,14 @@ export function App() {
   // that file inside whichever session is currently active.
   const [pinnedHtml, setPinnedHtml] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState<number>(readStoredWidth);
+  const [viewport, setViewport] = useState<Viewport>(readStoredViewport);
   const lastSrcRef = useRef<string | null>(null);
   const dragStartRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  function handleViewportChange(next: Viewport) {
+    setViewport(next);
+    writeStoredViewport(next);
+  }
 
   // Initial project list fetch + reconciliation: if the stored selection no
   // longer exists (e.g. user removed the project), fall back to the first.
@@ -225,16 +237,24 @@ export function App() {
             onPickHtml={setPinnedHtml}
             iframe={iframeEl}
           />
-          <PreviewIframe
-            src={src}
-            companionUrl={COMPANION_URL}
-            onIframeChange={setIframeEl}
-            onCompanionReady={() => {
-              // The iframe was just navigated; force the panel to re-attach
-              // the postMessage RPC against the fresh contentWindow.
-              setIframeEl((prev) => prev);
-            }}
+          <ViewportPicker
+            viewport={viewport}
+            onChange={handleViewportChange}
+            iframe={iframeEl}
           />
+          <div style={previewWrap}>
+            <PreviewIframe
+              src={src}
+              companionUrl={COMPANION_URL}
+              onIframeChange={setIframeEl}
+              onCompanionReady={() => {
+                // The iframe was just navigated; force the panel to re-attach
+                // the postMessage RPC against the fresh contentWindow.
+                setIframeEl((prev) => prev);
+              }}
+              viewport={viewport}
+            />
+          </div>
         </main>
         <div
           className="shell-resize-handle"
@@ -300,6 +320,13 @@ const stage: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
+};
+const previewWrap: React.CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
 };
 const sidebar: React.CSSProperties = {
   borderLeft: '1px solid #e2e8f0',
