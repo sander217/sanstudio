@@ -14,7 +14,7 @@
 //     the device is taller/wider than the stage, the frame is scaled down
 //     via CSS transform so the whole screen stays visible without panning.
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import type { Viewport } from './viewportPresets';
 
@@ -106,20 +106,35 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
   }, []);
 
   // Measure the outer stage container so the Fit toggle can scale the
-  // device frame down to fit. Updates on window resize AND sidebar drags
-  // (parent re-renders, container ResizeObserver fires).
-  const containerRef = useRef<HTMLDivElement>(null);
+  // device frame down to fit. MUST use a callback ref (not useEffect+useRef
+  // with [] deps), because the fluid branch returns the bare <iframe> with no
+  // container div — so the effect would run once at mount with ref=null and
+  // never re-fire when the user later switches to a fixed device. That left
+  // stageSize at {0,0}, the Fit math saw availW=availH=0 (which is treated
+  // as "skip scaling, scale=1"), and the device rendered at its native size
+  // overflowing the stage. flex `align-items: center` + `overflow: auto`
+  // then top-clipped the device with no way to scroll back up. The header /
+  // top of the artifact silently disappeared.
   const [stageSize, setStageSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
-  useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const setContainerNode = useCallback((el: HTMLDivElement | null) => {
+    resizeObserverRef.current?.disconnect();
+    resizeObserverRef.current = null;
+    if (!el) {
+      setStageSize({ w: 0, h: 0 });
+      return;
+    }
+    // Seed synchronously from clientWidth/Height so the first render in
+    // fixed mode already has real numbers — no flash-of-overflow.
+    setStageSize({ w: el.clientWidth, h: el.clientHeight });
     const ro = new ResizeObserver((entries) => {
       const cr = entries[0]?.contentRect;
       if (cr) setStageSize({ w: cr.width, h: cr.height });
     });
     ro.observe(el);
-    return () => ro.disconnect();
+    resizeObserverRef.current = ro;
   }, []);
+  useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
 
   if (!src) {
     return (
@@ -159,7 +174,7 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
   const scaledH = H * scale;
 
   return (
-    <div ref={containerRef} style={fixedStage}>
+    <div ref={setContainerNode} style={fixedStage}>
       <div
         style={{
           ...fixedFrameSlot,
@@ -214,8 +229,12 @@ const fixedStage: React.CSSProperties = {
   width: '100%',
   height: '100%',
   display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  // `safe center` falls back to flex-start when the child overflows. Without
+  // it, plain `center` + overflow:auto clips the top/left edge and the user
+  // can't scroll back to it (the classic Flexbox centering bug). Belt-and-
+  // -suspenders against any edge case where Fit math underestimates.
+  alignItems: 'safe center',
+  justifyContent: 'safe center',
   overflow: 'auto',
   padding: FRAME_PADDING,
   boxSizing: 'border-box',
