@@ -18,11 +18,14 @@ import { DEVICE_PRESETS, FLUID_VIEWPORT, presetById } from './viewportPresets';
 interface Props {
   viewport: Viewport;
   onChange: (next: Viewport) => void;
+  /** Force-refresh the iframe (bumps a cache-bust nonce on the src). Use
+   * when assets look stale or broken after a server-side fix. */
+  onRefresh?: () => void;
   /** Iframe — so dropdown closes when user clicks inside the artifact. */
   iframe?: HTMLIFrameElement | null;
 }
 
-export function ViewportPicker({ viewport, onChange, iframe }: Props) {
+export function ViewportPicker({ viewport, onChange, onRefresh, iframe }: Props) {
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
   const [draftW, setDraftW] = useState<string>('');
@@ -177,6 +180,18 @@ export function ViewportPicker({ viewport, onChange, iframe }: Props) {
       ) : (
         <span style={fluidHint}>fills the stage</span>
       )}
+
+      {onRefresh ? (
+        <button
+          type="button"
+          onClick={onRefresh}
+          style={{ ...iconBtn, marginLeft: 'auto' }}
+          title="Reload iframe + re-fetch all assets (bypasses any stale browser cache)"
+          aria-label="Refresh iframe"
+        >
+          ⟳
+        </button>
+      ) : null}
 
       {open ? (
         <div style={menu}>

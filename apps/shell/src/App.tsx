@@ -69,12 +69,21 @@ export function App() {
   const [pinnedHtml, setPinnedHtml] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState<number>(readStoredWidth);
   const [viewport, setViewport] = useState<Viewport>(readStoredViewport);
+  // Bumped on project switch + manual Refresh click. Becomes the `n` query
+  // param on the iframe src, so even stable artifacts re-navigate and
+  // re-fetch every asset — defeats any stale-broken-image cache the
+  // browser is holding onto from earlier failed loads.
+  const [cacheBust, setCacheBust] = useState<number>(0);
   const lastSrcRef = useRef<string | null>(null);
   const dragStartRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
   function handleViewportChange(next: Viewport) {
     setViewport(next);
     writeStoredViewport(next);
+  }
+
+  function handleRefresh() {
+    setCacheBust(Date.now());
   }
 
   // Initial project list fetch + reconciliation: if the stored selection no
@@ -106,6 +115,10 @@ export function App() {
     setPinnedSlug(null);
     setPinnedHtml(null);
     setSession(EMPTY_SESSION_STATE);
+    // Bump cache-bust so the new project's iframe starts with a fresh
+    // URL — protects against the browser serving cached responses from a
+    // previous load (especially asset failures cached before a server fix).
+    setCacheBust(Date.now());
   }
 
   // Re-poll sessions when the selected project changes. Wait until we have
@@ -142,7 +155,9 @@ export function App() {
   }, [pinnedSlug, session.all]);
 
   // Pass mtime so the iframe's src changes (and reloads) when claude
-  // rewrites the same file path during iterate.
+  // rewrites the same file path during iterate. cacheBust is bumped on
+  // project switch + manual Refresh so even a stable artifact re-loads
+  // from scratch when the user explicitly asks for it.
   const src =
     effectiveSlug && effectiveHtml
       ? artifactUrl(
@@ -150,6 +165,7 @@ export function App() {
           effectiveHtml,
           selectedProjectId,
           effectiveSession?.modifiedMs,
+          cacheBust,
         )
       : null;
 
@@ -240,6 +256,7 @@ export function App() {
           <ViewportPicker
             viewport={viewport}
             onChange={handleViewportChange}
+            onRefresh={handleRefresh}
             iframe={iframeEl}
           />
           <div style={previewWrap}>

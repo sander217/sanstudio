@@ -124,11 +124,18 @@ export function artifactUrl(
   /** Last-modified ms — appended as a cache-bust query so the iframe
    * actually navigates when claude rewrites the same file path. */
   mtimeMs: number = 0,
+  /** Manual cache-bust nonce — bumped by the shell when the user clicks
+   * Refresh or switches projects. Changes the iframe URL even when mtime
+   * is stable, which forces a fresh navigation and re-fetches all assets.
+   * Defends against the case where a previous fetch was cached with a
+   * broken state (e.g. dev server returned octet-stream before a fix). */
+  cacheBust: number = 0,
 ): string {
   const base = `/sessions/${encodeURIComponent(slug)}/html/${encodeURIComponent(htmlFile)}`;
   const params = new URLSearchParams();
   if (projectId) params.set('project', projectId);
   if (mtimeMs > 0) params.set('t', String(mtimeMs));
+  if (cacheBust > 0) params.set('n', String(cacheBust));
   const qs = params.toString();
   return qs ? `${base}?${qs}` : base;
 }
