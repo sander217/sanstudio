@@ -167,17 +167,29 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
           height: scaledH,
         }}
       >
-        <iframe
-          ref={setIframeNode}
-          src={src}
-          title="Gate 3 artifact"
+        {/* Inner shell carries the visual chrome (border, shadow). The iframe
+            itself stays sharp-cornered and ungrouped so no pixel of content
+            gets clipped at the rounded corners — matches Chrome DevTools
+            mobile mode behavior, where the viewport edges are square. */}
+        <div
           style={{
-            ...deviceIframeStyle,
-            width: W,
-            height: H,
-            transform: scale !== 1 ? `scale(${scale})` : 'none',
+            ...deviceShellStyle,
+            width: scaledW,
+            height: scaledH,
           }}
-        />
+        >
+          <iframe
+            ref={setIframeNode}
+            src={src}
+            title="Gate 3 artifact"
+            style={{
+              ...deviceIframeStyle,
+              width: W,
+              height: H,
+              transform: scale !== 1 ? `scale(${scale})` : 'none',
+            }}
+          />
+        </div>
       </div>
       <div style={dimReadout}>
         {W} × {H}
@@ -214,11 +226,19 @@ const fixedFrameSlot: React.CSSProperties = {
   flex: '0 0 auto',
 };
 
-const deviceIframeStyle: React.CSSProperties = {
-  border: '1px solid #cbd5e1',
-  borderRadius: 12,
+const deviceShellStyle: React.CSSProperties = {
+  position: 'relative',
   background: '#fff',
-  boxShadow: '0 12px 36px rgba(15,23,42,0.18)',
+  // Shadow only — no border. A 1px border on a shell sized to scaledW × scaledH
+  // would eat 2px from the iframe's content area (overflow:hidden clips the
+  // overflow) and we'd be right back to clipping content at the edges.
+  boxShadow: '0 12px 36px rgba(15,23,42,0.18), 0 0 0 1px rgba(15,23,42,0.08)',
+  overflow: 'hidden',
+};
+
+const deviceIframeStyle: React.CSSProperties = {
+  border: 0,
+  background: '#fff',
   transformOrigin: 'top left',
   display: 'block',
 };
