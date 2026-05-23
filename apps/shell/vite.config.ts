@@ -216,6 +216,46 @@ function pickFolderNative(): { ok: true; path: string } | { ok: false; error: st
   return { ok: true, path };
 }
 
+// Single source of truth for the extensions we serve out of /sessions/*.
+// Keep alphabetical; add new types as artifacts start using them.
+const MIME_BY_EXT: Record<string, string> = {
+  // markup / styles / scripts
+  html: 'text/html; charset=utf-8',
+  htm: 'text/html; charset=utf-8',
+  css: 'text/css; charset=utf-8',
+  js: 'application/javascript; charset=utf-8',
+  mjs: 'application/javascript; charset=utf-8',
+  json: 'application/json; charset=utf-8',
+  map: 'application/json; charset=utf-8',
+  xml: 'application/xml; charset=utf-8',
+  txt: 'text/plain; charset=utf-8',
+  md: 'text/markdown; charset=utf-8',
+  // images
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  svg: 'image/svg+xml',
+  webp: 'image/webp',
+  avif: 'image/avif',
+  ico: 'image/x-icon',
+  bmp: 'image/bmp',
+  // fonts
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+  ttf: 'font/ttf',
+  otf: 'font/otf',
+  eot: 'application/vnd.ms-fontobject',
+  // media
+  mp4: 'video/mp4',
+  webm: 'video/webm',
+  mp3: 'audio/mpeg',
+  wav: 'audio/wav',
+  // misc
+  pdf: 'application/pdf',
+  zip: 'application/zip',
+};
+
 // Vite middleware plugin: maps /sessions/* to the resolved sessions root for
 // the requested project AND publishes a polling-friendly manifest at
 // /sessions.json. Both endpoints accept ?project=<id>.
@@ -293,16 +333,13 @@ function sessionsPlugin(): Plugin {
             return;
           }
           const ext = abs.split('.').pop()?.toLowerCase() ?? '';
-          const mime =
-            ext === 'html'
-              ? 'text/html; charset=utf-8'
-              : ext === 'css'
-                ? 'text/css'
-                : ext === 'js'
-                  ? 'application/javascript'
-                  : ext === 'json'
-                    ? 'application/json'
-                    : 'application/octet-stream';
+          // Images, fonts, video MUST get a proper image/* or font/* mime so
+          // browsers actually render them. Before this fix everything except
+          // html/css/js/json fell through to application/octet-stream, which
+          // browsers refuse to render in <img>/<picture>/<video> and which
+          // breaks @font-face. Vercel auto-detects from extension so the
+          // artifact looks fine when deployed but broken in local preview.
+          const mime = MIME_BY_EXT[ext] ?? 'application/octet-stream';
           res.setHeader('Content-Type', mime);
           res.setHeader('Cache-Control', 'no-store');
           const buf = await fs.readFile(abs);
