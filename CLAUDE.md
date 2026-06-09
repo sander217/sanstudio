@@ -1,6 +1,7 @@
 # Design Agent Studio
 
-A 3-gate design system: fuzzy requirements → Figma-ready output.
+A 4-gate design system: fuzzy requirements → validated prototype → production-ready design package.
+Gates 1–3 are the core loop (idea → validated hi-fi). Gate 4 is opt-in hardening for production.
 
 ## Skills
 
@@ -10,6 +11,8 @@ skills/
 │   └── SKILL.md               # Gate 1: understand + infer + extract visual contract
 ├── direction-lock/
 │   └── SKILL.md               # Gate 2: research + validate + propose directions
+├── production-lock/
+│   └── SKILL.md               # Gate 4: harden validated prototype into a complete buildable design package
 └── design-lock/
     ├── SKILL.md               # Gate 3: design + iterate + export
     ├── design-md-spec.md      # DESIGN.md format spec (cross-gate visual language)
@@ -78,7 +81,9 @@ User request
     │       ▼
     │   /direction-lock (Gate 2) — research, validate, propose
     │       ▼
-    │   /design-lock (Gate 3) — design, iterate, export
+    │   /design-lock (Gate 3) — design, iterate, export (validated prototype)
+    │       ▼
+    │   /production-lock (Gate 4) — OPT-IN: harden into complete buildable design package
     │
     ├── COMPARE / CRITIQUE
     │   Evaluation/Analysis in Gate 1
@@ -88,6 +93,11 @@ User request
     │
     └── ITERATE → Gate 3 directly
 ```
+
+Gates 1–3 end at a validated prototype (spine screens, primary states, fake-but-real-looking
+data). Gate 4 is a separate altitude: only entered on explicit opt-in after Gate 3 confirms,
+it completes that prototype into a buildable spec (all states, full inventory, responsive
+matrix, component library, accessibility, dev handoff). Gate 4 hardens — it never redirects.
 
 ### Skill loading rule
 
@@ -106,6 +116,10 @@ Read ONLY the current gate's skill file. Do NOT pre-read downstream gates.
     - `skills/design-lock/references/INDEX.md` (every Gate 3 run targeting mobile)
     - Matched reference `.md` files under `references/mobile-app-examples/`
     - The session DESIGN.md, if Gate 1 emitted one (path in CONTEXT-LOCK block)
+- Transitioning to Gate 4 (opt-in only) → read `skills/production-lock/SKILL.md` only
+  - Gate 4 reads the session DESIGN.md + the Gate 3 hi-fi HTML + the `---DESIGN-LOCK---` block
+  - Gate 4 may compose marketplace skills (`design:design-handoff`, `design:design-system`,
+    `design:accessibility-review`) as engines for handoff / component-library / a11y depth
 
 The previous gate's skill file is already in conversation history. Do not re-read it.
 
@@ -115,7 +129,8 @@ When a gate completes and the user confirms, read the skill file for the next ga
 
 - After `/context-lock` confirms → read the `routed_to` field in the CONTEXT-LOCK block and invoke the corresponding gate skill
 - After `/direction-lock` confirms → invoke `/design-lock`
-- After `/design-lock` confirms → export JSON + companion docs + push to Figma
+- After `/design-lock` confirms → export JSON + companion docs + push to Figma, then OFFER Gate 4
+- After Gate 3, **only on explicit opt-in** → invoke `/production-lock` (Gate 4). Never auto-enter Gate 4; the validated prototype is a complete deliverable on its own. Gate 4 is for when the user needs a buildable production design package.
 
 ## Key behaviors
 
@@ -180,16 +195,19 @@ Gates communicate via structured text blocks:
 - `---CONTEXT-LOCK---` / `---CONTEXT-LOCK-EVALUATED---` / `---CONTEXT-LOCK-PARTIAL---`
 - `---DIRECTION-LOCK---` / `---DIRECTION-LOCK-PARTIAL---`
 - `---DESIGN-LOCK---` / `---DESIGN-LOCK-PARTIAL---`
+- `---PRODUCTION-LOCK---` / `---PRODUCTION-LOCK-PARTIAL---`
 
 ## Retreat
 
 - Gate 3 direction wrong → retreat to Gate 2
 - Gate 3 context wrong → retreat to Gate 1
 - Gate 2 after 6 rejected directions → retreat to Gate 1
+- Gate 4 hits a state it cannot design on-contract → contract is incomplete: retreat to Gate 3 (or Gate 1 for a missing token), fix upstream, return. Never patch off-contract inside Gate 4.
+- Gate 4 finds the direction does not survive real data / all states → retreat to Gate 2.
 
 ## Design system
 
-Gate 1 creates the digest. Gate 2 uses it for feasibility. Gate 3 enforces compliance.
+Gate 1 creates the digest. Gate 2 uses it for feasibility. Gate 3 enforces compliance. Gate 4 completes it into a buildable spec (all states / components / a11y) without changing it.
 
 ## Reference library
 
