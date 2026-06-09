@@ -1,6 +1,6 @@
 ---
 name: design-lock
-version: 2.2.0
+version: 2.2.1
 description: |
   Gate 3 of Design Agent Studio. Executes the confirmed direction.
   Generates hi-fi HTML mockups with real images, exports Figma JSON.
@@ -10,6 +10,8 @@ description: |
   zigzag cap), Picsum-seed + real-SVG-logo image fallbacks, motion principles,
   Redesign "never change silently" list. New Rules 17-20, Anti-Patterns 23-28.
   Plus Component Recipes R1-R11 (exact-value craft) in design-techniques-db.md.
+  v2.2.1: affordance provenance — borrow a reference's layout grammar, not its default
+  action set (Rule 21, Anti-Pattern 29, Step 8.5 check).
   All filler rules defer to the visual contract / DESIGN.md when it specifies a value.
   
   v2.1 changes: Step 2.5 Reference Lookup (curated Mobbin library), Hi-Fi Fill
@@ -783,6 +785,12 @@ but fake-looking* output. Any present = strip it and regenerate that element.
 □ Generic glassmorphism on every surface; infinite-loop micro-animations everywhere
 □ Centered hero floating over a dark purple mesh gradient (the LLM default composition)
 □ <div>-built fake product screenshots (see Step 7)
+□ Reference-default affordance the brief never asked for — when you borrow a platform's
+   grammar ("TikTok-style feed", "Instagram-style profile"), you imported its DEFAULT
+   actions too (follow `+`, duet, stitch, stories ring, "subscribe"). Each interactive
+   affordance must trace to the brief / PRD / DESIGN.md. If the brief NAMES the action
+   ("看原作者" = view author), implement that verb — not the platform's nearest default
+   ("+follow"), which is a different feature and often a different backend.
 ```
 
 State the result:
@@ -1018,6 +1026,7 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 18. **Copy is real, not slop.** No fake-perfect numbers, no Acme/Nexus names, no Elevate/Seamless filler verbs, zero em-dashes on canvas. Re-read every visible string before shipping.
 19. **Filler defaults defer to the contract.** Font/color craft rules (no Inter default, no pure #000/#fff, single accent, no AI-purple) apply ONLY when the DESIGN.md / visual contract is silent. A specified value is exact and binding — never "improve" it.
 20. **Motion must be motivated.** Every animation communicates one thing or it's cut. Honor `prefers-reduced-motion`, animate transform/opacity only, never ship half-built motion.
+21. **Affordances trace to the brief, not the reference.** Borrow a reference's layout grammar (full-bleed feed, right rail, bottom sheet), never its default action set. A "TikTok-style" brief does not authorize follow / duet / stitch unless the brief asks for them. When the brief names an action, implement that exact verb — substituting the platform's nearest default (e.g. "看原作者" rendered as "+follow") is scope creep and a likely model mismatch (follow-graph vs attribution). Every button maps to a requirement or it's cut.
 
 ---
 
@@ -1051,3 +1060,4 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 26. **Copy slop:** Fake-perfect numbers (`99.99%`), startup-slop names (`Acme`, `Nexus`), filler verbs (`Elevate`, `Seamless`), em-dashes on canvas. Filled but fake is still a fail.
 27. **Div-fake screenshot:** A product preview hand-built from styled `<div>` rectangles (fake dashboard, fake task list, fake terminal). Use a real screenshot, a real mini-component, or photography.
 28. **Fake text logo wall:** Social proof rendered as styled text wordmarks, or logos with category labels printed underneath. Use real SVG marks (Simple Icons) or an inline monogram; logos only.
+29. **Reference-default affordance import:** Borrowing a reference platform's grammar and dragging its default actions in with it. Example: a "TikTok-style" game feed shipped with a follow `+` badge on the author avatar — the PRD said "看原作者" (view author), not "follow", and the product's retention model is attribution (who remixed whom), not a follow graph. The `+` was an unexamined platform default: scope creep (implies a follow system) plus a visual bug (badge crowding the avatar). Fix: implement the named verb (tap avatar → author page), drop the imported default. The Step 8.5 Anti-Slop Pass catches this — every affordance must trace to the brief.
