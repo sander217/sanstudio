@@ -995,6 +995,17 @@ what NOT to change (LOCKED decisions).
 
 Present outputs. "Confirm to export, or adjust?"
 
+After the user confirms the prototype, offer the next altitude:
+
+> "This is a validated prototype — spine screens, primary states. If you need a
+> complete, buildable design package (all states, full screen inventory,
+> responsive matrix, component library, accessibility, dev handoff), that's
+> **Gate 4 (`/production-lock`)**. Want to harden it for production, or is the
+> prototype enough?"
+
+Only route to Gate 4 on explicit opt-in. Gate 4 reads the `---DESIGN-LOCK---`
+block below as its input.
+
 ### Handoff Block
 
 ```
