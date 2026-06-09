@@ -538,6 +538,27 @@ the section to work without one.
 Never use SVG for hero visuals, people, environments, product depictions, 
 decorative illustrations, or anything that should be a photograph.
 
+### Prototype durability — external-URL risk
+
+A self-contained HTML prototype that pulls its **identity images** (faces, avatars,
+the hero) from a live third-party URL (`i.pravatar.cc`, `source.unsplash.com`,
+`picsum.photos`) silently breaks offline, on a blocked network, or when the service
+throttles — and the empty slots then expose whatever sits on top of them. For any
+prototype meant to be **double-clicked, demoed, or archived** (not just screenshotted
+once in this session):
+
+- Download the few **identity / hero** images into the session `assets/` folder and
+  reference them locally, OR inline as base64. These must survive offline.
+- Iconify icons and purely decorative photos may stay as external URLs (stable, cached,
+  low-stakes), but say so.
+- **State the offline footprint explicitly** in the handoff: "N images are external
+  URLs; open with network or run the bundling step." Don't let the user discover it as
+  a broken face mid-demo.
+
+This is about the artifact's robustness, not the product. In the shipped product these
+images are real user/CDN content, so the risk transforms into a storage/CDN concern, not
+a broken-link one.
+
 ### Section Image Plan
 
 Before generating HTML, plan every visual slot:
