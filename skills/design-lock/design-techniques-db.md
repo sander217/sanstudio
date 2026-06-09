@@ -1064,3 +1064,161 @@ Apply these adjustments ON TOP of the matched screen-level technique:
 **Avoid when:** the issue is not an error but a missing prerequisite that should be prevented upstream.
 
 **Steal the mechanism, not the skin:** recovery guidance, not dramatic red banners.
+
+## Component Recipes (cross-cutting craft)
+
+These are exact-value component recipes, not screen-level techniques. They apply
+regardless of which cluster the decision tree matched — pull the ones the screen needs.
+Every recipe defers to the session DESIGN.md / visual contract: if a token specifies a
+value, the contract wins and the recipe's default is ignored. The recipes exist for the
+gaps the contract leaves open.
+
+### R1. Off-black body text
+
+The single fastest "this looks designed" upgrade. Pure black body text reads as a default.
+
+- Body text never `#000`. Use `#111` or `#1a1a1a` at `line-height: 1.6`.
+- Secondary text one step lighter (`#6b7280` / `#787774`), not pure gray.
+- Introduce 500 and 600 weights for hierarchy — don't jump 400 → 700.
+
+```css
+body { color: #1a1a1a; line-height: 1.6; }
+.text-secondary { color: #6b7280; }
+.label { font-weight: 500; }   /* not 400 */
+.subhead { font-weight: 600; } /* not 700 */
+```
+
+### R2. Muted-pastel tag / badge pairs
+
+Category chips and status badges. Each bg has a matched text color that passes WCAG AA —
+never gray-on-gray. Rotate by category so tags are scannable by color.
+
+```css
+/* bg               text */
+.tag-red    { background: #FDEBEC; color: #9F2F2D; }
+.tag-blue   { background: #E1F3FE; color: #1F6C9F; }
+.tag-green  { background: #EDF3EC; color: #346538; }
+.tag-yellow { background: #FBF3DB; color: #956400; }
+.tag-purple { background: #F2ECFB; color: #5B3B96; }
+.tag { padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; }
+```
+
+### R3. Quiet card
+
+The default container. Crisp hairline border, restrained radius, generous padding, no
+heavy drop shadow. Box-in-box-in-box is banned — a card does not live inside another card.
+
+```css
+.card {
+  border: 1px solid #EAEAEA;
+  border-radius: 12px;       /* 8-16px; pick ONE radius for the page */
+  padding: 28px;             /* 24-40px */
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.04);  /* tint to bg hue, never pure black */
+}
+```
+
+### R4. Double-Bezel enclosure (premium / "$150k agency")
+
+A nested shell with concentric radii and an inner highlight. Carries a tactile, expensive
+feel on hero panels, feature cards, and media frames. Use sparingly — one or two per page.
+
+```css
+.bezel-outer {
+  background: rgba(0,0,0,0.05);
+  padding: 6px;
+  border-radius: 2rem;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.6);
+}
+.bezel-inner {
+  border-radius: calc(2rem - 6px);   /* outer radius minus padding = optical-correct */
+  box-shadow: inset 0 1px 1px rgba(255,255,255,0.15);
+  background: #fff;
+}
+```
+
+### R5. Button-in-button (nested trailing icon)
+
+The signature premium CTA: the trailing arrow sits in its own circular wrapper inside the
+button, not floating loose next to the label.
+
+```css
+.btn { display: inline-flex; align-items: center; gap: 12px; padding: 12px 12px 12px 24px;
+       border-radius: 999px; background: #111; color: #fff; font-weight: 600; }
+.btn .icon-circle { width: 32px; height: 32px; border-radius: 50%;
+       background: rgba(255,255,255,0.12); display: flex; align-items: center; justify-content: center; }
+```
+
+### R6. Keystroke `<kbd>`
+
+For shortcut hints and command-palette UIs. Reads as a real key, not styled text.
+
+```css
+kbd { border: 1px solid #EAEAEA; border-radius: 4px; background: #F7F6F3;
+      padding: 2px 6px; font-family: ui-monospace, monospace; font-size: 12px;
+      box-shadow: 0 1px 0 #EAEAEA; }
+```
+
+### R7. Brutalist grid hairline
+
+Razor-thin dividers without per-cell border math: a grid with `gap: 1px` over a contrasting
+parent background. The gap shows through as a perfect 1px rule. Pairs with radius 0.
+
+```css
+.hairline-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #111; }
+.hairline-grid > * { background: #fff; padding: 24px; }   /* parent bleeds through as the line */
+```
+
+### R8. Texture over flat
+
+Flat fills read sterile. Add depth without clutter:
+
+- Grain/noise ONLY on a fixed, `pointer-events: none` overlay — never on a scrolling element.
+- Prefer radial or mesh gradients over a plain 45deg linear fade.
+- Audit every shadow to one consistent light source (top, slightly left).
+
+```css
+.grain-overlay { position: fixed; inset: 0; z-index: 60; pointer-events: none; opacity: 0.04;
+  background-image: url("data:image/svg+xml,...noise..."); }
+.atmosphere { background: radial-gradient(120% 80% at 50% 0%, #1b2a4a 0%, #0a0a0b 60%); }
+```
+
+### R9. Full interactive state cycle
+
+A component is not done at its happy path. Ship loading, empty, and error too.
+
+- **Loading:** skeleton blocks matching the final layout's shape — not a generic spinner.
+- **Empty:** composed, with one clear primary action telling the user how to populate it.
+- **Error:** name the problem plainly + the best next action.
+- **Tactile feedback:** `:active { transform: translateY(1px) scale(0.98); }` for a physical push.
+
+```css
+.skeleton { background: linear-gradient(90deg,#eee 25%,#f5f5f5 50%,#eee 75%);
+  background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+```
+
+### R10. Form field anatomy
+
+- Label ABOVE the input, always. Never placeholder-as-label.
+- Helper text present in markup; error text BELOW the input.
+- Focus = accent border + soft ring, not a default browser outline.
+
+```css
+.field label { display: block; font-weight: 500; font-size: 14px; margin-bottom: 6px; }
+.field input { width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 16px; }
+.field input:focus { border-color: var(--primary); outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 15%, transparent); }
+.field .error { color: #b42318; font-size: 13px; margin-top: 6px; }
+```
+
+### R11. Tabular numbers + orphan control
+
+Data that updates or aligns in columns must not shift width digit-to-digit. And no single
+word stranded on a headline's last line.
+
+```css
+.data, td.num, .price { font-variant-numeric: tabular-nums; }
+h1, h2, .headline { text-wrap: balance; }   /* short headings */
+p { text-wrap: pretty; }                      /* paragraphs: avoid orphans */
+```
