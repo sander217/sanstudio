@@ -1,9 +1,16 @@
 ---
 name: design-lock
-version: 2.1.0
+version: 2.2.0
 description: |
   Gate 3 of Design Agent Studio. Executes the confirmed direction.
   Generates hi-fi HTML mockups with real images, exports Figma JSON.
+  
+  v2.2 changes (anti-slop graft): AI Tells ban list (Step 8.5), copy/font/color
+  slop bans, web layout-variety enforcement (eyebrow count, layout-repetition,
+  zigzag cap), Picsum-seed + real-SVG-logo image fallbacks, motion principles,
+  Redesign "never change silently" list. New Rules 17-20, Anti-Patterns 23-28.
+  Plus Component Recipes R1-R11 (exact-value craft) in design-techniques-db.md.
+  All filler rules defer to the visual contract / DESIGN.md when it specifies a value.
   
   v2.1 changes: Step 2.5 Reference Lookup (curated Mobbin library), Hi-Fi Fill
   Checklist (catches wireframe-disguised-as-hi-fi output), new Rules 13-14
@@ -44,6 +51,20 @@ These rules override all other layout decisions. Violating any = regenerate.
 
 7. **Asymmetry is confidence.** Every screen must have ONE clear visual winner — 
    the element that is obviously most important.
+
+8. **Eyebrow restraint (mechanical, web).** The uppercase-tracking label above a 
+   headline ("WHY US", "HOW IT WORKS") is capped at 1 per 3 sections. Hero counts 
+   as 1. A 9-section page may use at most 3 eyebrows total. Count `text-transform: 
+   uppercase` + letter-spacing labels — if count > ceil(sections / 3), strip the excess.
+
+9. **Layout-repetition ban (web).** Across a scrollable page, each layout family 
+   (full-bleed image, image+text split, centered stack, bento grid, card row, 
+   horizontal scroll) appears at most ONCE. An 8-section page must use ≥4 different 
+   families. Same layout twice in a row = generic.
+
+10. **Zigzag cap (web).** Max 2 consecutive image+text split sections. The 3rd 
+    in a row is a fail — break the rhythm with a full-bleed band, centered stack, 
+    or data section.
 
 ### ⛔ APP-SPECIFIC LAYOUT CONSTRAINTS (when surface = mobile-app)
 
@@ -228,12 +249,48 @@ Ask for confirmation before proceeding.
 Propose a minimal framework. Confirm before proceeding.
 
 ### Typography defaults
-"Minimal", "clean", "modern", "Apple" → sans-serif. Never add serif for "premium" 
-unless explicitly requested.
+
+**Visual contract wins.** If the DESIGN.md / visual contract names a font, use it exactly —
+the rules below only apply when YOU are choosing because the contract is silent.
+
+- "Minimal", "clean", "modern", "Apple" → sans-serif. Never add serif for "premium"
+  unless explicitly requested. "Creative brief = serif" is the #1 AI font tell.
+- **Don't default to `Inter`.** It's the LLM default body font. When choosing freely,
+  prefer `Geist`, `Outfit`, `Satoshi`, `Cabinet Grotesk`, or a brand-appropriate sans.
+- **Don't default to `Fraunces` or `Instrument Serif`** — the two LLM-favorite display
+  serifs. If a serif is genuinely justified, rotate from: PP Editorial New, GT Sectra,
+  Reckless Neue, Tiempos Headline, Recoleta. Don't reuse the same serif twice in a row.
+- **No mixed-family emphasis.** To stress a word inside a headline, use italic or bold
+  of the SAME family. Injecting a random serif word into a sans headline is amateur.
+- **Italic descender clearance.** When an italic display word contains `y g j p q`,
+  `line-height: 1` clips the tail. Use `line-height: 1.1` min + a few px bottom padding.
+- **Body text is never pure `#000`.** Use off-black (`#111` / `#1a1a1a`) at line-height
+  ~1.6. Introduce 500/600 weights for hierarchy, not just 400/700.
+
+### Color craft (when the contract is silent)
+
+These apply only to values the DESIGN.md / visual contract does NOT specify. Contract
+hexes are exact and binding — never "improve" them with these defaults.
+
+- **No pure `#000000`, no pure `#ffffff`.** Pure values kill depth. Use off-black
+  (`#0a0a0b`–`#111`) and off-white (`#fafafa`–`#f7f7f5`).
+- **Max 1 accent color, used page-wide.** Once chosen, the accent appears the same
+  everywhere — a warm-grey page does not grow a blue CTA in section 7. Saturation < 80%.
+- **No AI-purple default.** Skip the reflexive purple/blue-glow button gradient. Pair a
+  neutral base (zinc / slate / stone) with ONE high-contrast accent (emerald, electric
+  blue, deep rose, burnt orange).
+- **Tint shadows to the background hue.** No pure-black drop shadows on light surfaces.
+- **One corner-radius system per page.** Pick sharp (0), soft (12-16px), or pill — don't
+  mix radii without a documented reason.
 
 ### Technique Database (if available)
-Read `skills/design-lock/design-techniques-db.md`. Match 1-2 techniques. 
+Read `skills/design-lock/design-techniques-db.md`. Match 1-2 screen-level techniques. 
 Emit `🎯 TECHNIQUE MATCH` block. These are binding layout constraints.
+
+Also pull from its **Component Recipes** (R1-R11) — cross-cutting, exact-value craft
+(off-black body, muted-pastel tag pairs, quiet card, Double-Bezel, button-in-button,
+brutalist hairline grid, texture-over-flat, full state cycle, form anatomy, tabular nums).
+Apply the ones the screen needs; the contract still wins on any specified value.
 
 ---
 
@@ -333,6 +390,19 @@ Out of scope: [element]: [why later]
 
 Confirm before hi-fi. State change magnitude: Tweak | Moderate | Significant.
 
+**Never change silently (redesign / ITERATE).** These need explicit user sign-off before
+you touch them — they break SEO, analytics, autofill, or legal compliance even when the
+new version looks better:
+
+- URL structure / route slugs
+- Primary nav labels
+- Form field names or order
+- Brand logo / wordmark
+- Legal / consent / cookie copy
+
+If a redesign improves the look but alters any of the above, flag it in the BASELINE block
+and wait for confirmation. Don't fold it into a "while I was here" change.
+
 ---
 
 ## Step 4: Wireframe Contract (from Gate 2)
@@ -421,6 +491,33 @@ Examples:
 ```
 
 Keep keywords specific — `dental,clinic,modern` beats `medical`. Use 2-3 keywords max.
+
+**If `source.unsplash.com` returns broken/blank images** (it throttles), fall back to
+seeded Picsum — deterministic, never 404s, the seed describes the slot:
+
+```html
+<img src="https://picsum.photos/seed/dental-clinic-interior/1400/800"
+     style="width:100%;height:480px;object-fit:cover;" alt="..." />
+```
+
+### Social-proof logos — real SVG marks, never plain text
+
+A logo wall built from styled text wordmarks reads as fake. Source real marks:
+
+```html
+<!-- Known brand: Simple Icons CDN, any color via /slug/hex -->
+<img src="https://cdn.simpleicons.org/stripe/635BFF" width="96" alt="Stripe" />
+```
+
+- For an invented brand, generate a simple inline `<svg>` monogram (one letter in a
+  circle, two-letter ligature) matching the page style — not a text label.
+- **Logo wall = logos only.** No category labels under each logo (`Stripe` + "payments").
+
+### NEVER fake a product screenshot with `<div>`s
+
+A "product preview" hand-built from styled `<div>` rectangles (fake dashboards, fake
+task lists, fake terminals) is a top AI tell. Use a real `image_search` screenshot, a
+real working mini-component inside the page, or skip the preview and use photography.
 
 ### Method 3: CSS-only (LAST RESORT)
 
@@ -521,6 +618,19 @@ Before writing HTML, verify:
 
 Real content, not Lorem Ipsum. Domain-appropriate placeholders. Flag [draft].
 
+**Copy slop ban (these scream "AI wrote this"):**
+- **No fake-perfect numbers.** `99.99%`, `50%`, `1,234,567` read as filler. Use organic,
+  messy figures: `47.2%`, `$1,840/mo`, `+1 (312) 847-1928`.
+- **No startup-slop brand names.** `Acme`, `Nexus`, `SmartFlow`, `Cloudly`. Invent
+  contextual names that sound like a real company in that domain.
+- **No filler verbs.** `Elevate`, `Seamless`, `Unleash`, `Next-Gen`, `Revolutionize`,
+  `Empower`. Use concrete, specific verbs.
+- **Zero em-dashes (`—`) in on-canvas copy.** Use a comma, a period, or restructure.
+  Applies to headlines, body, eyebrows, captions, button labels, alt text. (Hyphen `-`
+  for compounds/ranges is fine.)
+- **Re-read every visible string before showing the user.** Any string that is
+  grammatically broken or sounds hallucinated → replace with a plain functional sentence.
+
 **Copy budget defaults (consumer-style):**
 - Headline: 2-6 words, hard max 8
 - Support line: max 12 words, 1 only above fold
@@ -575,6 +685,21 @@ split into intentional lines, add breathing room around the block.
   This lets review verify which tokens were actually used.
 ```
 
+### Motion principles (if the mockup animates)
+
+Output is self-contained HTML, so use CSS transitions / keyframes / IntersectionObserver —
+no framework. Principles, not libraries:
+
+- **Motion must be motivated.** Every animation communicates one thing: hierarchy,
+  feedback, state change, or narrative. "It looked cool" is not a reason — drop it.
+- **Honor `prefers-reduced-motion`.** Any non-trivial motion collapses to static under
+  the reduced-motion media query. Non-negotiable.
+- **Animate `transform` and `opacity` only.** Never animate `top/left/width/height` (layout
+  thrash). Scroll-reveal via `IntersectionObserver`, never `addEventListener('scroll')`.
+- **Custom easing.** Prefer `cubic-bezier(0.16, 1, 0.3, 1)` for entrances over `ease`/`linear`.
+  Buttons get `:active { transform: scale(0.98) }` for tactile feedback.
+- **If you claim motion, show it; if half-built, ship static clean.** No cut-off reveals.
+
 ### Layout Decision Table
 
 | Content relationship | Use this | NOT this |
@@ -628,6 +753,41 @@ Design screens in the order a user encounters them (core loop first).
 
 ```
 ✅ DS CHECK: Colors ✓|✗ · Typography ✓|✗ · Spacing ✓|✗ · Radius ✓|✗
+```
+
+### Step 8.5: Anti-Slop Pass — AI Tells (MANDATORY — run BEFORE showing user)
+
+These are the micro-signals that make an interface read as "an AI made this." They are
+about credibility, not layout. Hi-Fi Fill catches empty wireframes; this catches *filled
+but fake-looking* output. Any present = strip it and regenerate that element.
+
+**Banned in the hero / chrome:**
+```
+□ Version label in hero — "V0.6", "v2.0", "BETA", "INVITE-ONLY PREVIEW", "EARLY ACCESS"
+   (allowed ONLY if the brief is literally a product-launch page)
+□ Section-number eyebrow — "00 / INDEX", "001 · Capabilities", "06 · how it works"
+□ Decoration text strip — "BRAND. MOTION. SPATIAL.", "TYPE / FORM / MOTION", "DESIGN · BUILD · SHIP"
+□ Fake locale/weather strip — "LIS 14:23 · 18°C" (allowed only if the brief is about a place)
+□ Tagline + trust strip + pricing teaser + avatar row crammed under the hero CTA
+   (each moves to its own section below the hero)
+```
+
+**Banned everywhere:**
+```
+□ "Quietly trusted by" / "Quietly in use at" social-proof headers
+□ Generic step labels — "Stage 1 / Stage 2 / Stage 3", "Step 01 / 02 / 03"
+   (the actual step content IS the label)
+□ Middle-dot (·) overused — max 1 per metadata line
+□ Em-dash (—) anywhere on the canvas
+□ Three identical equal-weight feature cards in a row (web)
+□ Generic glassmorphism on every surface; infinite-loop micro-animations everywhere
+□ Centered hero floating over a dark purple mesh gradient (the LLM default composition)
+□ <div>-built fake product screenshots (see Step 7)
+```
+
+State the result:
+```
+🧹 ANTI-SLOP: ✅ clean · ❌ [N] tells found → [list] → stripped + regenerated
 ```
 
 ### Hi-Fi Fill Checklist (MANDATORY — run BEFORE showing user, especially mobile-app)
@@ -726,6 +886,8 @@ QA CHECKLIST:
   SVG icons via Iconify API only — zero emoji in UI, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
 - Hi-Fi Fill: Step 8 Fill Checklist passed with 0 failures
+- Anti-slop (Step 8.5): em-dash count = 0, eyebrow count ≤ ceil(sections/3) [web],
+  no version/section-number/decoration-strip tells, no div-fake screenshots, no fake-perfect numbers
 - References: Step 2.5 matches announced, trace comments embedded, manifesto rules honored
 - DESIGN.md lint (run if session DESIGN.md exists — see design-md-spec.md):
   · broken-ref: every `{path.to.token}` resolves (BLOCKING)
@@ -852,6 +1014,10 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 14. **References anchor the output.** For mobile-app, always run Step 2.5 Reference Lookup. If the library is empty, flag it — don't silently default to generic patterns.
 15. **DESIGN.md is law when present.** Token values bind, prose constrains, Do's/Don'ts are hard rules. Never invent a color/font outside the token map without flagging. WCAG AA contrast failures block export — fix the tokens, don't ship inaccessible UI. Spec at `skills/design-lock/design-md-spec.md`.
 16. **Library design systems are upstream, not ceiling.** When `design_system_ref` points to `design-systems/<name>/DESIGN.md`, those tokens are the BASE — the session DESIGN.md is allowed (and expected) to override them for project fit. Never copy a library system verbatim and ship it as the user's product; that's plagiarism, not inspiration.
+17. **Anti-slop pass is mandatory.** Run Step 8.5 before showing any mockup. AI tells (version labels, section-number eyebrows, decoration strips, "Quietly trusted by", div-fake screenshots, em-dashes) get stripped, not shipped. Filled-but-fake fails just like empty.
+18. **Copy is real, not slop.** No fake-perfect numbers, no Acme/Nexus names, no Elevate/Seamless filler verbs, zero em-dashes on canvas. Re-read every visible string before shipping.
+19. **Filler defaults defer to the contract.** Font/color craft rules (no Inter default, no pure #000/#fff, single accent, no AI-purple) apply ONLY when the DESIGN.md / visual contract is silent. A specified value is exact and binding — never "improve" it.
+20. **Motion must be motivated.** Every animation communicates one thing or it's cut. Honor `prefers-reduced-motion`, animate transform/opacity only, never ship half-built motion.
 
 ---
 
@@ -879,3 +1045,9 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 20. **Wireframe disguised as hi-fi:** `$0.00` balances, `"User Name"` placeholders, gray category chips, empty charts, no illustrations, no color blocks. The Hi-Fi Fill Checklist exists to catch this — treat every failure as a regenerate trigger, not a warning to ignore.
 21. **Inaccessible color pair:** Component `backgroundColor` × `textColor` with WCAG AA contrast under 4.5:1 (normal text). Even if it looks "design-y," it fails users with low vision. The DESIGN.md `contrast-ratio` lint catches this — never override.
 22. **Token invention without declaration:** Inline-styling with a hex/font that isn't in the DESIGN.md token map. If you need it, propose adding it as a token (e.g. `colors.warning`) and have the user confirm — don't silently expand the palette.
+23. **Hero chrome slop:** Version labels (`V0.6`, `BETA`), section-number eyebrows (`00 / INDEX`), decoration text strips (`BRAND. MOTION. SPATIAL.`), fake locale/weather strips. The Step 8.5 Anti-Slop Pass exists to catch these.
+24. **Eyebrow inflation:** More than ceil(sections / 3) uppercase-tracking labels on a web page. The most-violated stylistic tell. Count them mechanically.
+25. **Layout-family repetition:** Same section layout twice in a row, or 3+ consecutive image+text splits. An 8-section page using <4 layout families reads as a template.
+26. **Copy slop:** Fake-perfect numbers (`99.99%`), startup-slop names (`Acme`, `Nexus`), filler verbs (`Elevate`, `Seamless`), em-dashes on canvas. Filled but fake is still a fail.
+27. **Div-fake screenshot:** A product preview hand-built from styled `<div>` rectangles (fake dashboard, fake task list, fake terminal). Use a real screenshot, a real mini-component, or photography.
+28. **Fake text logo wall:** Social proof rendered as styled text wordmarks, or logos with category labels printed underneath. Use real SVG marks (Simple Icons) or an inline monogram; logos only.
