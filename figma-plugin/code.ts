@@ -181,6 +181,26 @@ function weightToStyle(weight: number): string {
 // NODE CREATION
 // ============================================================
 
+function b64ToBytes(b64: string): Uint8Array {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const lookup = new Uint8Array(256);
+  for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
+  const s = b64.indexOf(',') >= 0 ? b64.slice(b64.indexOf(',') + 1) : b64;
+  const len = s.length;
+  let bufferLength = len * 0.75;
+  if (s[len - 1] === '=') { bufferLength--; if (s[len - 2] === '=') bufferLength--; }
+  const bytes = new Uint8Array(bufferLength);
+  let p = 0;
+  for (let i = 0; i < len; i += 4) {
+    const e1 = lookup[s.charCodeAt(i)], e2 = lookup[s.charCodeAt(i + 1)];
+    const e3 = lookup[s.charCodeAt(i + 2)], e4 = lookup[s.charCodeAt(i + 3)];
+    if (p < bufferLength) bytes[p++] = (e1 << 2) | (e2 >> 4);
+    if (p < bufferLength) bytes[p++] = ((e2 & 15) << 4) | (e3 >> 2);
+    if (p < bufferLength) bytes[p++] = ((e3 & 3) << 6) | (e4 & 63);
+  }
+  return bytes;
+}
+
 async function createNode(node: DASNode): Promise<SceneNode | null> {
   const { type, name, props } = node;
 
@@ -289,11 +309,19 @@ function createFrame(name: string, props: Record<string, any>, isImage: boolean 
   // Clip content (frames clip by default in Figma)
   frame.clipsContent = props.clipsContent ?? true;
 
-  // Image fill placeholder
+  // Image fill: embed real image from base64 (props.imageBase64), else gray placeholder
   if (isImage) {
     frame.name = `[IMG] ${name}`;
-    // Set a light gray fill as placeholder — real image would need figma.createImage()
-    frame.fills = [{ type: 'SOLID', color: { r: 0.92, g: 0.92, b: 0.95 }, opacity: 1 }];
+    if (props.imageBase64) {
+      try {
+        const _img = figma.createImage(b64ToBytes(props.imageBase64));
+        frame.fills = [{ type: 'IMAGE', scaleMode: props.scaleMode || 'FILL', imageHash: _img.hash }];
+      } catch (_e) {
+        frame.fills = [{ type: 'SOLID', color: { r: 0.92, g: 0.92, b: 0.95 }, opacity: 1 }];
+      }
+    } else {
+      frame.fills = [{ type: 'SOLID', color: { r: 0.92, g: 0.92, b: 0.95 }, opacity: 1 }];
+    }
   }
 
   return frame;
