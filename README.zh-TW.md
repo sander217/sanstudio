@@ -10,7 +10,7 @@
 
 ## 它是什麼
 
-Design Agent Studio 是一套 **3-gate 設計系統**，把模糊的需求變成 Figma-ready 的高保真設計：
+Design Agent Studio 是一套 **4-gate 設計系統**，把模糊的需求變成 Figma-ready 的高保真設計。Gate 1–3 是核心循環（想法 → 驗證過的 prototype）；Gate 4 是 opt-in 的硬化關,把驗證過的 prototype 補成完整可建造的設計包：
 
 ```text
 你說："我需要設計一個 onboarding flow"
@@ -19,9 +19,11 @@ Design Agent Studio 是一套 **3-gate 設計系統**，把模糊的需求變成
 Gate 1 (/context-lock)    → 理解需求、抽出視覺契約、產出 DESIGN.md
 Gate 2 (/direction-lock)  → 探索 3 個方向、驗證可行性
 Gate 3 (/design-lock)     → 生成 hi-fi HTML + Figma JSON → 自動匯入 Figma
+Gate 4 (/production-lock) → (opt-in) 硬化成完整可建造規格:
+                            全狀態、responsive matrix、component library、a11y、dev handoff
 ```
 
-每次跑完會產出一份 **DESIGN.md**（YAML tokens + Do's/Don'ts），這是貫穿三個 Gate 的視覺語言契約。Gate 3 會用它做 lint（WCAG 對比、token 引用是否存在）。
+每次跑完會產出一份 **DESIGN.md**（YAML tokens + Do's/Don'ts），這是貫穿各 Gate 的視覺語言契約。Gate 3 會用它做 lint（WCAG 對比、token 引用是否存在）。
 
 ---
 
@@ -84,7 +86,7 @@ claude
 
 ## 階段二：安裝 Figma Plugin（3 分鐘）
 
-Plugin 負責把 AI 生成的設計 JSON 變成 Figma 裡的可編輯元件。
+Plugin 負責把 AI 生成的設計 JSON 變成 Figma 裡的可編輯元件 —— 內含 **真圖**（base64 內嵌）與 **SVG icon** 原生繪製,frame 尺寸也固定正確。不需要任何第三方匯入工具。
 
 ### 步驟 1：編譯 Plugin
 

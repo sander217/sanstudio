@@ -10,7 +10,7 @@ Total install time: **15–20 minutes** (including basic training).
 
 ## What it is
 
-Design Agent Studio is a **3-gate design system** that turns vague requirements into Figma-ready hi-fi designs:
+Design Agent Studio is a **4-gate design system** that turns vague requirements into Figma-ready hi-fi designs. Gates 1–3 are the core loop (idea → validated prototype); Gate 4 is opt-in hardening into a complete buildable design package:
 
 ```text
 You say: "I need to design an onboarding flow"
@@ -19,6 +19,8 @@ You say: "I need to design an onboarding flow"
 Gate 1 (/context-lock)    → Understand requirement, extract visual contract, emit DESIGN.md
 Gate 2 (/direction-lock)  → Explore 3 directions, validate feasibility
 Gate 3 (/design-lock)     → Generate hi-fi HTML + Figma JSON → auto-import to Figma
+Gate 4 (/production-lock) → (opt-in) Harden into a complete buildable spec:
+                            all states, responsive matrix, component library, a11y, dev handoff
 ```
 
 Every run produces a **DESIGN.md** (YAML tokens + Do's/Don'ts) — the cross-gate visual contract. Gate 3 lints it (WCAG contrast, broken token refs) before shipping.
@@ -82,7 +84,7 @@ If installed correctly, Claude Code launches `/context-lock` (Gate 1) and starts
 
 ## Phase 2 — Install Figma Plugin (3 min)
 
-The plugin turns AI-generated design JSON into editable Figma components.
+The plugin turns AI-generated design JSON into editable Figma components — with **real images** (base64-embedded) and **SVG icons** rendered natively, plus correct **fixed-size frames**. No third-party importer needed.
 
 ### Step 1: Compile the plugin
 
