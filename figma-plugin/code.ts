@@ -240,10 +240,26 @@ function createFrame(name: string, props: Record<string, any>, isImage: boolean 
     if (props.counterAxisAlignItems && counterMap[props.counterAxisAlignItems]) {
       frame.counterAxisAlignItems = counterMap[props.counterAxisAlignItems];
     }
+    // A frame with layoutMode defaults to HUG on BOTH axes, which silently
+    // overrides the resize() above and collapses fixed frames (e.g. a 1280x720
+    // slide root) to their content height. Honor explicit FIXED sizing.
+    const wFixed = props.layoutSizingHorizontal === 'FIXED' || typeof props.width === 'number';
+    const hFixed = props.layoutSizingVertical === 'FIXED' || typeof props.height === 'number';
+    const vertical = frame.layoutMode === 'VERTICAL';
+    if (wFixed) {
+      if (vertical) frame.counterAxisSizingMode = 'FIXED';
+      else frame.primaryAxisSizingMode = 'FIXED';
+    }
+    if (hFixed) {
+      if (vertical) frame.primaryAxisSizingMode = 'FIXED';
+      else frame.counterAxisSizingMode = 'FIXED';
+    }
+    if (typeof props.width === 'number' && typeof props.height === 'number') {
+      frame.resize(props.width, props.height);
+    }
   }
 
-  // Sizing modes (must be set AFTER layoutMode on the parent, applied when appended)
-  // These are stored and applied in applyChildSizing()
+  // Per-child FILL/HUG sizing is applied in applyChildSizing() after append.
 
   // Fills
   if (props.fills) {
