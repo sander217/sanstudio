@@ -218,9 +218,29 @@ async function createNode(node: DASNode): Promise<SceneNode | null> {
     case 'ELLIPSE':
       return createEllipse(name, props);
 
+    case 'SVG':
+      return createSvg(name, props);
+
     default:
       console.warn(`Unknown node type: ${type}`);
       return null;
+  }
+}
+
+function createSvg(name: string, props: Record<string, any>): SceneNode {
+  try {
+    const node = figma.createNodeFromSvg(props.svg || '<svg width="24" height="24"/>');
+    node.name = name;
+    if (typeof props.width === 'number' && typeof props.height === 'number') {
+      node.resize(props.width, props.height);
+    }
+    return node;
+  } catch (_e) {
+    const f = figma.createFrame();
+    f.name = name;
+    if (typeof props.width === 'number' && typeof props.height === 'number') f.resize(props.width, props.height);
+    f.fills = [];
+    return f;
   }
 }
 
