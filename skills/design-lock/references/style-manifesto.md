@@ -2,119 +2,126 @@
 version: alpha
 name: Sander Personal Manifesto
 description: |
-  Sander 的個人設計信條，每次 Gate 3 hi-fi 前載入。結構遵循 DESIGN.md 規範
-  (skills/design-lock/design-md-spec.md)。其中 `colors`、`typography` 區段可選
-  ——填了就成為跨專案的預設 fallback；空著由每個 session 的 DESIGN.md 主導。
-# colors:                  # 可選：放這裡 = 跨專案預設
-#   primary: "#YOUR_HEX"
-# typography:              # 可選：跨專案預設字體
-#   body-md:
-#     fontFamily: Inter
-#     fontSize: 16px
-#     fontWeight: 400
+  Sander 的個人設計信條，每次 Gate 3 hi-fi 前載入，當 hard constraint。
+  結構遵循 DESIGN.md 規範 (skills/design-lock/design-md-spec.md)。
+  `colors` / `typography` 是跨專案 fallback；session 的 DESIGN.md 有指定就以它為主。
+  `## Do's and Don'ts` 一律附加到 session 的 binding rules（即使 session DESIGN.md 沒提，也生效）。
+colors:
+  # 中性底：淺色與深色各一個預設。永不使用純 #000 / #fff。
+  surface: "#FAFAF7"          # near-white 底（淺色預設）
+  surface-dark: "#1A1C1E"     # charcoal 底（深色預設）
+  on-surface: "#1A1C1E"       # 淺底上的文字＝炭黑，強對比
+  on-surface-dark: "#F4F4F2"  # 深底上的文字＝近白
+  # dominant（主色）與 accent（點綴）每個專案從 ## Colors 的 editorial ink 家族挑，不在這裡寫死。
 ---
 
-> 這是 **partial DESIGN.md**。必填段：Overview、Do's and Don'ts。其他 section 有想法就寫。Gate 3 每次載入並把規則當 hard constraint。
+> **partial DESIGN.md。** 每次 Gate 3 載入並把下列規則當 hard constraint。
+> 核心一句話：**簡約至上、每頁 ≤3 色、一個焦點、強對比、去裝飾。** 現代編輯感，不是花花綠綠的 SaaS 樣板。
 
 ## Overview
 
-_寫 200–400 字。你對 hi-fi mobile app 的整體哲學。例：「我做的東西要有重量、要敢留白、要相信使用者看得懂層級。介面是工具，不是裝飾。」這段是給 Gate 3 在沒有明確規則時的決策依據。_
+我做的東西以 **minimalist 為主軸**：敢留白、相信層級、去掉一切裝飾。介面是工具與內容的載體，不是調色盤。
+
+參照的美學是**現代編輯 / 版畫印刷**那種收斂的力道：一個中性底、一個主色油墨、頂多一個點綴，用**留白、字級落差、與單一焦點**製造張力,而不是靠很多顏色、很多卡片、很多 chip 去填滿。
+
+在沒有明確 session 規則時，Gate 3 的預設決策是：**先減再加**。每個畫面問三件事：這一屏的**唯一焦點**是什麼？能不能**再拿掉一個**元素？顏色**是不是超過三種**？任一答錯就收斂。
 
 ## Colors
 
-_可選。如果你有跨專案的色彩偏好（例如永遠避免哪種色相、永遠保留哪種對比範圍），寫在這裡。_
+**鐵則：每個畫面最多 3 種顏色 = 1 個中性底 + 1 個主色(dominant) + 最多 1 個點綴(accent)。** 常態是 2 色(底+主色)就夠。不花花綠綠、不彩虹、不霓虹。
 
-- 例：避免純黑 `#000000`，dark mode 一律用 `#0B0F1A` 或更深的 cool slate
-- 例：禁止使用紫色作為 primary
-- 例：error 色一律 `#FF6B6B`，不用紅色 primary
+- **中性底(挑一個)：** near-white `#FAFAF7` / cool-gray `#F2F2EF` / warm-paper `#F5F1E8`；深色版 charcoal `#1A1C1E` / carbon `#242321`。**永不用純 `#000000` 或 `#FFFFFF`**：純值殺掉深度。
+- **主色油墨(挑一個，現代編輯家族)：**
+  Cobalt `#2148B8` · Royal Blue `#2058D4` · Botanical Green `#008A4B` · Mint `#5EB783` · Terracotta `#C65F38` · Signal Red `#C83232` · Aubergine `#63365F` · Charcoal `#30343A`。
+- **點綴(可選，最多 1 個，覆蓋面積 < 15%，且要有明確角色：例如只用在數據正負、選中態，不當裝飾)。** 需要配對時從已知組合挑，不亂配：
+  Cobalt+Terracotta · Charcoal+Signal Red · Mint+Charcoal · Botanical Green+Oxblood `#8F3434` · Ultramarine `#263E99`+Safety Orange `#E55D2B`。
+- **對比是硬規(見 #6)：** 內文文字對底色 **WCAG AA ≥ 4.5:1**，大字(≥18pt / 14pt bold)**≥ 3:1**。主色若拿來當文字，也要在底色上過 4.5:1。**禁止低對比的灰字疊灰底。**
+- 主色出現 ≥3 處建立識別(CTA + 一處強調 + 選中/active)，但不因此變第二主色。
 
 ## Typography
 
-_可選。跨專案的字體偏好。_
-
-- 例：Inter 為預設字體家族
-- 例：Body 字級下限 15px，行高 ≥ 1.45
-- 例：絕不混用 serif + sans-serif
+- **簡約優先、層級靠字級落差不靠顏色。** 至少 3 階(display / headline / body / label)；editorial 場景可放大到 display 是 body 的 5-12 倍，製造一個決定性的字級焦點。
+- **標題句尾不加任何標點**：無句號、逗號、破折號、middle-dot。句中標點可以(陳述用句號、並列用逗號)，就是**結尾不留符號**。
+- **文案不使用破折號**：全形 `—`、半形 en-dash `–`、`&mdash;`/`&ndash;` 一律不用。用逗號、句號、或改寫句子。範圍值用普通連字號(`2.5-3.5%`)。
+- 字體收斂：一個主要顯示字 + 一個功能字就夠，不混三種。禁止 gradient 字、外框字、drop-shadow 字、灌水 3D 字。
+- 中文標題偏重時：加行高、拆成有意的斷行、給區塊呼吸，不要一坨粗黑撞在一起。
 
 ## Layout
 
-_可選。空間語言偏好。_
-
-- 例：Mobile screen-padding 預設 20px
-- 例：禁止網頁式 80–120px section gap 出現在 app 裡
+- **Minimalist、留白是主動的節奏不是剩下的空間。** 每屏一個明確的視覺贏家(唯一焦點)，其餘退讓。
+- **不使用 bento layout，除非使用者明確要求。** 預設用不對稱 / 單欄 / 編輯式版面。只有當項目**真的等權**且**被要求**時才用等權 grid。
+- 不對稱＝自信：避免所有東西置中、避免像模板一樣平均分佈。
+- App 內不套網頁模式(hero section、80-120px section gap、50/50 split 進 phone frame = wrong surface)。
 
 ## Elevation & Depth
 
-_可選。陰影 / 色調 / 邊框的選擇傾向。_
-
-- 例：Dark mode 禁止陰影，elevation 一律用 surface tonal layer
-- 例：Light mode 陰影限縮 `0 1px 3px rgba(0,0,0,0.08)`，禁止彩色陰影
+- 收斂陰影。深色用 surface tonal layer(底→高一階)+ 1px hairline，不用陰影。
+- 淺色陰影限 `0 1px 3px rgba(0,0,0,.08)` 以下，且**染底色色相**，禁止純黑陰影、禁止彩色光暈裝飾。
+- 用留白與 hairline 分層，優先於卡片堆疊。
 
 ## Shapes
 
-_可選。圓角語言。_
-
-- 例：CTA 一律 `rounded.full`，卡片 `rounded.lg`(20px)
-- 例：禁止在同一視覺區塊混用 `rounded.full` 與 `rounded.sm`
+- 一頁一套圓角語言，不在同一區塊混 `full` 與 `sm`。
+- 偏好克制的圓角(卡片 12-16px、CTA 視情況 pill 或同系)，radius 是系統不是隨手。
 
 ## Components
 
-_可選。如果你有跨專案的元件鐵則，寫成 component tokens（會被 session DESIGN.md 繼承）。_
-
-```yaml
-# 範例（取消註解）
-# button-primary:
-#   typography: "{typography.label-md}"
-#   rounded: "{rounded.full}"
-#   height: 52px
-```
+- **Chip 節制(見 Do's/Don'ts)。** 元件優先用**事實列(fact-row)、細規線標籤、字重/顏色強調、數字**表達，而不是一排彩色 chip。
+- 卡片不套卡片(no box-in-box)；能用 hairline + 留白分區就不加容器。
 
 ## Do's and Don'ts
 
-**這段是必填核心。** 寫具體、寫處方式、能直接當 lint rule。
+**必填核心。** 寫具體、寫處方式、能直接當 lint rule。
 
 ### Do
 
-- _Do 真實內容：所有金額、名字、數字必須是真資料。`$0.00` / "User Name" 出現在 hi-fi = 失敗_
-- _Do 至少一個 data viz：只要 app 有數字，就要有 chart / sparkline / progress / ring_
-- _Do 字級 ≥3 階：display / headline / body / label，至少 3 個層級的對比_
-- _Do brand accent 出現 ≥3 處：CTA + header + icon + active state，主色不能只用一次_
-- _（你自己加）_
+- Do 真實內容：所有金額、名字、數字必須是真資料。`$0.00` / "User Name" 出現在 hi-fi = 失敗。
+- Do 每頁 ≤3 色(底 + 主色 + ≤1 點綴)；常態 2 色。主色從 editorial ink 家族挑。
+- Do 內文對比過 WCAG AA(≥4.5:1)；大字 ≥3:1。低對比灰字 = 失敗。
+- Do 字級 ≥3 階，用字級落差建層級，不用顏色建層級。
+- Do 一屏一個焦點，先減再加；能拿掉的元素就拿掉。
+- Do 用留白、hairline、fact-row、字重強調 **取代 chip 與卡片堆疊**。
+- Do brand 主色出現 ≥3 處(CTA + 強調 + active)，但不變成第二主色。
 
 ### Don't
 
-- _Don't 灰色 placeholder：任何畫面有 `#E5E5E5` / `#D1D1D1` 空方塊 = 失敗。用真內容或不放_
-- _Don't emoji 當 icon：🦷 📅 ✅ 在 UI 裡 = 即時 reject。用 Iconify SVG_
-- _Don't 全字一個級別：所有 17pt 沒階層 = wireframe_
-- _Don't web pattern in app：hero section、80–120px section gap、50/50 split 在 phone frame 裡 = wrong surface_
-- _（你自己加）_
+- **Don't 文案用破折號**：`—` `–` `&mdash;` `&ndash;` 一律不用，改逗號/句號/改寫。
+- **Don't 標題句尾加標點**：結尾不留句號/逗號/破折號/middle-dot。句中可以。
+- **Don't 用 bento layout（除非被明確要求）**：預設不對稱 / 單欄 / 編輯式。
+- **Don't 花花綠綠**：超過 3 色、彩虹點綴、霓虹、AI 紫漸層、無角色的第二點綴色 = 失敗。
+- **Don't 純黑純白**：用 off-white / charcoal，保留深度。
+- **Don't 過度使用 chip**：chip 只給「真的可枚舉的 tag / filter」，每屏至多 1 群，且不當裝飾。灰底灰字 chip、一排彩色 chip 當資訊 = 失敗；改用 fact-row / 細規線標籤 / 字重色彩強調。
+- Don't 灰色 placeholder：任何畫面有 `#E5E5E5` / `#D1D1D1` 空方塊 = 失敗。用真內容或不放。
+- Don't emoji 當 icon：🦷 📅 ✅ 在 UI 裡 = 即時 reject。用 Iconify SVG。
+- Don't 全字一個級別：所有 17pt 沒階層 = wireframe。
+- Don't web pattern in app：hero section、80-120px section gap、50/50 split 在 phone frame 裡 = wrong surface。
 
 ### 產業特定
 
 #### Finance / Accounting
-- Balance 必須是畫面最大元素（≥48pt）
-- 正負金額必須顏色編碼（綠 +/紅 -）
-- 數字欄位必須 tabular figures (`fontFeature: "tnum" 1`)
-- _（你自己加）_
+- Balance 必須是畫面最大元素（≥48pt）。
+- 正負金額用顏色編碼(綠 + / 紅 −)： 這是點綴色的合法角色，不算破壞 ≤3 色(語意色不算入主色計數，但仍克制)。
+- 數字欄位用 tabular figures (`fontFeature: "tnum" 1`)。
 
 #### E-commerce
-- 商品照必須 full-bleed 或大卡片，不是縮圖
-- 價格階層至少 2 層字級（原價 / 特價）
-- _（你自己加）_
+- 商品照 full-bleed 或大卡片，不是縮圖。
+- 價格階層至少 2 層字級(原價 / 特價)。
 
 #### Wellness / Productivity
-- _（你自己加）_
+- 更大留白、更低視覺密度；主色更收斂(單色 + 中性)。
 
 #### Social / Content
-- _（你自己加）_
+- 內容(圖 / 影片)是主角，chrome 讓路；顏色交給內容，介面維持中性 + 單一主色。
 
 ---
 
-## 我討厭的東西（free-form 補充，不限格式）
+## 我討厭的東西（free-form，Gate 3 載入時會掃）
 
-_隨手記下。看到什麼設計讓你皺眉就寫進來。Gate 3 載入時會掃過。_
-
-- _例：Bootstrap 式白底黑字表格_
-- _例：所有 card 都加陰影的 elevation overload_
-- _例：把 emoji 當 icon 還排在按鈕裡_
-- _（你自己加）_
+- 花花綠綠的 SaaS 樣板：五顏六色的 chip、彩色 icon、每個 section 一個顏色。
+- 一排灰底灰字的 chip 拿來塞資訊。
+- 預設就 bento：把不等權的東西硬塞等權方格。
+- 低對比灰字(#9CA3AF 疊白底當內文)。
+- 所有 card 都加陰影的 elevation overload；box-in-box-in-box。
+- 文案裡的破折號、標題尾巴的句號。
+- 純黑 `#000` / 純白 `#fff` 當底或字。
+- AI 紫漸層、霓虹光暈、無理由的第二點綴色。
