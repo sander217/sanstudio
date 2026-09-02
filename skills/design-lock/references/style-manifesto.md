@@ -53,6 +53,12 @@ colors:
 - 不對稱＝自信：避免所有東西置中、避免像模板一樣平均分佈。
 - App 內不套網頁模式(hero section、80-120px section gap、50/50 split 進 phone frame = wrong surface)。
 
+### 流程 / 導覽
+
+- **從哪邊進就回哪邊。** 任何 sub-flow、modal、bottom sheet、編輯頁：完成或取消後，回到**進入時的那個畫面**，並保留原本的 scroll 位置與狀態。不跳首頁、不跳 tab 根、不跳無關頁。
+- **唯一例外是規格明確要求別的去向**（例如「發布後導到作品頁」）。那就照規格做，並在 interaction spec / handoff 註明這是刻意的例外，不能默默改。
+- 流程圖與 transitions 裡，每條「完成 / 取消」的箭頭都要指回入口畫面；找不到入口 = 這條流程還沒設計完。
+
 ## Elevation & Depth
 
 - 收斂陰影。深色用 surface tonal layer(底→高一階)+ 1px hairline，不用陰影。
@@ -82,6 +88,7 @@ colors:
 - Do 一屏一個焦點，先減再加；能拿掉的元素就拿掉。
 - Do 用留白、hairline、fact-row、字重強調 **取代 chip 與卡片堆疊**。
 - Do brand 主色出現 ≥3 處(CTA + 強調 + active)，但不變成第二主色。
+- Do 流程出口回入口：從哪個畫面進的 sub-flow / modal / sheet，完成或取消後回到那個畫面（保留 scroll 與狀態）。要導去別處必須是規格明確要求，並註明例外。
 
 ### Don't
 
@@ -95,6 +102,7 @@ colors:
 - Don't emoji 當 icon：🦷 📅 ✅ 在 UI 裡 = 即時 reject。用 Iconify SVG。
 - Don't 全字一個級別：所有 17pt 沒階層 = wireframe。
 - Don't web pattern in app：hero section、80-120px section gap、50/50 split 在 phone frame 裡 = wrong surface。
+- **Don't 流程結束後把人丟到別處**：完成或取消一個 sub-flow 後跳首頁 / tab 根 / 無關頁 = 失敗，除非被明確要求。
 
 ### 產業特定
 
@@ -125,3 +133,4 @@ colors:
 - 文案裡的破折號、標題尾巴的句號。
 - 純黑 `#000` / 純白 `#fff` 當底或字。
 - AI 紫漸層、霓虹光暈、無理由的第二點綴色。
+- 做完一件事被丟回首頁，得自己再滑回原本的位置。
