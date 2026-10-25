@@ -3,7 +3,7 @@
 > Source: [google-labs-code/design.md](https://github.com/google-labs-code/design.md) — adapted for the 3-gate pipeline. Distilled essence, not the full spec.
 
 DESIGN.md is the **shared visual-system language** between Gate 1, Gate 2, Gate 3.
-Gate 1 emits one. Gate 3 reads it. Style-manifesto is shaped like one.
+Gate 1 emits one. Gate 3 reads it. TASTE.md and craft-rules.md are shaped like one.
 
 A DESIGN.md is a single file with **two layers**:
 
@@ -146,8 +146,10 @@ When extracting visual contract from a reference URL/screenshot, also emit a
 session DESIGN.md at:
 
 ```
-/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output/sessions/<timestamp>-<slug>/DESIGN.md
+<output-root>/sessions/<timestamp>-<slug>/DESIGN.md
 ```
+
+(`<output-root>` is `$SANSTUDIO_OUTPUT`, else `./sanstudio-output/`.)
 
 The DESIGN.md is the **canonical visual contract** — gates pass its path, 
 not duplicated JSON.
@@ -166,9 +168,13 @@ needs new tokens — propose adding them, don't silently invent.
 - Every Hi-Fi Fill Checklist run also runs DESIGN.md lint rules
 - Failed `contrast-ratio` = block, fix, regenerate
 
-### style-manifesto.md
+### craft-rules.md and TASTE.md
 
-The user's manifesto file in `references/` is structured as a partial DESIGN.md — Overview + Do's and Don'ts at minimum, optionally with `colors`/`typography` defaults that override Gate 1's defaults.
+Two overlays sit on top of every session DESIGN.md. `skills/design-lock/references/craft-rules.md`
+holds brand-independent, checkable rules with ids; they bind in every session. The user's
+`TASTE.md` (working directory, template at `skills/design-chain/assets/TASTE.template.md`) is a
+partial DESIGN.md: Overview and Do's and Don'ts at minimum, optionally `colors`/`typography`
+defaults that fill gaps Gate 1 left open.
 
 ### Reference annotations
 

@@ -1,9 +1,12 @@
-# Design Agent Studio — 安裝教學
+# sanstudio v3 安裝教學
 
-給團隊成員的 step-by-step 安裝指南。完成後你就可以在 Claude Code 裡用 AI 做設計思維 → 方向探索 → 高保真設計 → 自動匯出到 Figma。
+給團隊成員的安裝指南。裝完後在 Claude Code 裡一句需求就能跑完整條設計鏈路：研究、視覺契約、三個方向、hi-fi mockup，major lane 再加 production 設計包。每一關都會停下來等你確認。
 
-整個安裝大約需要 **10-15 分鐘**。
+**最短路徑（5 分鐘）**：把 `skills/` 底下六個資料夾放進 `~/.claude/skills/`，在專案根目錄放一份 `TASTE.md`（從 `skills/design-chain/assets/TASTE.template.md` 複製），然後直接下需求。不需要 Node，不需要 bridge。
 
+下面的 Figma bridge 和 auto-export 是選配，只有維護者要推到 Figma 又沒有 Figma MCP 時才需要。
+
+> 本檔其餘段落沿用 v2 的安裝步驟，其中「Phase 2 / Phase 3」為選配，skill 本身不依賴它們。產出目錄已改為 `./sanstudio-output/`（或 `$SANSTUDIO_OUTPUT`），不再是 `sanstudio-ai-output`。
 ---
 
 ## 前置條件

@@ -1,15 +1,11 @@
 ---
 name: context-lock
-version: 2.1.0
-description: |
-  Gate 1 of Design Agent Studio. Strategic entry point for all design work.
-  Core job: turn a fuzzy prompt into a locked design spec with concrete visual 
-  constraints. Infers aggressively — who the user is, what they like, why they 
-  need this — before asking a single question.
-
-  v2.1 changes: emits a session DESIGN.md (skills/design-lock/design-md-spec.md
-  format) as the canonical visual contract. The DESIGN.md path is passed
-  downstream via `design_md_path` in the CONTEXT-LOCK handoff block.
+description: Gate 1 of sanstudio. Turns a fuzzy design request plus the research lock into a locked design spec with concrete visual constraints (hex colors, fonts, layout, surface) and a session DESIGN.md. Infers who the user is and why they need this before asking anything.
+when_to_use: Invoked by design-chain after research. Use directly only when the user asks for the context or visual contract step by name, uploads a UI screenshot or reference URL for extraction, or asks for a design critique or comparison. Emits a CONTEXT-LOCK handoff block.
+metadata:
+  version: 3.0.0
+  suite: sanstudio
+  gate: "1"
 ---
 
 # /context-lock — Understand Before You Design
@@ -33,6 +29,16 @@ when the term could be ambiguous.
 ---
 
 ## Step 0: Process Inputs
+
+### Research lock (from Gate 0)
+
+When a `---RESEARCH-LOCK---` block exists in the conversation, read it first.
+It carries the decision, the findings (`C1`, `C2`, ...), the evidence quality and
+the open gaps. Your `key_insight` must cite at least one finding id. Your
+`blind_spots` must include every gap the research marked decision-relevant.
+If there is no research lock and you were invoked by `design-chain`, stop and
+return to Gate 0; the chain never skips research. If you were invoked directly
+by the user, say in one line that no research ran and continue.
 
 Inventory what the user provided and process each type:
 
@@ -222,8 +228,11 @@ A DESIGN.md is a single file with:
 ### Where to write
 
 ```
-/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output/sessions/<timestamp>-<slug>/DESIGN.md
+<output-root>/sessions/<timestamp>-<slug>/DESIGN.md
 ```
+
+Output root is `$SANSTUDIO_OUTPUT` when set, else `./sanstudio-output/` in the
+working directory. Never write into `skills/`.
 
 If the session output directory doesn't exist yet (first artifact of the session), 
 create it. The session slug is derived from the user's request.
@@ -249,11 +258,14 @@ create it. The session slug is derived from the user's request.
 - **`## Do's and Don'ts`**: pull from explicit user statements + obvious Step 0.5
   exclusions (e.g., "Excluded colors" → "Don't use purple").
 
-### Manifesto overlay
+### Taste overlay
 
-Before writing, also load `skills/design-lock/references/style-manifesto.md`. Any
-tokens or rules in the manifesto act as **defaults** — the session DESIGN.md may
-override them but should explicitly say so in the prose body.
+Before writing, also load the user's `TASTE.md` (working directory, or
+`.sanstudio/TASTE.md`; fall back to `skills/design-chain/assets/TASTE.template.md`).
+Its tokens and rules act as **defaults**. The session DESIGN.md may override
+them but must say so in the prose body. Craft rules in
+`skills/design-lock/references/craft-rules.md` are not defaults; they bind
+regardless and are not restated here.
 
 ### Lint before handoff
 
@@ -535,7 +547,8 @@ routed_to: G2|G3
 design_system_digest: [JSON] | none
 design_system_ref: <name> | <name1>+<name2> | none   # name(s) under design-systems/, base for session DESIGN.md
 visual_contract: {"bg_primary":"#hex","bg_secondary":"#hex","accent_primary":"#hex","accent_secondary":"#hex|none","text_primary":"#hex","text_secondary":"#hex","cta_color":"#hex","heading_font":"family","body_font":"family","heading_weight":N,"max_width":"Npx","hero_pattern":"type","section_gap":"Npx","excluded_colors":["list"]} | none
-design_md_path: /absolute/path/to/sessions/<slug>/DESIGN.md | none
+design_md_path: <output-root>/sessions/<slug>/DESIGN.md | none
+research_lock: [finding ids cited, e.g. C1,C3] | none
 design_md_lint: {"errors":N,"warnings":N,"blocking_failures":["list"]} | none
 ---END-CONTEXT-LOCK---
 ```

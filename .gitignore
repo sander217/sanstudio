@@ -5,3 +5,7 @@ figma-plugin/test-sample.json
 apps/shell/node_modules/
 apps/shell/dist/
 apps/shell/.vite/
+
+# build and session output
+dist/
+sanstudio-output/

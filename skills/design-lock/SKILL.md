@@ -1,17 +1,11 @@
 ---
 name: design-lock
-version: 2.1.0
-description: |
-  Gate 3 of Design Agent Studio. Executes the confirmed direction.
-  Generates hi-fi HTML mockups with real images, exports Figma JSON.
-  
-  v2.1 changes: Step 2.5 Reference Lookup (curated Mobbin library), Hi-Fi Fill
-  Checklist (catches wireframe-disguised-as-hi-fi output), new Rules 13-14
-  and Anti-Pattern 20.
-  
-  v2 changes: hard layout constraints at top, fixed image sourcing via 
-  image_search/web_search, visual contract enforcement from Gate 1, 
-  dramatically reduced token count.
+description: Gate 3 of sanstudio. Executes the confirmed direction as a hi-fi HTML mockup with real content and images, enforces DESIGN.md tokens, craft rules and the user's taste, runs the Hi-Fi Fill Checklist and lint, and exports Figma JSON when a Figma tool is connected.
+when_to_use: Invoked by design-chain after a direction is approved, or on the fast lane right after context-lock. Use directly when the user says ITERATE on an existing mockup or asks for a hi-fi mockup, a Figma export or a pixel-level design by name. Emits a DESIGN-LOCK handoff block.
+metadata:
+  version: 3.0.0
+  suite: sanstudio
+  gate: "3"
 ---
 
 # /design-lock — Design, Validate, Export
@@ -144,7 +138,7 @@ this is the **upstream base** that the session DESIGN.md inherits from.
 Resolution order for any token lookup:
 1. **Session DESIGN.md** (project-specific overrides — highest priority)
 2. **Library DESIGN.md** (`design-systems/<name>/DESIGN.md` — base values)
-3. **Manifesto** (`references/style-manifesto.md` — fallback defaults)
+3. **User taste** (`TASTE.md` in the working directory, else `skills/design-chain/assets/TASTE.template.md`; fallback defaults)
 4. **Inline visual_contract** (last-resort fallback)
 
 If `design_system_ref` is a blend (e.g. `stripe+revolut`), load BOTH library files.
@@ -184,13 +178,19 @@ These are binding CSS values. Use them directly. Do not reinterpret, do not
 "improve" them, do not substitute. If you disagree with a value, flag it and
 ask — do not silently deviate.
 
-#### Manifesto overlay (always)
+#### Craft rules and taste overlay (always)
 
-Independently of the two above, also load
-`skills/design-lock/references/style-manifesto.md` (itself a partial DESIGN.md).
-Its `## Do's and Don'ts` are appended to the session's binding rules. Its
-`colors`/`typography` frontmatter (if filled) acts as a fallback when the
-session DESIGN.md / visual_contract is silent on a value.
+Independently of the sources above, load two more files:
+
+1. `skills/design-lock/references/craft-rules.md`. Every rule id in it
+   (`CR-*`, `UI-*`) is a hard constraint on par with the visual contract. It
+   is the same for every brand and the user cannot loosen it in a session;
+   an exception needs their words and a line in `docs/decisions.md`.
+2. The user's `TASTE.md` (working directory or `.sanstudio/TASTE.md`; fall
+   back to `skills/design-chain/assets/TASTE.template.md`). It is a partial
+   DESIGN.md. Its `## Do's and Don'ts` are appended to the session's binding
+   rules. Its `colors`/`typography` frontmatter acts as a fallback when the
+   session DESIGN.md and visual_contract are silent on a value.
 
 ### Surface-Fit Check (MANDATORY)
 
@@ -255,12 +255,13 @@ from wireframe-ish to real hi-fi.**
 
 ### Load order
 
-1. Read `skills/design-lock/references/style-manifesto.md` — **rules here are BINDING**.
-   Treat each numbered rule as a hard constraint on par with the visual contract.
+1. Read `skills/design-lock/references/craft-rules.md` (**BINDING**, every rule id) and
+   the user's `TASTE.md` (defaults plus their Do's and Don'ts). Treat each rule as a
+   hard constraint on par with the visual contract.
 2. Read `skills/design-lock/references/INDEX.md` — find the 2–3 most relevant entries
    by matching (in priority order):
    - `industry` (from CONTEXT-LOCK)
-   - `style_tags` (compatible with visual_contract + manifesto)
+   - `style_tags` (compatible with visual_contract + taste)
    - `components` (from direction + screens planned)
 3. For each matched entry, open its `.md` file (under `mobile-app-examples/<industry>/`):
    - The **"為什麼這是 hi-fi"** section = what to replicate visually
@@ -277,7 +278,8 @@ Matched [N] references for this generation:
 2. [005-monarch-transactions] — component match (transaction-row, category-pill)
 3. [011-copilot-categories] — layout pattern match
 
-Manifesto rules loaded: [N] binding rules from style-manifesto.md
+Craft rules loaded: [N] from craft-rules.md
+Taste rules loaded: [N] from TASTE.md | template defaults
 Top 3 prescriptive rules from matched references:
 - [quoted rule 1]
 - [quoted rule 2]
@@ -515,7 +517,7 @@ Before writing HTML, verify:
 - [ ] Image plan complete?
 - [ ] Surface type declared?
 - [ ] Viewport declared?
-- [ ] **Reference lookup done?** (Step 2.5 — references matched + manifesto loaded)
+- [ ] **Reference lookup done?** (Step 2.5 — references matched + craft rules + taste loaded)
 
 ### Content Strategy
 
@@ -647,7 +649,8 @@ Do NOT ship wireframe-level output under a hi-fi label.
 □ Avatars where users/entities appear — colored-bg initial OR real photo
 □ Empty-state (if applicable) uses illustration, not blank canvas
 □ Every reference comment (<!-- REF: ... -->) has a matching implemented section
-□ Every manifesto rule has been checked against the output
+□ Every craft rule id has been checked against the output (UI-PILL-001: no dots in chips; UI-STROKE-001: no bordered cards or chips)
+□ Every TASTE.md Do/Don't has been checked against the output
 ```
 
 If the screen has ≥3 failures: **the output is still a wireframe. Regenerate, don't ship.**
@@ -726,7 +729,7 @@ QA CHECKLIST:
   SVG icons via Iconify API only — zero emoji in UI, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
 - Hi-Fi Fill: Step 8 Fill Checklist passed with 0 failures
-- References: Step 2.5 matches announced, trace comments embedded, manifesto rules honored
+- References: Step 2.5 matches announced, trace comments embedded, craft rules and taste honored
 - DESIGN.md lint (run if session DESIGN.md exists — see design-md-spec.md):
   · broken-ref: every `{path.to.token}` resolves (BLOCKING)
   · contrast-ratio: every component bg/text pair WCAG AA ≥ 4.5:1 normal text,
@@ -774,17 +777,20 @@ Push directly via MCP — no bridge server needed.
 
 ---
 
-### Path B: No Figma MCP — bridge server
+### Path B: No Figma MCP — file export only
 
 1. Read `skills/design-lock/figma-schema-v0.2.md` for JSON schema
-2. Generate `design-export.json` and write to:
-   `/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output/latest/figma/design-export.json`
-3. Run export script: `./scripts/export-design-session.sh`
-4. Push to bridge: `curl -X POST http://localhost:3333/push -d @.../design-export.json`
-5. Tell user to open Figma Plugin → Auto-import tab → Start listening
+2. Generate `design-export.json` and write it to the session output:
+   `<output-root>/sessions/<slug>/figma/design-export.json`
+3. Tell the user where the file is and that it follows figma-schema v0.2, so
+   any importer that reads that schema can consume it. Make no network call.
 
 **Tell the user:**
-> "No Figma MCP detected. Using bridge server. Make sure `node figma-plugin/server.js` is running."
+> "No Figma tool detected. Wrote figma/design-export.json to the session folder. Connect a Figma MCP to push directly next time."
+
+(The sanstudio repository ships an optional local bridge under `figma-plugin/`
+for its maintainers. It is developer tooling, not part of the skill, and the
+skill never assumes it is running.)
 
 ---
 
@@ -818,7 +824,9 @@ design_system: [name|ad-hoc|inferred]
 design_system_ref: <name>|<name1>+<name2>|none   # echoed from CONTEXT-LOCK if used
 visual_contract_enforced: true|false
 references_used: [list of reference IDs, or "none-available"]
-manifesto_rules_applied: [N or "no-manifesto"]
+craft_rules_checked: [N]
+taste_rules_applied: [N or "template-defaults"]
+craft_exceptions: [rule ids approved by the user, or none]
 qa_status: all-clear|warnings|fixed
 hifi_fill_status: all-pass|regenerated-N-times
 iteration_rounds: [N]

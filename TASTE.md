@@ -1,8 +1,10 @@
 ---
 version: alpha
-name: Sander Personal Manifesto
+name: Sander Taste
 description: |
-  Sander 的個人設計信條，每次 Gate 3 hi-fi 前載入，當 hard constraint。
+  Sander 的個人設計品味。放在工作目錄根部的 TASTE.md 會被 Gate 3 當 defaults 載入。
+  通用工藝規則已搬到 skills/design-lock/references/craft-rules.md，這裡只留品味。
+  上架版不包含這份檔案，買家拿到的是 skills/design-chain/assets/TASTE.template.md。
   結構遵循 DESIGN.md 規範 (skills/design-lock/design-md-spec.md)。
   `colors` / `typography` 是跨專案 fallback；session 的 DESIGN.md 有指定就以它為主。
   `## Do's and Don'ts` 一律附加到 session 的 binding rules（即使 session DESIGN.md 沒提，也生效）。

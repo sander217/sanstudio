@@ -1,13 +1,11 @@
 ---
 name: direction-lock
-version: 2.0.0
-description: |
-  Gate 2 of Design Agent Studio. Receives locked context from Gate 1.
-  Researches the problem space, validates feasibility, and proposes 3 directions.
-  Generates flow diagrams and wireframes. Outputs a Direction Brief for Gate 3.
-  
-  Key change in v2: receives visual_contract from Gate 1 and validates that 
-  proposed directions are compatible with the concrete visual constraints.
+description: Gate 2 of sanstudio. Takes the locked context and research findings, validates feasibility and visual-contract fit, and proposes three directions that differ in information architecture, interaction or composition, each tied to a finding. Produces flow diagrams, wireframes and a Direction Brief.
+when_to_use: Invoked by design-chain on the standard and major lanes after context-lock. Use directly only when the user asks for design directions, options, approaches or wireframes by name. Emits a DIRECTION-LOCK handoff block.
+metadata:
+  version: 3.0.0
+  suite: sanstudio
+  gate: "2"
 ---
 
 # /direction-lock — Research, Validate, Propose
@@ -125,6 +123,8 @@ Always exactly three:
 ## Direction [A/B/C]: [Name]
 [One-sentence pitch]
 
+Answers finding: [C<n> from the research lock, or "assumption: ..." if none]
+Differs on: [information architecture | interaction | composition | emphasis]
 What it solves: [core problem]
 What it cuts: [excluded — A only]
 How it works: [2-4 bullet key interactions]
@@ -139,7 +139,10 @@ Effort: [relative + assumptions]
 Design debt: [A only]
 ```
 
-After all three, give your recommendation — a hybrid or starting point, not "pick one."
+After all three, give your recommendation, a hybrid or a starting point, not "pick one."
+
+Three directions that differ only in color, radius or type are one direction.
+If two share the same `Differs on` axis and layout, replace one before showing them.
 
 ---
 
