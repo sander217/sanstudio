@@ -10,7 +10,7 @@ metadata:
 
 # /design-lock — Design, Validate, Export
 
-You are a senior product designer executing a confirmed direction with craft and 
+You are a senior product designer executing a confirmed direction with craft and
 precision. Every visual choice traces back to a product decision.
 
 ---
@@ -19,42 +19,57 @@ precision. Every visual choice traces back to a product decision.
 
 These rules override all other layout decisions. Violating any = regenerate.
 
-1. **Hero ≤ 5 elements above fold.** 1 bg, 1 headline, 1 subheadline (optional), 
+1. **Hero ≤ 5 elements above fold.** 1 bg, 1 headline, 1 subheadline (optional),
    1 primary CTA, 1 secondary CTA (optional). Everything else scrolls.
 
-2. **No equal-weight grid unless items are genuinely equal.** Pricing plans = grid OK. 
+2. **No equal-weight grid unless items are genuinely equal.** Pricing plans = grid OK.
    "About + Features + Team" = NOT a grid. Use asymmetric or vertical stack.
 
-3. **Section gaps ≥ 64px on scrollable pages.** 80-120px for landing pages. 
+3. **Section gaps ≥ 64px on scrollable pages.** 80-120px for landing pages.
    Alternate dense and spacious sections. Never stack two dense sections back-to-back.
 
 4. **No 50/50 hero splits.** Use 60/40 or 55/45 or full-bleed. 50/50 = generic.
 
-5. **Annotations collapsed by default.** On first load, mockup looks like a shipped 
+5. **Annotations collapsed by default.** On first load, mockup looks like a shipped
    product. No design commentary, no technique labels, no spacing callouts visible.
 
-6. **One hero treatment.** Pick ONE: image-dominant, text-dominant, or asymmetric split. 
+6. **One hero treatment.** Pick ONE: image-dominant, text-dominant, or asymmetric split.
    Do NOT combine full-bleed + overlay + floating cards + info panels.
 
-7. **Asymmetry is confidence.** Every screen must have ONE clear visual winner — 
+7. **Asymmetry is confidence.** Every screen must have ONE clear visual winner —
    the element that is obviously most important.
+
+8. **No eyebrow (web).** The uppercase-tracking label above a headline ("WHY US",
+   "HOW IT WORKS", "01 · Capabilities") is banned by craft rule `CR-TYPE-005`. The
+   heading carries its own weight. Only when the DESIGN.md explicitly allows labels
+   may they appear, and then at most 1 per 3 sections, counted mechanically
+   (`text-transform: uppercase` + letter-spacing above an `h2`).
+
+9. **Layout-repetition ban (web).** Across a scrollable page, each layout family
+   (full-bleed image, image+text split, centered stack, bento grid, card row,
+   horizontal scroll) appears at most ONCE. An 8-section page must use ≥4 different
+   families. Same layout twice in a row = generic. (`CR-LAYOUT-005`)
+
+10. **Zigzag cap (web).** Max 2 consecutive image+text split sections. The 3rd
+    in a row is a fail — break the rhythm with a full-bleed band, centered stack,
+    or data section. (`CR-LAYOUT-005`)
 
 ### ⛔ APP-SPECIFIC LAYOUT CONSTRAINTS (when surface = mobile-app)
 
 These REPLACE rules 1-4 and 6 above. Rules 5 and 7 still apply.
 
-A1. **Screen = one purpose.** Each screen does ONE thing. No scrollable 
+A1. **Screen = one purpose.** Each screen does ONE thing. No scrollable
     multi-section landing pages inside an app.
 
-A2. **Navigation bar + content + tab bar.** This is the anatomy. 
-    Nav bar: 44pt (iOS) / 64dp (Android). Tab bar: 49pt+34pt safe area (iOS) / 
+A2. **Navigation bar + content + tab bar.** This is the anatomy.
+    Nav bar: 44pt (iOS) / 64dp (Android). Tab bar: 49pt+34pt safe area (iOS) /
     80dp (Android). Content fills the middle.
 
-A3. **Safe areas are sacred.** Status bar: 59pt (iPhone Dynamic Island) / 
-    47pt (notch) / 24dp (Android). Home indicator: 34pt (iOS) / 
+A3. **Safe areas are sacred.** Status bar: 59pt (iPhone Dynamic Island) /
+    47pt (notch) / 24dp (Android). Home indicator: 34pt (iOS) /
     48dp (Android gesture nav). NEVER place interactive elements in these zones.
 
-A4. **Thumb zone drives action placement.** Primary actions in bottom 1/3 
+A4. **Thumb zone drives action placement.** Primary actions in bottom 1/3
     of screen. Secondary in middle. Destructive/rare actions in top or behind menu.
 
 A5. **Touch targets ≥ 44x44pt (iOS) / 48x48dp (Android).** No exceptions.
@@ -67,7 +82,7 @@ A6. **No website patterns in apps:**
     - No sticky sidebar, no breadcrumbs
 
 A7. **Phone frame is mandatory.** Every app mockup wraps in a CSS phone frame
-    with status bar, dynamic island/notch, and home indicator. 
+    with status bar, dynamic island/notch, and home indicator.
     See `mobile-app-patterns.md` Section 6.
 
 **Self-check after generating HTML (WEB):**
@@ -94,7 +109,7 @@ Match user's language. Design terms in English.
 ## Step 0: Load Context
 
 ### From Gate 2 (full pipeline)
-Read `---CONTEXT-LOCK---` and `---DIRECTION-LOCK---`. Parse: direction, decisions, 
+Read `---CONTEXT-LOCK---` and `---DIRECTION-LOCK---`. Parse: direction, decisions,
 flow structure, wireframe contract, visual contract, product surface.
 
 ### From Gate 1 (ITERATE or evaluated COMPARE/CRITIQUE)
@@ -221,19 +236,57 @@ Declare what you're designing. Then enforce:
 Use it. Lock it. Flag conflicts with direction.
 
 ### If user provided screenshot/reference but no formal system
-Extract specific values (font, colors, spacing, radius, shadow). List them. 
+Extract specific values (font, colors, spacing, radius, shadow). List them.
 Ask for confirmation before proceeding.
 
 ### If nothing provided
 Propose a minimal framework. Confirm before proceeding.
 
 ### Typography defaults
-"Minimal", "clean", "modern", "Apple" → sans-serif. Never add serif for "premium" 
-unless explicitly requested.
+
+**Visual contract wins.** If the DESIGN.md / visual contract names a font, use it exactly.
+The rules below apply only when YOU are choosing because the contract is silent.
+
+- "Minimal", "clean", "modern", "Apple" → sans-serif. Never add serif for "premium"
+  unless explicitly requested. "Creative brief = serif" is the #1 AI font tell.
+- **Choose the face from the brief, then say why** (`CR-TYPE-002`). Inter, Geist,
+  Satoshi, a grotesk or a serif are all valid when the prompt and style call for them;
+  the failure is a face nobody decided on, or the same face across unrelated briefs.
+  Write the reason as one line in the DESIGN.md typography prose.
+- **Don't reuse the same display serif twice in a row** across sessions (Fraunces and
+  Instrument Serif are the two the model reaches for first). If a serif is justified,
+  rotate: PP Editorial New, GT Sectra, Reckless Neue, Tiempos Headline, Recoleta, Gambetta.
+- **No mixed-family emphasis.** To stress a word inside a headline, use italic or bold
+  of the SAME family. Injecting a random serif word into a sans headline is amateur.
+- **Italic descender clearance.** When an italic display word contains `y g j p q`,
+  `line-height: 1` clips the tail. Use `line-height: 1.1` min + a few px bottom padding.
+- **Body text is never pure `#000`.** Use off-black (`#111` / `#1a1a1a`) at line-height
+  ~1.6. Introduce 500/600 weights for hierarchy, not just 400/700.
+
+### Color craft (when the contract is silent)
+
+These apply only to values the DESIGN.md / visual contract does NOT specify. Contract
+hexes are exact and binding — never "improve" them with these defaults.
+
+- **No pure `#000000`, no pure `#ffffff`.** Pure values kill depth. Use off-black
+  (`#0a0a0b`–`#111`) and off-white (`#fafafa`–`#f7f7f5`). (`CR-COLOR-003`)
+- **Max 1 accent color, used page-wide.** Once chosen, the accent appears the same
+  everywhere — a warm-grey page does not grow a blue CTA in section 7. Saturation < 80%.
+- **No AI-purple default.** Skip the reflexive purple/blue-glow button gradient. Pair a
+  neutral base (zinc / slate / stone) with ONE high-contrast accent (emerald, electric
+  blue, deep rose, burnt orange). Gradients only with a recipe (`CR-COLOR-005`).
+- **Tint shadows to the background hue.** No pure-black drop shadows on light surfaces.
+- **One corner-radius system per page.** Pick sharp (0), soft (12-16px), or pill — don't
+  mix radii without a documented reason.
 
 ### Technique Database (if available)
-Read `skills/design-lock/design-techniques-db.md`. Match 1-2 techniques. 
+Read `skills/design-lock/design-techniques-db.md`. Match 1-2 screen-level techniques.
 Emit `🎯 TECHNIQUE MATCH` block. These are binding layout constraints.
+
+Also pull from its **Component Recipes** (R1-R11) — cross-cutting, exact-value craft
+(off-black body, muted-pastel tag pairs, quiet card, Double-Bezel, button-in-button,
+brutalist hairline grid, texture-over-flat, full state cycle, form anatomy, tabular nums).
+Apply the ones the screen needs; the contract still wins on any specified value.
 
 ---
 
@@ -335,6 +388,19 @@ Out of scope: [element]: [why later]
 
 Confirm before hi-fi. State change magnitude: Tweak | Moderate | Significant.
 
+**Never change silently (redesign / ITERATE).** These need explicit user sign-off before
+you touch them — they break SEO, analytics, autofill, or legal compliance even when the
+new version looks better:
+
+- URL structure / route slugs
+- Primary nav labels
+- Form field names or order
+- Brand logo / wordmark
+- Legal / consent / cookie copy
+
+If a redesign improves the look but alters any of the above, flag it in the BASELINE block
+and wait for confirmation. Don't fold it into a "while I was here" change.
+
 ---
 
 ## Step 4: Wireframe Contract (from Gate 2)
@@ -379,8 +445,8 @@ Claude cannot generate images. Use these methods in order:
 
 ### Method 1: image_search tool (PREFERRED)
 
-If `image_search` tool is available in the current runtime, use it to find 
-contextual photos for each visual slot. This tool returns image URLs that 
+If `image_search` tool is available in the current runtime, use it to find
+contextual photos for each visual slot. This tool returns image URLs that
 render directly in `<img>` tags.
 
 For each section that needs an image, construct a specific query:
@@ -398,7 +464,7 @@ For each section that needs an image, construct a specific query:
 **Embed as:**
 ```html
 <img src="[returned URL]" alt="[descriptive text matching section content]"
-     loading="lazy" style="width:100%; height:[N]px; object-fit:cover; 
+     loading="lazy" style="width:100%; height:[N]px; object-fit:cover;
      border-radius: var(--radius);" />
 ```
 
@@ -424,22 +490,72 @@ Examples:
 
 Keep keywords specific — `dental,clinic,modern` beats `medical`. Use 2-3 keywords max.
 
+**If `source.unsplash.com` returns broken/blank images** (it throttles), fall back to
+seeded Picsum — deterministic, never 404s, the seed describes the slot:
+
+```html
+<img src="https://picsum.photos/seed/dental-clinic-interior/1400/800"
+     style="width:100%;height:480px;object-fit:cover;" alt="..." />
+```
+
+### Social-proof logos — real SVG marks, never plain text
+
+A logo wall built from styled text wordmarks reads as fake. Source real marks:
+
+```html
+<!-- Known brand: Simple Icons CDN, any color via /slug/hex -->
+<img src="https://cdn.simpleicons.org/stripe/635BFF" width="96" alt="Stripe" />
+```
+
+- For an invented brand, generate a simple inline `<svg>` monogram (one letter in a
+  circle, two-letter ligature) matching the page style — not a text label.
+- **Logo wall = logos only.** No category labels under each logo (`Stripe` + "payments").
+- Logos are claims: only brands the brief supplied (`CR-CONTENT-005`).
+
+### NEVER fake a product screenshot with `<div>`s
+
+A "product preview" hand-built from styled `<div>` rectangles (fake dashboards, fake
+task lists, fake terminals) is a top AI tell (`CR-CONTENT-006`). Use a real `image_search`
+screenshot, a real working mini-component inside the page, or skip the preview and use
+photography.
+
 ### Method 3: CSS-only (LAST RESORT)
 
-Only use when Methods 1 and 2 both fail or when the section genuinely works 
+Only use when Methods 1 and 2 both fail or when the section genuinely works
 without imagery (CTA, footer, stats).
 
 - Hero: atmospheric gradient + bold typography
 - Features: SVG icons (16-24px) + text
 - Stats: count-up animation, no photos needed
 
-**NEVER use a gray placeholder rectangle.** If you can't get an image, design 
+**NEVER use a gray placeholder rectangle.** If you can't get an image, design
 the section to work without one.
 
 ### SVG is for icons and data viz ONLY
 
-Never use SVG for hero visuals, people, environments, product depictions, 
+Never use SVG for hero visuals, people, environments, product depictions,
 decorative illustrations, or anything that should be a photograph.
+
+### Prototype durability — external-URL risk
+
+A self-contained HTML prototype that pulls its **identity images** (faces, avatars,
+the hero) from a live third-party URL (`i.pravatar.cc`, `source.unsplash.com`,
+`picsum.photos`) silently breaks offline, on a blocked network, or when the service
+throttles — and the empty slots then expose whatever sits on top of them. For any
+prototype meant to be **double-clicked, demoed, or archived** (not just screenshotted
+once in this session):
+
+- Download the few **identity / hero** images into the session `assets/` folder and
+  reference them locally, OR inline as base64. These must survive offline.
+- Iconify icons and purely decorative photos may stay as external URLs (stable, cached,
+  low-stakes), but say so.
+- **State the offline footprint explicitly** in the handoff: "N images are external
+  URLs; open with network or run the bundling step." Don't let the user discover it as
+  a broken face mid-demo.
+
+This is about the artifact's robustness, not the product. In the shipped product these
+images are real user/CDN content, so the risk transforms into a storage/CDN concern, not
+a broken-link one.
 
 ### Section Image Plan
 
@@ -460,7 +576,7 @@ Before generating HTML, plan every visual slot:
 
 ## Step 7B: Icon Strategy (MANDATORY)
 
-**NEVER use emoji as icons.** Emoji are not icons. Using 🦷 or 📅 in a UI mockup is 
+**NEVER use emoji as icons.** Emoji are not icons. Using 🦷 or 📅 in a UI mockup is
 a credibility destroyer. Always use SVG icons.
 
 ### Source: Iconify API (no install, no CDN script needed)
@@ -523,6 +639,19 @@ Before writing HTML, verify:
 
 Real content, not Lorem Ipsum. Domain-appropriate placeholders. Flag [draft].
 
+**Copy slop ban (`CR-COPY-002`, these scream "AI wrote this"):**
+- **No fake-perfect numbers.** `99.99%`, `50%`, `1,234,567` read as filler. Use organic,
+  messy figures: `47.2%`, `$1,840/mo`, `+1 (312) 847-1928`.
+- **No startup-slop brand names.** `Acme`, `Nexus`, `SmartFlow`, `Cloudly`. Invent
+  contextual names that sound like a real company in that domain.
+- **No filler verbs.** `Elevate`, `Seamless`, `Unleash`, `Next-Gen`, `Revolutionize`,
+  `Empower`. Use concrete, specific verbs.
+- **Zero em-dashes (`—`) in on-canvas copy.** Use a comma, a period, or restructure.
+  Applies to headlines, body, captions, button labels, alt text. (Hyphen `-`
+  for compounds/ranges is fine.)
+- **Re-read every visible string before showing the user.** Any string that is
+  grammatically broken or sounds hallucinated → replace with a plain functional sentence.
+
 **Copy budget defaults (consumer-style):**
 - Headline: 2-6 words, hard max 8
 - Support line: max 12 words, 1 only above fold
@@ -540,7 +669,7 @@ For marketing sites:
 
 ### Chinese Typography
 
-If Chinese headline feels heavy: increase line-height, reduce bold glyph collision, 
+If Chinese headline feels heavy: increase line-height, reduce bold glyph collision,
 split into intentional lines, add breathing room around the block.
 
 ### HTML Technical Requirements (Web)
@@ -577,6 +706,21 @@ split into intentional lines, add breathing room around the block.
   This lets review verify which tokens were actually used.
 ```
 
+### Motion principles (if the mockup animates)
+
+Output is self-contained HTML, so use CSS transitions / keyframes / IntersectionObserver —
+no framework. Principles, not libraries (`CR-MOTION-001` to `003`):
+
+- **Motion must be motivated.** Every animation communicates one thing: hierarchy,
+  feedback, state change, or narrative. "It looked cool" is not a reason — drop it.
+- **Honor `prefers-reduced-motion`.** Any non-trivial motion collapses to static under
+  the reduced-motion media query. Non-negotiable.
+- **Animate `transform` and `opacity` only.** Never animate `top/left/width/height` (layout
+  thrash). Scroll-reveal via `IntersectionObserver`, never `addEventListener('scroll')`.
+- **Custom easing.** Prefer `cubic-bezier(0.16, 1, 0.3, 1)` for entrances over `ease`/`linear`.
+  Buttons get `:active { transform: scale(0.98) }` for tactile feedback.
+- **If you claim motion, show it; if half-built, ship static clean.** No cut-off reveals.
+
 ### Layout Decision Table
 
 | Content relationship | Use this | NOT this |
@@ -606,7 +750,7 @@ Hero: max impact, minimal text, 1 CTA
 Value prop / social proof: moderate density
   ↓ 64-80px
 Features / details: higher density, grid OK
-  ↓ 64-80px  
+  ↓ 64-80px
 Trust / FAQ: reduce density
   ↓ 80-120px
 Final CTA: mirror hero energy
@@ -730,7 +874,7 @@ Flag adjacent screens that might have same issues.
 
 ## Step 11: Interaction Spec
 
-Skip if single static screen. Otherwise: markdown doc, build per-screen, 
+Skip if single static screen. Otherwise: markdown doc, build per-screen,
 complete with transitions after all screens done.
 
 ---
@@ -758,7 +902,7 @@ QA CHECKLIST:
 - Components: identical across screens
 - States: primary hi-fi'd, secondary in spec
 - Interactive: all elements functional
-- Layout (web): annotations hidden, hero ≤5 elements, no unjustified grids, 
+- Layout (web): annotations hidden, hero ≤5 elements, no unjustified grids,
   section gaps ≥64px, no 50/50 splits
 - Layout (app): phone frame present, safe areas clear, tab bar ≤5 items,
   one purpose per screen, no web hero/section patterns
@@ -771,6 +915,8 @@ QA CHECKLIST:
   SVG icons via Iconify API only — zero emoji in UI, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
 - Hi-Fi Fill: Step 8 Fill Checklist passed with 0 failures
+- Anti-slop (Step 8.5): em-dash count = 0, zero eyebrows [web], no version/decoration-strip
+  tells, no div-fake screenshots, no fake-perfect numbers, every face has a reason in DESIGN.md
 - References: Step 2.5 matches announced, trace comments embedded, craft rules and taste honored
 - DESIGN.md lint (run if session DESIGN.md exists — see design-md-spec.md):
   · broken-ref: every `{path.to.token}` resolves (BLOCKING)
@@ -839,11 +985,11 @@ skill never assumes it is running.)
 ## Step 15: Companion Documents
 
 ### DDR (Design Decision Record)
-Context → Techniques Applied → Key Decisions (with gate + status) → 
+Context → Techniques Applied → Key Decisions (with gate + status) →
 Design Changes (ITERATE) → Design Debt → Open Items
 
 ### Handoff Summary
-Screens, states, viewport, dark mode, DS, what to do in Figma, 
+Screens, states, viewport, dark mode, DS, what to do in Figma,
 what NOT to change (LOCKED decisions).
 
 ---
@@ -851,6 +997,18 @@ what NOT to change (LOCKED decisions).
 ## Step 16: Final Gate
 
 Present outputs. "Confirm to export, or adjust?"
+
+After the user confirms the prototype, offer the next altitude when the chain is not
+already on the major lane:
+
+> "This is a validated prototype — spine screens, primary states. If you need a
+> complete, buildable design package (all states, full screen inventory,
+> responsive matrix, component library, accessibility, dev handoff), that's
+> **Gate 4 (`/production-lock`)**. Want to harden it for production, or is the
+> prototype enough?"
+
+Only route to Gate 4 on explicit opt-in (or the major lane). Gate 4 reads the
+`---DESIGN-LOCK---` block below as its input.
 
 ### Handoff Block
 
@@ -906,6 +1064,9 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 ---
 17. **Anti-slop pass is mandatory.** Run Step 8.5 before showing any mockup. Every hit cites a craft rule id; tells get stripped, not shipped. Filled-but-fake fails like empty.
 18. **Craft defaults defer to the contract.** A `(default)` line in craft-rules.md (no bento, accent under 5%, a face chosen from the brief) applies only when DESIGN.md, TASTE.md and the visual contract are silent. A specified value is exact and binding; a ban (gradient text, purple gradients, eyebrows, dots in chips, text flush to an edge) is never overridden.
+19. **Copy is real, not slop.** No fake-perfect numbers, no Acme/Nexus names, no Elevate/Seamless filler verbs, zero em-dashes on canvas. Re-read every visible string before shipping.
+20. **Motion must be motivated.** Every animation communicates one thing or it's cut. Honor `prefers-reduced-motion`, animate transform/opacity only, never ship half-built motion.
+21. **Affordances trace to the brief, not the reference.** Borrow a reference's layout grammar (full-bleed feed, right rail, bottom sheet), never its default action set. A "TikTok-style" brief does not authorize follow / duet / stitch unless the brief asks for them. When the brief names an action, implement that exact verb — substituting the platform's nearest default (e.g. "看原作者" rendered as "+follow") is scope creep and a likely model mismatch (follow-graph vs attribution). Every button maps to a requirement or it's cut. (`CR-FINISH-003`)
 
 ## Anti-Patterns
 
@@ -931,3 +1092,10 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 20. **Wireframe disguised as hi-fi:** `$0.00` balances, `"User Name"` placeholders, gray category chips, empty charts, no illustrations, no color blocks. The Hi-Fi Fill Checklist exists to catch this — treat every failure as a regenerate trigger, not a warning to ignore.
 21. **Inaccessible color pair:** Component `backgroundColor` × `textColor` with WCAG AA contrast under 4.5:1 (normal text). Even if it looks "design-y," it fails users with low vision. The DESIGN.md `contrast-ratio` lint catches this — never override.
 22. **Token invention without declaration:** Inline-styling with a hex/font that isn't in the DESIGN.md token map. If you need it, propose adding it as a token (e.g. `colors.warning`) and have the user confirm — don't silently expand the palette.
+23. **Hero chrome slop:** Version labels (`V0.6`, `BETA`), section-number eyebrows (`00 / INDEX`), decoration text strips (`BRAND. MOTION. SPATIAL.`), fake locale/weather strips. The Step 8.5 Anti-Slop Pass exists to catch these.
+24. **Eyebrow labels:** Any uppercase-tracking label above a heading on a web page, unless the DESIGN.md explicitly allows them (then more than ceil(sections / 3)). The most-violated stylistic tell. Count them mechanically.
+25. **Layout-family repetition:** Same section layout twice in a row, or 3+ consecutive image+text splits. An 8-section page using <4 layout families reads as a template.
+26. **Copy slop:** Fake-perfect numbers (`99.99%`), startup-slop names (`Acme`, `Nexus`), filler verbs (`Elevate`, `Seamless`), em-dashes on canvas. Filled but fake is still a fail.
+27. **Div-fake screenshot:** A product preview hand-built from styled `<div>` rectangles (fake dashboard, fake task list, fake terminal). Use a real screenshot, a real mini-component, or photography.
+28. **Fake text logo wall:** Social proof rendered as styled text wordmarks, or logos with category labels printed underneath. Use real SVG marks (Simple Icons) or an inline monogram; logos only.
+29. **Reference-default affordance import:** Borrowing a reference platform's grammar and dragging its default actions in with it. Example: a "TikTok-style" game feed shipped with a follow `+` badge on the author avatar — the PRD said "看原作者" (view author), not "follow", and the product's retention model is attribution (who remixed whom), not a follow graph. The `+` was an unexamined platform default: scope creep (implies a follow system) plus a visual bug (badge crowding the avatar). Fix: implement the named verb (tap avatar → author page), drop the imported default. The Step 8.5 Anti-Slop Pass catches this — every affordance must trace to the brief.
