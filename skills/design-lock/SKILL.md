@@ -632,6 +632,45 @@ Design screens in the order a user encounters them (core loop first).
 ✅ DS CHECK: Colors ✓|✗ · Typography ✓|✗ · Spacing ✓|✗ · Radius ✓|✗
 ```
 
+### Step 8.5: Anti-Slop Pass (MANDATORY, run BEFORE showing the user)
+
+The micro-signals that make a screen read as machine-made. Hi-Fi Fill catches
+empty wireframes; this catches filled-but-fake output. Any hit: strip it and
+regenerate that element. Each line cites its craft rule so the decision record
+can name it.
+
+```
+□ Eyebrow above a heading ("WHY US", "01 · Capabilities", "00 / INDEX")        CR-TYPE-005
+□ Model-default face as display or body (Inter, Roboto, Poppins, DM Sans ...)   CR-TYPE-002
+□ One italic or colored word inside a heading                                   CR-TYPE-004
+□ Gradient text; purple-blue / purple-pink / cyan-on-dark gradient;
+  centered hero over a dark mesh; gradient without a recipe                     CR-COLOR-005
+□ Glow halo, zero-offset colored shadow, glass on every surface                 CR-COLOR-006
+□ Three identical feature cards in a row; icon-heading-text card grid as the
+  page; hero-metric template; section numbers; same layout family twice        CR-LAYOUT-005
+□ Card in a card; border plus shadow on one card; colored left border > 1px     CR-LAYOUT-004
+□ Version label in hero ("V0.6", "BETA"); decoration text strip
+  ("BRAND. MOTION. SPATIAL."); fake locale / weather strip; tagline + trust
+  strip + pricing teaser + avatar row crammed under the CTA                     CR-FINISH-002
+□ "Quietly trusted by"; "Reimagine"; "Whether you're X or Y"; "Say goodbye to";
+  "Seamless"; "Elevate"; "journey"; 99.99%; Acme / Nexus                        CR-COPY-002
+□ Generic step labels ("Step 01 / 02 / 03") where the content is the label     CR-LAYOUT-005
+□ Middle dot (·) more than once per metadata line; any em dash on canvas        CR-CONTENT-004
+□ Div-built fake screenshot; text wordmarks as a logo wall                      CR-CONTENT-006
+□ Emoji or Unicode glyph as an icon; sketch-style SVG scene                     CR-CONTENT-003 / 007
+□ Pulsing dot, parallax, cursor follower, auto carousel, same reveal on
+  every section                                                                 CR-MOTION-003
+□ Dot inside a chip or pill; bordered card or chip                              UI-PILL-001 / UI-STROKE-001
+□ Affordance the brief never asked for, imported from the reference platform
+  ("TikTok-style" feed shipping follow / duet / stitch)                         CR-FINISH-003
+□ Browser defaults left on selection, caret, focus ring, scrollbar              CR-FINISH-001
+```
+
+State the result:
+```
+ANTI-SLOP: clean | [N] tells found -> [rule ids] -> stripped + regenerated
+```
+
 ### Hi-Fi Fill Checklist (MANDATORY — run BEFORE showing user, especially mobile-app)
 
 **This is the difference between wireframe and hi-fi.** Any ❌ = regenerate that section.
@@ -862,6 +901,8 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 16. **Library design systems are upstream, not ceiling.** When `design_system_ref` points to `design-systems/<name>/DESIGN.md`, those tokens are the BASE — the session DESIGN.md is allowed (and expected) to override them for project fit. Never copy a library system verbatim and ship it as the user's product; that's plagiarism, not inspiration.
 
 ---
+17. **Anti-slop pass is mandatory.** Run Step 8.5 before showing any mockup. Every hit cites a craft rule id; tells get stripped, not shipped. Filled-but-fake fails like empty.
+18. **Craft defaults defer to the contract.** A `(default)` line in craft-rules.md (no Inter, no bento, accent under 5%) applies only when DESIGN.md, TASTE.md and the visual contract are silent. A specified value is exact and binding; a ban (gradient text, purple gradients, eyebrows, dots in chips) is never overridden.
 
 ## Anti-Patterns
 

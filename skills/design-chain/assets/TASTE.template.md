@@ -16,8 +16,8 @@ colors:
   # primary: "#1F3A5F"
   # accent: "#C8553D"
 typography:
-  # heading: "Inter Tight"
-  # body: "Inter"
+  # heading: "Clash Display"
+  # body: "Switzer"
 ---
 
 # Taste
@@ -38,7 +38,35 @@ against the limit but still restrained.
 
 ## Typography
 
-Scale steps, weights used for hierarchy, any pairing rule.
+Scale steps, weights used for hierarchy, any pairing rule. Name your display
+and body faces here. Craft rule `CR-TYPE-002` refuses the model-default faces
+(Inter, Roboto, Poppins, Montserrat, DM Sans, system-ui and friends) unless
+you name them here as your brand's choice.
+
+- Display:
+- Body:
+- Figures / code (optional, one role only):
+
+## Gradient
+
+Leave this section out and no gradient will be used. To allow one, declare
+a recipe. Craft rule `CR-COLOR-005` enforces one hue family, three stops at
+most, lightness-driven, readable ink at the lightest stop, never on text or
+inside chips.
+
+```yaml
+gradient:
+  name:
+  hue:            # OKLCH hue range, e.g. 258-262
+  stops:
+    - { name: dark,  hex: "" }
+    - { name: mid,   hex: "" }
+    - { name: light, hex: "" }
+  direction:      # e.g. 160deg
+  ink-on-top:     # the text color that must pass contrast at the lightest stop
+  allowed-on:     # hero field, one section band, primary CTA
+  never-on:       # text, chips, inputs, body copy backgrounds
+```
 
 ## Layout
 

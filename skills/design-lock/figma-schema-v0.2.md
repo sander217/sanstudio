@@ -70,7 +70,7 @@ Use this schema when generating the Figma export JSON in Gate 3 Step 13.
             "characters": "Text content",
             "fontSize": 16,
             "fontWeight": 400,
-            "fontFamily": "Inter",
+            "fontFamily": "Switzer",
             "textAlignHorizontal": "LEFT|CENTER|RIGHT",
             "lineHeight": { "value": 24, "unit": "PIXELS" }
           }

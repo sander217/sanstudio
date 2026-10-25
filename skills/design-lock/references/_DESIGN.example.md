@@ -21,40 +21,40 @@ colors:
   on-error: "#3F0A0A"
 typography:
   display-lg:
-    fontFamily: Inter
+    fontFamily: Switzer
     fontSize: 56px
     fontWeight: 700
     lineHeight: 1.05
     letterSpacing: -0.03em
     fontFeature: '"tnum" 1'
   headline-md:
-    fontFamily: Inter
+    fontFamily: Switzer
     fontSize: 24px
     fontWeight: 600
     lineHeight: 1.2
   body-lg:
-    fontFamily: Inter
+    fontFamily: Switzer
     fontSize: 17px
     fontWeight: 400
     lineHeight: 1.5
   body-md:
-    fontFamily: Inter
+    fontFamily: Switzer
     fontSize: 15px
     fontWeight: 400
     lineHeight: 1.45
   label-md:
-    fontFamily: Inter
+    fontFamily: Switzer
     fontSize: 13px
     fontWeight: 600
     lineHeight: 1.2
   amount-positive:
-    fontFamily: Inter
+    fontFamily: Switzer
     fontSize: 17px
     fontWeight: 600
     lineHeight: 1
     fontFeature: '"tnum" 1, "ss01" 1'
   amount-negative:
-    fontFamily: Inter
+    fontFamily: Switzer
     fontSize: 17px
     fontWeight: 600
     lineHeight: 1
@@ -131,7 +131,7 @@ Built on a near-black surface (`#0B0F1A`) with cool slate elevation. The single 
 
 ## Typography
 
-Inter throughout — single family, fully variable. Numerals use **tabular figures** (`fontFeature: "tnum" 1`) so transaction lists align cleanly down the right edge. The `amount-positive` / `amount-negative` typography tokens additionally enable `ss01` for the slashed zero (helps distinguish from "O" in dense rows).
+Switzer throughout, single family, fully variable (chosen; see craft-rules CR-TYPE-002). Numerals use **tabular figures** (`fontFeature: "tnum" 1`) so transaction lists align cleanly down the right edge. The `amount-positive` / `amount-negative` typography tokens additionally enable `ss01` for the slashed zero (helps distinguish from "O" in dense rows).
 
 - **display-lg** is for the home screen balance only — one element per screen, never duplicated.
 - **headline-md** for screen titles and section headers.

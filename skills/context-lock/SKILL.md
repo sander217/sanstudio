@@ -108,7 +108,7 @@ Colors (hex values):
 - CTA color: [hex]
 
 Typography:
-- Heading font: [family] (e.g., Inter, SF Pro, Helvetica Neue)
+- Heading font: [family] (the face the reference actually uses; name it exactly)
 - Body font: [family]
 - Heading weight: [number] (e.g., 700, 600)
 - Body size estimate: [px]
@@ -360,7 +360,7 @@ SYNTHESIS — Design Spec:
 - Product grid: 2-3 columns, large images, name + price only
 - PDP: image-dominant (60%+), minimal spec chips, single "Add to Cart"
 - Color: #000/#FFF/#0071E3 base, extend with 1 warm neutral if needed
-- Typography: Inter or similar geometric sans, 700 headings, 400 body
+- Typography: a chosen grotesk or serif (never a model default, see craft-rules CR-TYPE-002), 700 headings, 400 body
 - Section gaps: 96-120px
 - No: gradients, purple, busy grids, multiple CTAs, social proof clutter
 ```
