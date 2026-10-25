@@ -32,14 +32,14 @@ never fetches a repository.
 
 ```yaml
 schema: 1
-brand: gamegen
-product: gamegen-web          # optional
+brand: atlas
+product: atlas-web            # optional
 design: DESIGN.md
 taste: taste.yml
 experience: EXPERIENCE.md
 qa: qa-policy.yml
 memory: [memory/brand.yml, memory/product.yml]
-source: sander217/gamegen-design-contracts@<commit>   # provenance only, never fetched
+source: your-org/atlas-design-contracts@<commit>   # provenance only, never fetched
 ```
 
 ## What each gate does with it
@@ -57,8 +57,8 @@ source: sander217/gamegen-design-contracts@<commit>   # provenance only, never f
 Announce once, after `DESIGN CHAIN READY`:
 
 ```
-CONTRACT LOADED  .sanstudio/  brand: gamegen  product: gamegen-web
-  design: gamegen-core@2.5.0 (DESIGN.md, 14 colors, 4 type roles, 9 components)
+CONTRACT LOADED  .sanstudio/  brand: atlas  product: atlas-web
+  design: atlas-core@2.5.0 (DESIGN.md, 14 colors, 4 type roles, 9 components)
   taste: taste.yml (3 intent, 5 traits, 5 avoid)
   experience: EXPERIENCE.md (3 journeys)   qa: 7 gates (5 blocking)   memory: 4 accepted decisions
 ```
@@ -78,14 +78,14 @@ A contract value that collides with a craft **ban** (a gradient without a recipe
 A pack repository (`brands/<brand>/`, `contracts/<name>/`, `memory/`) maps one to one. From a clone of the pack, in the product repository:
 
 ```bash
-PACK=~/src/gamegen-design-contracts
+PACK=~/src/atlas-design-contracts
 mkdir -p .sanstudio/memory .sanstudio/assets
-cp "$PACK/contracts/gamegen-core/DESIGN.md"        .sanstudio/DESIGN.md
-cp "$PACK/brands/gamegen/taste.yml"                .sanstudio/taste.yml
-cp "$PACK/contracts/gamegen-next/EXPERIENCE.md"    .sanstudio/EXPERIENCE.md
-cp "$PACK/contracts/gamegen-next/qa-policy.yml"    .sanstudio/qa-policy.yml
-cp "$PACK/memory/brands/gamegen.yml"               .sanstudio/memory/brand.yml
-cp "$PACK/memory/products/gamegen-web.yml"         .sanstudio/memory/product.yml
+cp "$PACK/contracts/atlas-core/DESIGN.md"        .sanstudio/DESIGN.md
+cp "$PACK/brands/atlas/taste.yml"                .sanstudio/taste.yml
+cp "$PACK/contracts/atlas-next/EXPERIENCE.md"    .sanstudio/EXPERIENCE.md
+cp "$PACK/contracts/atlas-next/qa-policy.yml"    .sanstudio/qa-policy.yml
+cp "$PACK/memory/brands/atlas.yml"               .sanstudio/memory/brand.yml
+cp "$PACK/memory/products/atlas-web.yml"         .sanstudio/memory/product.yml
 ```
 
 Record the pack commit in `contract.yml` so a reviewer can tell which version the
