@@ -111,6 +111,14 @@ Before delivery, check that summaries retain attribution, uncertainty, populatio
 
 For Refresh, retain the prior finding and decision, append new evidence, and explain changes in applicability or confidence. Mark findings current, needs recheck, resolved with evidence, or superseded. Never overwrite history solely because a newer source arrived. Follow the user's destination and audience when saving. Use synthetic examples for public demonstrations rather than publishing sensitive research.
 
+## Project contract as supplied context
+
+When the working directory has `.sanstudio/` (see `skills/design-chain/references/contracts.md`),
+treat `EXPERIENCE.md` as a supplied brief (product intent, objects, journeys) and
+`memory/*.yml` accepted decisions as existing knowledge. Cite them as sources (`S1: .sanstudio/EXPERIENCE.md § Primary journeys`).
+They are context, not user evidence: a journey named in a contract does not establish that
+people complete it or want it.
+
 ## Design Chain handoff
 
 When invoked by `design-chain` (or when a design gate will consume the result),

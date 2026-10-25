@@ -49,6 +49,10 @@ Match the user's language. Design terms in English.
 
 - Read the `---DESIGN-LOCK---` handoff + the session `DESIGN.md` + the Gate 3
   hi-fi HTML. These are the inputs you harden — not raw material to reinterpret.
+- Read `.sanstudio/qa-policy.yml` when it exists: every gate (design and product
+  phases) becomes a row of the Production Readiness Scorecard, scored against its
+  `criteria`; product-phase gates are reported as "needs runtime evidence", never passed
+  from a mockup. `.sanstudio/EXPERIENCE.md` journeys are the screen inventory's spine.
 - Read `skills/design-lock/references/craft-rules.md` and the user's `TASTE.md`.
   Gate 4 checks every rule id per state: every pill state for `UI-PILL-001`,
   every container for `UI-STROKE-001`, every header variant for `UI-NAV-001`,

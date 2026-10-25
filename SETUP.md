@@ -203,7 +203,27 @@ Figma：有連 Figma MCP，G3 直接推。沒有，它把 `figma/design-export.j
 
 ---
 
-## 九、維護者
+## 九、已經有 design contract 的品牌
+
+GameGen、XtraSpots 這種已經有 contract pack 的品牌，不用每次從提示詞開始。在產品 repo 根目錄放一個 `.sanstudio/` 資料夾，鏈路開跑就先讀它：
+
+```text
+.sanstudio/
+  DESIGN.md        品牌視覺契約，直接當 session DESIGN.md 的 base
+  taste.yml        Harness 的 taste profile，intent / signatureTraits / avoid 直接讀
+  EXPERIENCE.md    產品意圖、IA、journeys，G0 和 G1 的輸入
+  qa-policy.yml    blocking gates 併進 G3 的 QA 和 G4 的 scorecard
+  memory/          accepted 的決定變成 G1 的 constraints
+  contract.yml     選配，記 pack 的 commit 當 provenance
+```
+
+從 pack clone 複製進去就好，鏈路不會自己 fetch。完整對應表和 copy 指令在 `skills/design-chain/references/contracts.md`。私有 contract 不進 sanstudio repo，`.sanstudio/` 放產品 repo 並加進它的 `.gitignore`。
+
+契約裡的值是精確的：contract 寫 Inter 就是 Inter，寫 `#0048DD` 就是它。鏈路只在上面加這次需求的 override。契約和工藝鐵律撞到（例如沒有 recipe 的漸層、pill 裡的圓點），G1 會列成 contract gap 讓你決定，不會偷偷照做也不會偷偷改。
+
+---
+
+## 十、維護者
 
 這段只給維護 repo 的人，買家不需要。
 

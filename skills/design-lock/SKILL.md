@@ -150,6 +150,11 @@ If the upstream CONTEXT-LOCK block has `design_system_ref: <name>` (e.g. `stripe
 `tesla`, `notion`, `revolut+wise`), also load `design-systems/<name>/DESIGN.md` —
 this is the **upstream base** that the session DESIGN.md inherits from.
 
+If it is `design_system_ref: .sanstudio/DESIGN.md`, the base is the project contract in
+the working directory (`skills/design-chain/references/contracts.md`). Its values are
+exact: a contract font or hex is never "improved", and any `### UI-*` section inside it is
+the product's variant of that craft rule and wins over the generic wording.
+
 Resolution order for any token lookup:
 1. **Session DESIGN.md** (project-specific overrides — highest priority)
 2. **Library DESIGN.md** (`design-systems/<name>/DESIGN.md` — base values)
@@ -201,8 +206,10 @@ Independently of the sources above, load two more files:
    (`CR-*`, `UI-*`) is a hard constraint on par with the visual contract. It
    is the same for every brand and the user cannot loosen it in a session;
    an exception needs their words and a line in `docs/decisions.md`.
-2. The user's `TASTE.md` (working directory or `.sanstudio/TASTE.md`; fall
-   back to `skills/design-chain/assets/TASTE.template.md`). It is a partial
+2. The taste overlay: `.sanstudio/taste.yml` (Harness shape: `intent` is the
+   Overview, `signatureTraits` are Do lines, `avoid` are Don't lines) or
+   `.sanstudio/TASTE.md`, else the user's `TASTE.md` in the working directory,
+   else `skills/design-chain/assets/TASTE.template.md`. It is a partial
    DESIGN.md. Its `## Do's and Don'ts` are appended to the session's binding
    rules. Its `colors`/`typography` frontmatter acts as a fallback when the
    session DESIGN.md and visual_contract are silent on a value.
@@ -915,6 +922,9 @@ QA CHECKLIST:
   SVG icons via Iconify API only — zero emoji in UI, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
 - Hi-Fi Fill: Step 8 Fill Checklist passed with 0 failures
+- Contract QA (when `.sanstudio/qa-policy.yml` exists): every gate with `severity: blocking`
+  and `design` in `phases` is listed here by id with its `criteria` as check lines; a
+  `rule:` field maps it to the craft rule id. Any failing blocking gate = fix, regenerate
 - Anti-slop (Step 8.5): em-dash count = 0, zero eyebrows [web], no version/decoration-strip
   tells, no div-fake screenshots, no fake-perfect numbers, every face has a reason in DESIGN.md
 - References: Step 2.5 matches announced, trace comments embedded, craft rules and taste honored

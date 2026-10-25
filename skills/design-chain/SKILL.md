@@ -18,16 +18,18 @@ Canonical entry: any design request. The user may prefix controls such as `lane:
 
 Locate the suite root: walk upward from this file to the directory whose `skills/` child holds `design-chain`, `research-synthesis`, `context-lock`, `direction-lock`, `design-lock` and `production-lock`. In the repository that is the repo root; in Claude Code it is `.claude/` or `~/.claude/`; in the marketplace package it is the `sanstudio/` folder. Every path written as `skills/<gate>/...` in a gate file resolves against that root. Never assume a user-specific path.
 
-Resolve two user-owned files in the working directory, in this order:
+Resolve the user-owned inputs in the working directory, in this order:
 
-1. `TASTE.md` or `.sanstudio/TASTE.md`: the user's brand taste. If absent, use `assets/TASTE.template.md` defaults and tell the user once that they can copy the template to `TASTE.md` to make the chain theirs.
-2. Output root: `$SANSTUDIO_OUTPUT` if set, else `./sanstudio-output/`. Every artifact goes under `<output-root>/sessions/<YYYYMMDD-HHMM>-<slug>/` with `html/`, `figma/`, `docs/`, `research/` and `DESIGN.md`. Refresh `<output-root>/latest` to point at the current session. Never write artifacts into `skills/`.
+1. `.sanstudio/`: a project contract folder (brand `DESIGN.md`, `TASTE.md` or `taste.yml`, `EXPERIENCE.md`, `qa-policy.yml`, `memory/`). When present, read [references/contracts.md](references/contracts.md) and announce `CONTRACT LOADED`. The contract's `DESIGN.md` becomes the base of the session `DESIGN.md`; its QA gates join Gate 3 and 4 checks; its accepted memory becomes prior decisions.
+2. `TASTE.md` in the working directory, when `.sanstudio/` has no taste file: the user's brand taste. If neither exists, use `assets/TASTE.template.md` defaults and tell the user once that they can copy the template to `TASTE.md` to make the chain theirs.
+3. Output root: `$SANSTUDIO_OUTPUT` if set, else `./sanstudio-output/`. Every artifact goes under `<output-root>/sessions/<YYYYMMDD-HHMM>-<slug>/` with `html/`, `figma/`, `docs/`, `research/` and `DESIGN.md`. Refresh `<output-root>/latest` to point at the current session. Never write artifacts into `skills/`.
 
 Announce once:
 
 ```
 DESIGN CHAIN READY
-  taste: TASTE.md (user) | template defaults
+  contract: .sanstudio/ (<brand>[/<product>]) | none
+  taste: .sanstudio/taste.yml | TASTE.md (user) | template defaults
   output: <output-root>/sessions/<slug>/
   lane: <fast|standard|major> (<reason>)
 ```
@@ -107,6 +109,7 @@ Then state remaining risks and evidence gaps in two or three lines. Do not descr
 2. One stop per gate. The user decides; you do not pre-approve.
 3. Lanes go up, never silently down.
 4. Craft rules bind; taste is the user's. Load `skills/design-lock/references/craft-rules.md` as hard constraints. Load the user's `TASTE.md` as defaults they own.
+4a. A project contract is exact. Values in `.sanstudio/DESIGN.md` and gates in `.sanstudio/qa-policy.yml` are used verbatim; the chain adds overrides on top and never edits the contract files. A contract value that collides with a craft ban is raised at G1 as a contract gap for the user to decide.
 5. Evidence gaps are recorded, not papered over.
 6. No em or en dashes in any user-facing copy, and no trailing punctuation in titles.
 7. Match the user's language. Keep design terms in English.
