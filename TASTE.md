@@ -9,7 +9,7 @@ description: |
   `colors` / `typography` 是跨專案 fallback；session 的 DESIGN.md 有指定就以它為主。
   `## Typography picks
 
-字體一律是「選過的」，不是模型預設。craft rule `CR-TYPE-002` 已經禁掉 Inter、Roboto、Poppins、Montserrat、DM Sans 那一串當預設；這裡是我的起點清單，專案要換就換，但要在 DESIGN.md 寫明。
+字體要從提示詞和整體風格選出來，不是模型順手拿的。Inter 可以用，產品 UI、工具類介面、品牌本來就用它的時候它常常就是對的答案；不行的是「沒想就用」。craft rule `CR-TYPE-002` 要求 DESIGN.md 寫一行為什麼選這個字。下面是我的起點清單，專案要換就換。
 
 - Display（編輯感、有骨架）：Instrument Serif、Fraunces、Gambetta、Clash Display、Hubot Sans。
 - Body（安靜、字距寬鬆）：Switzer、General Sans、Hanken Grotesk、IBM Plex Sans。
@@ -121,6 +121,9 @@ colors:
 - Do 字級 ≥3 階，用字級落差建層級，不用顏色建層級。
 - Do 一屏一個焦點，先減再加；能拿掉的元素就拿掉。
 - Do 用留白、hairline、fact-row、字重強調 **取代 chip 與卡片堆疊**。
+- Do 留白要夠：手機 gutter ≥16px、桌面 container gutter ≥64px、web section 間距 120 到 176px、card 內距 web 32 到 40px、app 16 到 20px。頁面看起來空，是標題或內容太小，不是間距太大（`CR-SPACE-001`）。
+- Do 任何有底色、框線或 hover 狀態的盒子，文字離左右邊至少 8px、上下至少 4px（`CR-SPACE-002`）。
+- Do tab / segment / nav 的字四邊至少 8px padding，hover 和 active 的底色、底線、focus ring 都畫在含 padding 的格子上，不是貼著文字；第一個 tab 的字不能貼螢幕邊，bar 自己要有 gutter；各狀態 padding 不變，只變顏色、字重和指示線（`UI-TAB-001`）。
 - Do brand 主色出現 ≥3 處(CTA + 強調 + active)，但不變成第二主色。
 - Do 流程出口回入口：從哪個畫面進的 sub-flow / modal / sheet，完成或取消後回到那個畫面（保留 scroll 與狀態）。要導去別處必須是規格明確要求，並註明例外。
 
@@ -135,7 +138,7 @@ colors:
 - Don't 灰色 placeholder：任何畫面有 `#E5E5E5` / `#D1D1D1` 空方塊 = 失敗。用真內容或不放。
 - Don't emoji 當 icon：🦷 📅 ✅ 在 UI 裡 = 即時 reject。用 Iconify SVG。
 - Don't 全字一個級別：所有 17pt 沒階層 = wireframe。
-- **Don't 用模型預設字體**：Inter、Roboto、Poppins、Montserrat、DM Sans、system-ui 當 display 或 body = 沒選字。選字見 `## Typography picks`。
+- **Don't 字體沒選就用**：任何字體（包括 Inter）出現在 DESIGN.md 裡都要有一行理由，對得上提示詞和風格。同一個字體跨不相干的案子一直出現 = 沒選。選字見 `## Typography picks`。
 - **Don't 標題上方放 eyebrow**：「WHY US」「01 · 功能」那種小字 tracked 大寫標籤一律不用，標題自己撐。
 - Don't web pattern in app：hero section、80-120px section gap、50/50 split 在 phone frame 裡 = wrong surface。
 - **Don't 流程結束後把人丟到別處**：完成或取消一個 sub-flow 後跳首頁 / tab 根 / 無關頁 = 失敗，除非被明確要求。

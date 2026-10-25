@@ -39,9 +39,9 @@ against the limit but still restrained.
 ## Typography
 
 Scale steps, weights used for hierarchy, any pairing rule. Name your display
-and body faces here. Craft rule `CR-TYPE-002` refuses the model-default faces
-(Inter, Roboto, Poppins, Montserrat, DM Sans, system-ui and friends) unless
-you name them here as your brand's choice.
+and body faces here and say in one line why they fit your brand. Craft rule
+`CR-TYPE-002` accepts any face, Inter included, as long as it was chosen from
+the brief and style rather than defaulted.
 
 - Display:
 - Body:
@@ -71,7 +71,10 @@ gradient:
 ## Layout
 
 Density, white space, default composition (single column, asymmetric, grid),
-and what you consider a web pattern that must not appear in an app.
+and what you consider a web pattern that must not appear in an app. Craft
+rules `CR-SPACE-001`, `CR-SPACE-002` and `UI-TAB-001` already guarantee
+gutters, 8px text insets and padded tab labels; write here only if your brand
+wants more room than that.
 
 ## Elevation & Depth
 

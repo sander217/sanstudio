@@ -61,14 +61,14 @@ reviewer can verify on a render.
 
 - `CR-TYPE-001` At least three type sizes on a screen. Hierarchy is built with
   size and weight before color.
-- `CR-TYPE-002` Unchosen faces are a failure `(default)`. Inter, Roboto, Open
-  Sans, Lato, Poppins, Source Sans, Nunito, Montserrat, Raleway, Work Sans, DM
-  Sans, Plus Jakarta Sans, system-ui, Arial and Helvetica as a display or body
-  face; Merriweather, Lora and Georgia as the body serif; Courier New or the
-  system mono. Any of them is allowed only when `DESIGN.md`, `TASTE.md` or the
-  reference product already uses it, and the artifact says so. Native mobile
-  app shells keep SF Pro and Roboto for system chrome; the brand voice still
-  gets a chosen face.
+- `CR-TYPE-002` The face is chosen from the brief, never defaulted. Read the
+  prompt, the reference and the overall style, then pick the family that fits
+  them and write one line in `DESIGN.md` saying why. Inter, Roboto, Helvetica
+  or the system face are fine answers when the style calls for them (a product
+  UI, an operate surface, a brand that already uses them); they fail only when
+  they appear because nobody decided. The tell is a face with no reason in
+  `DESIGN.md`, or the same face across unrelated briefs. Native mobile app
+  shells keep SF Pro and Roboto for system chrome regardless.
 - `CR-TYPE-003` At most two families: a display face and a body face, or one
   family for both. A third face carries exactly one role (wordmark, headline
   figure or code). At most three weights across the page, picked as extremes
@@ -145,6 +145,32 @@ reviewer can verify on a render.
 - `CR-LAYOUT-006` Spacing is a scale (2, 4, 8, 12, 16, 24, 40, 64, 96, 144),
   tight inside a group, generous between groups, more space above a heading
   than below it. At most three optical nudges off the scale per page.
+
+## Space
+
+- `CR-SPACE-001` Generous whitespace is the default. Screen gutters at least
+  16px on a phone, 24px on a tablet, 64px on a desktop container; sections on
+  a web page part by 120 to 176px; a card or well carries 32 to 40px of
+  padding on web and 16 to 20px in an app. Space is earned by mass: an empty
+  looking page wants a bigger heading, a fuller section or a larger visual,
+  never a smaller gap. Rhythm comes from contrast between tight and generous
+  intervals, not one value repeated until everything weighs the same.
+- `CR-SPACE-002` Nothing touches an edge. Text inside any filled, tinted,
+  bordered or hoverable box sits at least 8px from the box's left and right
+  edges and at least 4px from its top and bottom, before any optical nudge.
+  Measure the painted box, not the element's margin. A label flush to its
+  container's edge is a failure even when the container has no visible fill,
+  because its hover or focus state will paint one.
+- `UI-TAB-001` Tab, segment and nav labels keep 8px of padding in every
+  state. The label text is inset at least 8px from its item's left and right
+  edges and 8px from top and bottom (12px horizontal on web nav). The hover
+  background, active fill, focus ring and selected underline all span the
+  padded item box, never the text's own width. The first and last item's text
+  is never flush with the tab bar or screen edge: the bar carries its own
+  gutter (the screen gutter, at least 16px). Hit target is 44px tall even
+  when the painted item is shorter; expand it with a transparent inset, not by
+  stretching the label. Changing padding between states (hover, pressed,
+  selected) is a failure; only color, weight and the indicator change.
 - `CR-FLOW-001` A sub-flow, modal or sheet returns to the screen it was opened
   from, with scroll position and state preserved. Redirecting elsewhere needs
   an explicit requirement and a note in the decision record. A modal is for a
@@ -233,8 +259,9 @@ reviewer can verify on a render.
 ## How gates use this file
 
 - Gate 3 loads it in Step 2.5, runs the Anti-Slop Pass (Step 8.5) against the
-  `CR-COPY`, `CR-TYPE-005`, `CR-COLOR-005`, `CR-LAYOUT-005` and `CR-FINISH`
-  lines, and checks every id in the final QA checklist. Report the count of
+  `CR-COPY`, `CR-TYPE-005`, `CR-COLOR-005`, `CR-LAYOUT-005`, `CR-SPACE-002`,
+  `UI-TAB-001` and `CR-FINISH` lines, and checks every id in the final QA
+  checklist. Report the count of
   rules checked and any exceptions the user approved.
 - Gate 4 inherits the same rules and adds state-level checks (every state of a
   pill, every header variant, every breakpoint entry).

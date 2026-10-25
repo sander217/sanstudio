@@ -641,7 +641,7 @@ can name it.
 
 ```
 □ Eyebrow above a heading ("WHY US", "01 · Capabilities", "00 / INDEX")        CR-TYPE-005
-□ Model-default face as display or body (Inter, Roboto, Poppins, DM Sans ...)   CR-TYPE-002
+□ A face with no reason in DESIGN.md (defaulted, not chosen from the brief)    CR-TYPE-002
 □ One italic or colored word inside a heading                                   CR-TYPE-004
 □ Gradient text; purple-blue / purple-pink / cyan-on-dark gradient;
   centered hero over a dark mesh; gradient without a recipe                     CR-COLOR-005
@@ -661,6 +661,9 @@ can name it.
 □ Pulsing dot, parallax, cursor follower, auto carousel, same reveal on
   every section                                                                 CR-MOTION-003
 □ Dot inside a chip or pill; bordered card or chip                              UI-PILL-001 / UI-STROKE-001
+□ Text within 8px of a box's side edge; tab or nav label whose hover or active
+  fill hugs the text instead of a padded box; first tab flush to the screen     CR-SPACE-002 / UI-TAB-001
+□ Cramped page: gutters under 16px on phone, sections under 120px apart on web  CR-SPACE-001
 □ Affordance the brief never asked for, imported from the reference platform
   ("TikTok-style" feed shipping follow / duet / stitch)                         CR-FINISH-003
 □ Browser defaults left on selection, caret, focus ring, scrollbar              CR-FINISH-001
@@ -902,7 +905,7 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 
 ---
 17. **Anti-slop pass is mandatory.** Run Step 8.5 before showing any mockup. Every hit cites a craft rule id; tells get stripped, not shipped. Filled-but-fake fails like empty.
-18. **Craft defaults defer to the contract.** A `(default)` line in craft-rules.md (no Inter, no bento, accent under 5%) applies only when DESIGN.md, TASTE.md and the visual contract are silent. A specified value is exact and binding; a ban (gradient text, purple gradients, eyebrows, dots in chips) is never overridden.
+18. **Craft defaults defer to the contract.** A `(default)` line in craft-rules.md (no bento, accent under 5%, a face chosen from the brief) applies only when DESIGN.md, TASTE.md and the visual contract are silent. A specified value is exact and binding; a ban (gradient text, purple gradients, eyebrows, dots in chips, text flush to an edge) is never overridden.
 
 ## Anti-Patterns
 
