@@ -82,8 +82,11 @@ reviewer can verify on a render.
 - `CR-TYPE-004` Display: tracking between -0.02em and -0.04em on a
   regular-width face, never tighter than -0.04em; line-height 1.0 to 1.15. A
   heading is one weight, one style, one color: no single word set apart by
-  italic, color, weight or highlight. Body: 16px minimum, line-height 1.5 to
-  1.65, measure 45 to 75ch, never justified, never all caps. `text-wrap:
+  italic, color, weight or highlight. Body: 16px minimum on Persuade, Read
+  and Experience surfaces; an Operate surface may declare a dense body of 13
+  to 15px in `DESIGN.md` (data tables, editors, consoles), never below 13px
+  for running text. Line-height 1.5 to 1.65 (1.4 allowed for a dense body),
+  measure 45 to 75ch, never justified, never all caps. `text-wrap:
   balance` on heads, `pretty` on body. `tabular-nums` on figures that compare.
 - `CR-TYPE-005` No eyebrow. The small tracked-uppercase label above a heading
   ("WHY US", "HOW IT WORKS", "01 · Capabilities") is the single most reliable
@@ -295,7 +298,11 @@ reviewer can verify on a render.
   rules checked and any exceptions the user approved.
 - Gate 4 inherits the same rules and adds state-level checks (every state of a
   pill, every header variant, every breakpoint entry).
-- A `(default)` line is earned back only by the brief, `DESIGN.md`, `TASTE.md`
-  or the user's words, never by the model's own preference. A ban is never
-  earned back. Either way the exception is written in `docs/decisions.md`
-  with the rule id.
+- A `(default)` line is earned back by the brief, `DESIGN.md`, `TASTE.md`, a
+  `.sanstudio/` contract or the user's words, never by the model's own
+  preference.
+- A ban is never earned back by the brief or the model. Only the user can
+  grant an exception: in their own words in the session, or by confirming at
+  Gate 1 a contract value that collides with it (raised there as a contract
+  gap). Either way the exception is written in `docs/decisions.md` with the
+  rule id, the scope (this session, this brand) and the user's words.
