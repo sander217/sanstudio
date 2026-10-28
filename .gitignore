@@ -12,3 +12,7 @@ sanstudio-output/
 
 # private team guides for private brands, never commit
 private/
+# local backups and unannotated reference screenshots
+*.bak
+* 2.bak
+skills/design-lock/references/mobile-app-examples/**/*.png
