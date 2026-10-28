@@ -17,10 +17,12 @@ The user steers the chain with a small vocabulary. Nothing else advances a gate.
 |---|---|
 | `APPROVE` | Lock this gate's output. Enter the next gate. |
 | `ITERATE <note>` | Redo this gate with the note applied. Keep the gate's earlier output as a baseline for a before and after diff. |
+| `ITERATE <verb> [target][: note]` | Run a refine verb from `refine.md` on the target: `polish`, `bolder`, `quieter`, `distill`, `harden`, `clarify`, `typeset`, `layout`, `colorize`, `motion`, `adapt`, `onboard`. |
+| `REVIEW` | Run the fresh-eyes review (`skills/design-lock/references/review.md`) on the current rendered artifact. Does not advance the gate. |
 | `BACK <gate>` | Return to `G0`, `G1`, `G2` or `G3`. Everything downstream is marked stale in `docs/decisions.md`. The returned gate reopens with its last output as a baseline. |
 | `STOP` | Write a `---<GATE>-PARTIAL---` block and a summary of what exists. End. |
 
-Accept lowercase and the Traditional Chinese equivalents: `確認` = APPROVE, `改` + note = ITERATE, `回到 G2` = BACK G2, `停` = STOP.
+Accept lowercase and the Traditional Chinese equivalents: `確認` = APPROVE, `改` + note = ITERATE, `回到 G2` = BACK G2, `停` = STOP, `檢查` = REVIEW. Refine verbs in Chinese: 打磨 polish, 更大膽 bolder, 收斂 quieter, 精簡 distill, 補強 harden, 文案 clarify, 字體 typeset, 版面 layout, 上色 colorize, 動態 motion, 適配 adapt, 首次體驗 onboard.
 
 ## What does not count
 
@@ -34,7 +36,7 @@ Accept lowercase and the Traditional Chinese equivalents: `確認` = APPROVE, `�
 Print after every handoff block:
 
 ```
-G<N> done. Reply APPROVE, ITERATE <note>, BACK G<n>, or STOP.
+G<N> done. Reply APPROVE, ITERATE <note or verb>, BACK G<n>, REVIEW, or STOP.
 ```
 
 ## Decision record

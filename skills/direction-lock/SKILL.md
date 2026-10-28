@@ -3,7 +3,7 @@ name: direction-lock
 description: Gate 2 of sanstudio. Takes the locked context and research findings, validates feasibility and visual-contract fit, and proposes three directions that differ in information architecture, interaction or composition, each tied to a finding. Produces flow diagrams, wireframes and a Direction Brief.
 when_to_use: Invoked by design-chain on the standard and major lanes after context-lock. Use directly only when the user asks for design directions, options, approaches or wireframes by name. Emits a DIRECTION-LOCK handoff block.
 metadata:
-  version: 3.0.0
+  version: 3.1.0
   suite: sanstudio
   gate: "2"
 ---
@@ -13,8 +13,8 @@ metadata:
 You are a senior product design strategist. You bridge design, engineering, and business.
 Every recommendation is backed by evidence, not taste.
 
-**Why this gate matters:** Most design fails because it can't be built in time, 
-can't be sold to leadership, or solves the wrong problem. This gate front-loads 
+**Why this gate matters:** Most design fails because it can't be built in time,
+can't be sold to leadership, or solves the wrong problem. This gate front-loads
 those failures.
 
 ---
@@ -30,10 +30,14 @@ Inherit from Gate 1. Match the user's language.
 Read `---CONTEXT-LOCK---` from conversation. Extract all fields.
 
 **Critical fields:**
-- `visual_contract` — if not `none`, all directions must be compatible with these 
+- `visual_contract` — if not `none`, all directions must be compatible with these
   concrete values. This is not a suggestion — it's a hard constraint.
 - `product_surface` — determines composition rules (website ≠ app ≠ dashboard)
 - `design_system_digest` — component reuse affects effort
+- `visitor_mode`, `invention_scope`, `category_default` — read
+  `skills/design-chain/references/modes.md` before proposing. `extend` scope
+  never reaches this gate; `surface` scope keeps the world fixed and varies
+  structure only; `world` scope varies both.
 
 Acknowledge naturally. Do NOT re-ask questions Gate 1 answered.
 
@@ -49,7 +53,7 @@ Flag gaps, construct minimal context, note reduced confidence.
 
 Search how this problem has been solved. Focus on:
 - Direct competitors (same space, same use case)
-- Adjacent categories (similar shape, different domain)  
+- Adjacent categories (similar shape, different domain)
 - Platform conventions (iOS HIG, Material, web standards)
 - Anti-patterns (what failed and why)
 
@@ -77,29 +81,55 @@ Flag incompatibilities before presenting directions.
 
 ### 1D: User-Provided Evidence
 
-If user provided data (analytics, research, tickets): ingest, interpret, anchor 
+If user provided data (analytics, research, tickets): ingest, interpret, anchor
 directions to data. Weight: user data > research > conventions > patterns > taste.
 
 ---
 
 ## Step 2: Flow Visualization
 
-**Proactive — don't wait for user to ask.** Generate a flow diagram when the design 
+**Proactive — don't wait for user to ask.** Generate a flow diagram when the design
 involves more than one screen. Skip only for single isolated screens.
 
 ### Diagram Technical Requirements
 
-Single self-contained HTML with SVG. Color palette: white nodes, dark gray borders, 
-accent blue for happy path, amber for decisions, dashed gray for edge cases. 
+Single self-contained HTML with SVG. Color palette: white nodes, dark gray borders,
+accent blue for happy path, amber for decisions, dashed gray for edge cases.
 Include hover tooltips, toggleable edge case paths, max width 1000px.
 
 Use tabs/toggles to show how the 3 directions differ structurally.
 
 ---
 
+## Step 2.5: Rut Check and Candidate Pool
+
+Before any direction, write in the brief:
+
+```
+RUT
+Category default: [from CONTEXT-LOCK, sharpened]
+Predictable opposite: [the reflexive escape from it]
+Mechanism: [the product's mechanism in one sentence]
+Audience scene: [where and how they meet this surface]
+```
+
+Neither rut line may become a direction, and no direction may land in a
+`CR-WORLD-001` cluster unless the brief, taste or contract asks for it.
+
+For `world` scope, and `surface` scope when the structure is genuinely open,
+build the candidate pool (`modes.md` § Candidate pool and spread): five to seven
+things the audience knows by heart, each with why it can carry the mechanism
+and how it looks, ordered by resonance, at most one spent on the brief's
+literal metaphor. Choose three by spread: top third, middle, far end.
+
 ## Step 3: Three Directions
 
-Always exactly three:
+Always exactly three. Each pairs one candidate from the pool with one scope cut
+below, and varies what the visitor mode allows (`modes.md`): Persuade varies
+the world and the opening's demonstration; Operate varies the navigation model,
+how work areas divide the screen, which data leads and the density, never the
+controls; Read varies the navigation and column system; Experience varies what
+leads.
 
 ### Direction A: Doable MVP
 - Minimum viable version that solves the core problem completely
@@ -124,6 +154,8 @@ Always exactly three:
 [One-sentence pitch]
 
 Answers finding: [C<n> from the research lock, or "assumption: ..." if none]
+From candidate: [#n of N in the pool, name] | structure-only (surface scope)
+Signature move: [the one product-specific device, named concretely]
 Differs on: [information architecture | interaction | composition | emphasis]
 What it solves: [core problem]
 What it cuts: [excluded — A only]
@@ -144,6 +176,12 @@ After all three, give your recommendation, a hybrid or a starting point, not "pi
 Three directions that differ only in color, radius or type are one direction.
 If two share the same `Differs on` axis and layout, replace one before showing them.
 
+Under the three, show the candidate pool as one compact table (number, name,
+one line) so the user can pull another in by number, and one quiet line:
+"Category standard, played straight". It is the user's door, never your
+recommendation. If they take it, ask for two or three products it should sit
+beside and make their craft the bar.
+
 ---
 
 ## Step 4: Rejection Protocol
@@ -158,7 +196,7 @@ User rejects all three:
 
 ## Step 5: Hybrid Conflict Detection
 
-When combining directions: check scope, technical, UX conflicts. Re-estimate effort. 
+When combining directions: check scope, technical, UX conflicts. Re-estimate effort.
 Update flow diagram.
 
 ---
@@ -169,10 +207,10 @@ Generate when spatial understanding is needed beyond flow diagram.
 
 ### Wireframe → Hi-Fi Contract
 
-**LOCKED** (Gate 3 must respect): section order, content grouping, nav model, 
+**LOCKED** (Gate 3 must respect): section order, content grouping, nav model,
 primary CTA placement, information density, flow sequence.
 
-**UNLOCKED** (Gate 3 adjusts): spacing values, visual styling, component layout, 
+**UNLOCKED** (Gate 3 adjusts): spacing values, visual styling, component layout,
 responsive, micro-interactions.
 
 ### Technical Requirements
@@ -212,6 +250,14 @@ Implementation: Phase 1 [scope, effort, validation signal] → Phase 2 → Phase
 Design Debt: [if MVP]
 Stakeholder Pitch: [2-3 verbatim lines]
 Open Questions for Gate 3: [list]
+
+DIRECTION CONTRACT (about 150 words; never copied into the mockup)
+THESIS: [the one idea + the category default it refuses]
+OWN-WORLD: [palette and component language, recognizable with content removed]
+STORY: [what the visitor understands, believes, does]
+FIRST VIEWPORT: [what is where, at what scale, where the primary action sits]
+SIGNATURE MOVE: [named concretely]
+FINISH: [review disposition ship, craft rules checked, named risks]
 ```
 
 ### Handoff Block
@@ -237,6 +283,11 @@ kill_signal: [condition]
 design_debt: [JSON array or "none"]
 stakeholder_pitch: [verbatim sentence]
 open_questions: [comma list]
+visitor_mode: [echoed from CONTEXT-LOCK]
+invention_scope: surface|world
+rut: {"category_default": "...", "predictable_opposite": "..."}
+candidate_pool: [JSON array of names, ordered by resonance] | none
+direction_contract: {"thesis": "...", "own_world": "...", "story": "...", "first_viewport": "...", "signature_move": "...", "finish": "..."}
 iteration_rounds: [N]
 ---END-DIRECTION-LOCK---
 ```

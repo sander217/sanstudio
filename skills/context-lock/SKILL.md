@@ -3,7 +3,7 @@ name: context-lock
 description: Gate 1 of sanstudio. Turns a fuzzy design request plus the research lock into a locked design spec with concrete visual constraints (hex colors, fonts, layout, surface) and a session DESIGN.md. Infers who the user is and why they need this before asking anything.
 when_to_use: Invoked by design-chain after research. Use directly only when the user asks for the context or visual contract step by name, uploads a UI screenshot or reference URL for extraction, or asks for a design critique or comparison. Emits a CONTEXT-LOCK handoff block.
 metadata:
-  version: 3.0.0
+  version: 3.1.0
   suite: sanstudio
   gate: "1"
 ---
@@ -29,6 +29,14 @@ when the term could be ambiguous.
 ---
 
 ## Step 0: Process Inputs
+
+### Product truth (`PRODUCT.md`)
+
+When `.sanstudio/PRODUCT.md` or `PRODUCT.md` exists, read it before inferring.
+Its users, purpose, positioning, operating context and evidence on hand are
+confirmed facts: fill `user`, `goal` and `constraints` from them and do not
+re-ask them. Its "Evidence on hand" absences are binding: never invent what it
+says does not exist.
 
 ### Project contract (from `.sanstudio/`)
 
@@ -423,6 +431,10 @@ This research is FREE — it costs no user patience. Questions cost patience.
 After Step 1.5 decomposition, you should already know most of what you need.
 Only ask about what you genuinely can't infer.
 
+Never ask for CSS values, hex codes or an aesthetic lane ("minimal or bold?").
+State the likely reading and invite correction instead. Ask two or three related
+questions per round at most; one round is the default.
+
 ### Always confirm (not ask):
 - User: state your inference, ask for correction
 - Goal: state your inference, ask for correction
@@ -494,6 +506,22 @@ Infer key flows (not just screens):
 
 ---
 
+## Step 6.5: Visitor Mode and Invention Scope (MANDATORY)
+
+Read `skills/design-chain/references/modes.md`. Declare both from the surface
+being designed, not from the product:
+
+- **Visitor mode:** Persuade | Operate | Read | Experience. A mixed surface takes
+  the mode of its first viewport and names the second for its section.
+- **Invention scope:** extend | surface | world. A coherent identity in
+  production code counts as an established world even without a DESIGN.md.
+- **Category default:** one line naming the screen this category always ships.
+  Gate 2 refuses it and its predictable opposite.
+- **Color posture:** Restrained | Committed | Full palette | Drenched, from the
+  mode and the brief (`CR-COLOR-004`).
+
+State them in the Context Summary as inferences the user can correct.
+
 ## Step 7: Context Summary
 
 ```
@@ -537,7 +565,11 @@ ITERATE → Gate 3 directly
 Then: "(1) Use verdict, done. (2) Gate 3. (3) Gate 2."
 
 ### CRITIQUE: Analysis Output
-3-6 issues prioritized → Root Cause → Fix Direction → Quick Win
+Run the fresh-eyes review in `skills/design-lock/references/review.md` on the
+target (render, capture, independent reviewer, heuristics, personas, P0-P3).
+Lead with the specificity verdict, then 3-6 priority issues with root cause,
+fix and the refine verb that addresses each, then one quick win. Write it to
+`docs/review.md` so `ITERATE polish` can use it as a backlog.
 Then: "(1) Enough. (2) Gate 3. (3) Gate 2."
 
 ---
@@ -562,6 +594,11 @@ key_insight: [one sentence]
 blind_spots: [comma list]
 language: zh-TW|en|mixed
 routed_to: G2|G3
+visitor_mode: persuade|operate|read|experience
+invention_scope: extend|surface|world
+category_default: [one line]
+color_posture: restrained|committed|full-palette|drenched
+product_md: .sanstudio/PRODUCT.md | PRODUCT.md | none
 design_system_digest: [JSON] | none
 design_system_ref: <name> | <name1>+<name2> | .sanstudio/DESIGN.md | none   # library name(s) under design-systems/, or the project contract
 contract: .sanstudio (<brand>[/<product>], design <ref>, qa <N> gates, memory <N> accepted) | none

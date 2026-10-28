@@ -9,8 +9,11 @@ skills/
 ├── design-chain/              # Entry point. Picks the lane, runs the gates, stops for the user
 │   ├── SKILL.md
 │   ├── references/lanes.md    # fast / standard / major
-│   ├── references/control.md  # APPROVE / ITERATE / BACK / STOP
-│   └── assets/TASTE.template.md
+│   ├── references/control.md  # APPROVE / ITERATE / BACK / REVIEW / STOP
+│   ├── references/modes.md    # visitor mode, invention scope, the rut, candidate spread, direction contract
+│   ├── references/refine.md   # ITERATE verbs: polish, bolder, quieter, distill, harden, ...
+│   ├── references/contracts.md # .sanstudio/ project contract folder
+│   └── assets/                # TASTE.template.md, PRODUCT.template.md
 ├── research-synthesis/        # Gate 0: why, evidence, gaps. Runs on every lane
 ├── context-lock/              # Gate 1: who, what, visual contract, session DESIGN.md
 ├── direction-lock/            # Gate 2: three directions tied to findings
@@ -22,12 +25,15 @@ skills/
 │   ├── svg-patterns.md
 │   └── references/
 │       ├── craft-rules.md     # Binding, brand-independent rules with ids (UI-PILL-001, UI-STROKE-001, ...)
+│       ├── review.md          # Fresh-eyes review: captures, independent reviewer, heuristics, personas, P0-P3
 │       ├── INDEX.md           # Curated reference library lookup
 │       └── mobile-app-examples/
 └── production-lock/           # Gate 4: state matrix, component spec, handoff, readiness scorecard
 ```
 
-Repo-only, not shipped: `TASTE.md` (Sander's taste), `design-systems/` (73 imported DESIGN.md files, Apache 2.0 and MIT, see `design-systems/NOTICE.md`), `figma-plugin/` (optional local bridge), `apps/`, `scripts/`.
+Repo-only, not shipped: `TASTE.md` (Sander's taste), `design-systems/` (73 imported DESIGN.md files, Apache 2.0 and MIT, see `design-systems/NOTICE.md`), `figma-plugin/` (optional local bridge), `apps/`, `scripts/`, `private/` (gitignored team guides for private brands; never commit).
+
+Never put a private brand's name, tokens or contract into a tracked file. Brand contracts live in their private pack repositories and reach a session through a product repository's `.sanstudio/` folder.
 
 ## Routing
 
@@ -86,7 +92,7 @@ When a Figma MCP is connected, Gate 3 pushes directly. Otherwise it writes `figm
 
 ## Packaging for Agensi
 
-`./scripts/package-agensi.sh` builds `dist/` with one bundle ZIP and one ZIP per skill from an allowlist, strips third-party screenshots and repo-only files, and fails on any local path, localhost reference or em dash in frontmatter. Run it before every listing update.
+`./scripts/package-agensi.sh` builds `dist/sanstudio-pack-v<version>.zip`, one skill pack sold as one listing, from an allowlist plus `packaging/agensi/` (pack README, NOTICE, listing draft). It fails on private identifiers, local paths, scripts or binaries, images, symlinks, Agensi's security-scan patterns, unresolved cross references, frontmatter problems and the delivery limits (200 non-SKILL files, 6,000,000 characters). Run it before every listing update.
 
 ## Working rules
 

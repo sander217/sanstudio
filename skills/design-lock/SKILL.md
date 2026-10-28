@@ -3,7 +3,7 @@ name: design-lock
 description: Gate 3 of sanstudio. Executes the confirmed direction as a hi-fi HTML mockup with real content and images, enforces DESIGN.md tokens, craft rules and the user's taste, runs the Hi-Fi Fill Checklist and lint, and exports Figma JSON when a Figma tool is connected.
 when_to_use: Invoked by design-chain after a direction is approved, or on the fast lane right after context-lock. Use directly when the user says ITERATE on an existing mockup or asks for a hi-fi mockup, a Figma export or a pixel-level design by name. Emits a DESIGN-LOCK handoff block.
 metadata:
-  version: 3.0.0
+  version: 3.1.0
   suite: sanstudio
   gate: "3"
 ---
@@ -109,6 +109,11 @@ Match user's language. Design terms in English.
 ## Step 0: Load Context
 
 ### From Gate 2 (full pipeline)
+Read `visitor_mode` and `invention_scope` (both blocks) and the
+`direction_contract` (DIRECTION-LOCK). The contract's FIRST VIEWPORT and
+SIGNATURE MOVE are what you build to; the review checks every block. Build the
+locked direction, not a safer interpretation of it. The mode's first-viewport
+duty is in `skills/design-chain/references/modes.md`.
 Read `---CONTEXT-LOCK---` and `---DIRECTION-LOCK---`. Parse: direction, decisions,
 flow structure, wireframe contract, visual contract, product surface.
 
@@ -395,6 +400,11 @@ Out of scope: [element]: [why later]
 
 Confirm before hi-fi. State change magnitude: Tweak | Moderate | Significant.
 
+**Refinement preserves; redesign replaces.** On `extend` or `surface` scope keep
+the incumbent identity, behavior, copy and everything outside scope. On a
+`world` redesign keep product truth, content and function, and replace the
+look; never split the difference by polishing a look you were asked to replace.
+
 **Never change silently (redesign / ITERATE).** These need explicit user sign-off before
 you touch them — they break SEO, analytics, autofill, or legal compliance even when the
 new version looks better:
@@ -553,7 +563,7 @@ prototype meant to be **double-clicked, demoed, or archived** (not just screensh
 once in this session):
 
 - Download the few **identity / hero** images into the session `assets/` folder and
-  reference them locally, OR inline as base64. These must survive offline.
+  reference them locally, OR inline them as data URIs. These must survive offline.
 - Iconify icons and purely decorative photos may stay as external URLs (stable, cached,
   low-stakes), but say so.
 - **State the offline footprint explicitly** in the handoff: "N images are external
@@ -818,6 +828,10 @@ can name it.
 □ Affordance the brief never asked for, imported from the reference platform
   ("TikTok-style" feed shipping follow / duet / stitch)                         CR-FINISH-003
 □ Browser defaults left on selection, caret, focus ring, scrollbar              CR-FINISH-001
+□ Lands in an AI aesthetic cluster nothing asked for (cream + serif + terracotta,
+  black + neon glow, broadsheet italic + tracked mono, brutalist offset shadows)  CR-WORLD-001
+□ Operate screen wearing a costume of its world (bezel, terminal bar, ledger
+  paper table) or non-standard controls                                         CR-MODE-001
 ```
 
 State the result:
@@ -888,6 +902,10 @@ complete with transitions after all screens done.
 
 ## Step 12: Iteration
 
+- Refine verb (`ITERATE polish|bolder|quieter|distill|harden|clarify|typeset|layout|colorize|motion|adapt|onboard [target]`)
+  → follow its recipe in `skills/design-chain/references/refine.md`: scope is
+  sovereign, no new primitives without asking, finish with Step 9's diff, the
+  Anti-Slop Pass and the review on the changed area
 - Text feedback → apply directly
 - Directional ("too dense") → interpret, propose, confirm
 - Comparative ("more like [ref]") → identify what to adopt
@@ -928,6 +946,8 @@ QA CHECKLIST:
 - Anti-slop (Step 8.5): em-dash count = 0, zero eyebrows [web], no version/decoration-strip
   tells, no div-fake screenshots, no fake-perfect numbers, every face has a reason in DESIGN.md
 - References: Step 2.5 matches announced, trace comments embedded, craft rules and taste honored
+- Mode duty: the first viewport does what `modes.md` asks of this visitor mode; on Operate
+  every control is a standard one (`CR-MODE-001`)
 - DESIGN.md lint (run if session DESIGN.md exists — see design-md-spec.md):
   · broken-ref: every `{path.to.token}` resolves (BLOCKING)
   · contrast-ratio: every component bg/text pair WCAG AA ≥ 4.5:1 normal text,
@@ -942,6 +962,20 @@ QA CHECKLIST:
 ```
 
 Fix failures before export.
+
+## Step 13.5: Fresh-Eyes Review (MANDATORY, before the user sees the mockup)
+
+Follow `skills/design-lock/references/review.md`: render and capture at the
+shipped viewports into `<session>/review/`, validate every capture, hand the
+reviewer only the brief, the direction contract, the rule paths and the
+captures (a subagent when the agent can spawn one; otherwise a separate pass
+marked `DEGRADED`), then act on the disposition: `recapture`, `rebuild`, `fix`
+(P0 and P1, then a verdict pass on those fixes only) or `ship`. Two fix rounds
+at most; the rest goes to the user and stays in `docs/review.md`.
+
+```
+REVIEW: <method> · <heuristics total>/<max> · P0 <n> · P1 <n> · disposition <word>
+```
 
 ---
 
@@ -1038,6 +1072,10 @@ craft_rules_checked: [N]
 taste_rules_applied: [N or "template-defaults"]
 craft_exceptions: [rule ids approved by the user, or none]
 qa_status: all-clear|warnings|fixed
+review_method: subagent|degraded-single-context|degraded-no-render
+review_disposition: ship|fix
+review_score: [total]/[max]
+open_issues: [P2/P3 count; P0/P1 must be 0 or listed as user-approved]
 hifi_fill_status: all-pass|regenerated-N-times
 iteration_rounds: [N]
 companion_docs: DDR,interaction-spec,handoff-summary

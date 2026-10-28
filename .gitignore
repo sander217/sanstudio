@@ -9,3 +9,6 @@ apps/shell/.vite/
 # build and session output
 dist/
 sanstudio-output/
+
+# private team guides for private brands, never commit
+private/

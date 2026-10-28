@@ -34,7 +34,16 @@ cp -R ~/sanstudio/skills/* ~/.claude/skills/
 
 從 Agensi 買的 bundle 解開後是 `sanstudio/skills/<六個資料夾>`，把 `skills/` 整個放到 `.claude/` 底下就好。
 
-### 2. 放一份 TASTE.md
+### 2. 放一份 PRODUCT.md（建議）
+
+```bash
+mkdir -p .sanstudio
+cp ~/.claude/skills/design-chain/assets/PRODUCT.template.md ./.sanstudio/PRODUCT.md
+```
+
+只寫確定的產品事實：使用者、產品目的、定位、使用情境、手上有哪些真資料。不寫顏色字體。有了它，每次 session 不會再問一次「這是給誰用的」，也不會捏造你說過不存在的東西。沒寫的話，G1 確認完會問你一次要不要幫你存。
+
+### 3. 放一份 TASTE.md
 
 在你要做設計的專案根目錄：
 
@@ -46,7 +55,7 @@ cp ~/.claude/skills/design-chain/assets/TASTE.template.md ./TASTE.md
 
 這份是你的。session 的 `DESIGN.md` 可以覆蓋它的 token，但 `craft-rules.md` 的工藝規則蓋過兩者。
 
-### 3. 確認載入
+### 4. 確認載入
 
 開 Claude Code，打一句：
 
@@ -114,9 +123,18 @@ tab bar 不要動，iOS 優先。
 
 `direction-lock` 看兩三個競品，給三個方向的 wireframe。三個必須在資訊架構、互動或構圖上不同，只換顏色不算。每個方向寫它回答哪條發現、解什麼、代價是什麼，最後推薦一個。
 
+### G1 也會決定兩件事
+
+- **Visitor mode**：這個畫面的人要完成什麼。Persuade（被說服然後行動，landing、pricing）、Operate（完成工作，app、dashboard、設定）、Read（讀懂，文件、報告）、Experience（沉浸在作品裡，作品集、展示）。模式決定字體怎麼選、顏色敢不敢放、第一屏要做什麼。Operate 畫面用 Inter 這類工作字體是對的答案，Persuade 才需要有個性的字。
+- **Invention scope**：能發明多少。`extend` 在既有畫面裡加東西，不跑方向；`surface` 在既有品牌裡做新頁面，只變結構；`world` 新品牌或改版，世界觀和結構都能變。原則是「精修保留，改版替換」，不會半套地把要換掉的舊樣子再打磨一次。
+
+### G2 怎麼避免千篇一律
+
+先寫出「這個類別永遠會做的那一頁」和「它反射性的反面」，兩個都不能當方向。再從使用者熟悉的世界列五到七個候選（他們每天看的出版物、器具、場所、介面），按共鳴排序，挑三個時從前段、中段、尾段各拿一個，不讓最直覺的答案佔滿三格。三個方向下面附一行安靜的「類別標準做法」，那是給你的退路，鏈路不會推薦它。選定後寫六段 direction contract（THESIS、OWN-WORLD、STORY、FIRST VIEWPORT、SIGNATURE MOVE、FINISH），G3 照它做、review 照它驗。
+
 ### G3 hi-fi
 
-`design-lock` 載入 `DESIGN.md`、`craft-rules.md`、你的 `TASTE.md`、reference library，做出 hi-fi HTML：手機框、真金額、真商家名、SVG icon、真圖。生完先跑 Hi-Fi Fill Checklist 和 lint：對比度、灰色 placeholder、chip 有沒有圓點、card 有沒有框線。不過就自己修再出。有 Figma MCP 就推進 Figma。
+`design-lock` 載入 `DESIGN.md`、`craft-rules.md`、你的 `TASTE.md`、reference library，做出 hi-fi HTML：手機框、真金額、真商家名、SVG icon、真圖。生完先跑 Anti-Slop Pass、Hi-Fi Fill Checklist 和 lint：對比度、灰色 placeholder、chip 有沒有圓點、card 有沒有框線。然後是 **fresh-eyes review**：用瀏覽器在實際尺寸截圖，交給一個沒參與製作的 subagent 審，給出具體性判斷、Nielsen 十項分數、兩三個人物走查、P0 到 P3 問題和 ship / fix / rebuild / recapture 的結論。P0、P1 會在你看到之前先修掉，剩下的寫進 `docs/review.md`。agent 沒有 subagent 時會標明 DEGRADED，不會假裝獨立。有 Figma MCP 就推進 Figma。
 
 ### G4 設計包，只在 major
 
@@ -129,10 +147,10 @@ tab bar 不要動，iOS 優先。
 每關結束鏈路會印：
 
 ```text
-G2 done. Reply APPROVE, ITERATE <note>, BACK G<n>, or STOP.
+G2 done. Reply APPROVE, ITERATE <note or verb>, BACK G<n>, REVIEW, or STOP.
 ```
 
-只接受這四種，中英文都行：
+只接受這幾種，中英文都行：
 
 | 回話 | 中文 | 作用 |
 |---|---|---|
@@ -140,6 +158,31 @@ G2 done. Reply APPROVE, ITERATE <note>, BACK G<n>, or STOP.
 | `ITERATE 金額再大一點` | 改 金額再大一點 | 帶著備註重做這關，會給 before/after |
 | `BACK G1` | 回到 G1 | 回到更早的關，後面的產出標成 stale |
 | `STOP` | 停 | 存 PARTIAL block，總結現況，結束 |
+| `REVIEW` | 檢查 | 現在就跑一次 fresh-eyes review，不推進關卡 |
+
+### 精修動詞
+
+`ITERATE` 後面接一個動詞，就跑對應的固定流程，只動你指定的地方，不會順手改別的，也不會自己加新顏色、新字體、新元件（要加會先問你）：
+
+| 動詞 | 中文 | 什麼時候用 |
+|---|---|---|
+| `polish` | 打磨 | 方向對，完成度不夠。會先讀 `docs/review.md` 的 P0、P1 當待辦 |
+| `bolder` | 更大膽 | 某一塊跟其他區比起來太平 |
+| `quieter` | 收斂 | 太吵、太花、看了累 |
+| `distill` | 精簡 | 畫面上東西太多 |
+| `harden` | 補強 | 只有完美資料才好看：長名字、空狀態、錯誤、離線 |
+| `clarify` | 文案 | 字看不懂 |
+| `typeset` | 字體 | 層級或閱讀舒適度不對 |
+| `layout` | 版面 | 分組、節奏、間距不對 |
+| `colorize` | 上色 | 顏色沒在做事 |
+| `motion` | 動態 | 動畫缺、亂或沒理由 |
+| `adapt` | 適配 | 換尺寸、換裝置 |
+| `onboard` | 首次體驗 | 第一次用、空狀態、多快拿到價值 |
+
+```text
+ITERATE bolder hero
+改 精簡 設定頁: 匯出要留著
+```
 
 沉默、問問題、只說「不錯」都不會往下走。問問題它會答完再印一次提示行。想選方向直接說「B，但分組用 A 的」，它會當 APPROVE 加備註處理。
 
@@ -159,6 +202,7 @@ G2 done. Reply APPROVE, ITERATE <note>, BACK G<n>, or STOP.
 | hi-fi mockup | `html/` | 瀏覽器打開看，給工程師對照 |
 | Figma 匯出 | `figma/design-export.json` | 有 MCP 時已直接推進 Figma |
 | 決策紀錄 | `docs/decisions.md` | 每關的 APPROVE、ITERATE、BACK |
+| 截圖和審查 | `review/`、`docs/review.md` | 分數、問題清單，`ITERATE polish` 的待辦 |
 | 設計包 | `docs/` | major lane 才有 |
 
 mockup 是提案預覽，不是產品程式碼。鏈路永遠不寫你的產品 repo。
@@ -185,6 +229,9 @@ Figma：有連 Figma MCP，G3 直接推。沒有，它把 `figma/design-export.j
 ---
 
 ## 八、常見問題
+
+**不知道下一步做什麼？**
+直接叫 design-chain 不給需求，它會看 `.sanstudio/`、上一次 session 的 review 和 PARTIAL 狀態，建議兩三個下一步，不會自己開跑。
 
 **我只想改一個按鈕，也要跑研究？**
 要，但 fast lane 的 G0 很輕：兩到五條發現加未知清單，不做 desk research。研究的目的是確認你要改的東西真的是問題所在。

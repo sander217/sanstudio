@@ -12,13 +12,15 @@ A lane is the depth of the chain. It decides which gates run and how heavy G0 is
 
 When signals conflict, pick the heavier lane and say why in one line.
 
+Invention scope (`modes.md`) bounds the lane: `extend` fits the fast lane and never runs G2; `world` scope (a new visual world, a redesign or rebrand) needs at least standard.
+
 ## What each lane runs
 
 ### fast
 
 1. G0 research, light: Evaluate mode on the request. Two to five findings, an explicit list of unknowns, no desk research unless one search could change the decision.
 2. G1 context lock: ITERATE or CONSTRAINED entry. Inherit `DESIGN.md` from the prior session when it exists; otherwise extract from the screenshot.
-3. G3 design lock: one direction. Before and after diff. Hi-Fi Fill Checklist and `DESIGN.md` lint still run.
+3. G3 design lock: one direction. Before and after diff. Anti-Slop Pass, Hi-Fi Fill Checklist, `DESIGN.md` lint and the fresh-eyes review still run.
 
 No G2. The fast lane does not explore alternatives; if G0 or G1 shows the approach itself is open, upgrade to standard.
 

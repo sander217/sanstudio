@@ -67,8 +67,14 @@ reviewer can verify on a render.
   or the system face are fine answers when the style calls for them (a product
   UI, an operate surface, a brand that already uses them); they fail only when
   they appear because nobody decided. The tell is a face with no reason in
-  `DESIGN.md`, or the same face across unrelated briefs. Native mobile app
-  shells keep SF Pro and Roboto for system chrome regardless.
+  `DESIGN.md`, or the same face across unrelated briefs. The register follows
+  the visitor mode (`skills/design-chain/references/modes.md`): on Operate and
+  Read surfaces workhorse UI faces and system stacks are well-chosen answers;
+  on Persuade and Experience surfaces the faces models reach for first (Inter
+  as display, Fraunces, Playfair Display, Space Grotesk, DM Sans, Instrument
+  Serif, Outfit, Plus Jakarta Sans) need a reason specific to this brief, and a
+  subject association is not one. Native mobile app shells keep SF Pro and
+  Roboto for system chrome regardless.
 - `CR-TYPE-003` At most two families: a display face and a body face, or one
   family for both. A third face carries exactly one role (wordmark, headline
   figure or code). At most three weights across the page, picked as extremes
@@ -116,6 +122,9 @@ reviewer can verify on a render.
   "spotlights", neon bloom or frosted glass as decoration. A shadow carries an
   offset and a soft blur, one per page at most, and an elevated surface is
   never darker than its canvas.
+- `CR-COLOR-008` Light or dark is chosen from the use scene (who, where,
+  under what light), never from the category ("developer tool, so dark").
+  Write the one-line reason in `DESIGN.md`.
 - `CR-COLOR-007` Dark mode is composed, never the light theme inverted. Surface
   steps are lightness steps in the ground's own hue.
 
@@ -207,6 +216,27 @@ reviewer can verify on a render.
   outline, never a border change, and never animates. Disabled is opacity plus
   the native attribute. Two button sizes at most; an input matches the button
   beside it.
+
+## World and mode
+
+- `CR-WORLD-001` AI aesthetic clusters `(default)`. Where the brief leaves the
+  aesthetic free, do not land in one of the looks AI interfaces converge on
+  regardless of subject: warm cream ground with a high-contrast serif and a
+  terracotta or signal-red accent; near-black with one neon accent and glowing
+  edges; broadsheet hairlines with an italic display serif and small tracked
+  mono labels; flat saturated ink with black boxes, hard offset shadows and
+  heavy condensed type. Each is legitimate when the brief, `TASTE.md` or a
+  contract calls for it. If someone could guess the aesthetic from the
+  category alone, the direction was not decided.
+- `CR-MODE-001` On an Operate surface the chosen world lends type, palette,
+  density and one signature move, and nothing else. Navigation, layout model
+  and controls stay the standard ones for the platform (web components on the
+  web, native controls in an app). A terminal's function-key bar, an
+  instrument bezel or ruled ledger paper standing in for a table is a costume.
+  On a Read surface the world owns the frame and never the reading column.
+- `CR-MODE-002` The first viewport is a thesis, not a header. It does the job
+  `modes.md` gives its visitor mode, and passes the memory test: someone who
+  saw only that viewport could describe something specific an hour later.
 
 ## Motion
 

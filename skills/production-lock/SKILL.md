@@ -3,7 +3,7 @@ name: production-lock
 description: Gate 4 of sanstudio. Hardens a validated Gate 3 prototype into a complete, buildable design package with full state and screen coverage, responsive matrix, component spec, final copy, interaction and accessibility specs and a dev handoff. Reports an honest readiness scorecard and never claims the design is auto-shippable.
 when_to_use: Invoked by design-chain on the major lane after design-lock is approved. Use directly only when the user asks for a production package, dev handoff, state matrix or component spec by name and a DESIGN-LOCK block already exists. Emits a PRODUCTION-LOCK handoff block.
 metadata:
-  version: 3.0.0
+  version: 3.1.0
   suite: sanstudio
   gate: "4"
 ---
@@ -211,7 +211,12 @@ Compose `design:design-handoff`. Write to `docs/dev-handoff.md`.
 
 ## Step 9: Production Readiness Scorecard (the honest gate)
 
-Score each dimension. Be ruthless — this is the credibility of the whole gate:
+Score each dimension. Be ruthless — this is the credibility of the whole gate.
+Run the fresh-eyes review (`skills/design-lock/references/review.md`) over the
+hardened screen set first: its heuristic total, open P0/P1 issues and persona
+breaks feed the Interaction, Accessibility and States rows, and the `harden`
+recipe in `skills/design-chain/references/refine.md` is the checklist for
+extreme inputs:
 
 ```
 🏁 PRODUCTION READINESS

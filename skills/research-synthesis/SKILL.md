@@ -1,6 +1,6 @@
 ---
 name: research-synthesis
-description: Support design decisions by synthesizing interviews, Slack discussions, issue tickets, reviews, research papers, metrics, and project context. Use for understanding user needs, exploring design directions, evaluating a proposed solution with supporting and challenging evidence, or revisiting findings as products and evidence change. Can conduct desk research when the runtime provides search tools. Do not use for a simple ticket status lookup or quantitative computation without a research or design question.
+description: Gate 0 of sanstudio. Supports design decisions by synthesizing interviews, Slack threads, tickets, reviews, papers, metrics and project context, and by running desk research when search tools exist, to explain user needs, explore directions or evaluate a proposed solution with supporting and challenging evidence. Not for a ticket status lookup or a calculation with no research or design question.
 ---
 
 # Design Research and Synthesis
@@ -110,6 +110,12 @@ Lead with what the evidence permits the designer to decide. Keep the decision su
 Before delivery, check that summaries retain attribution, uncertainty, population, and time limits; counts reconcile without false corroboration; key numbers and causal claims are supported or labeled as hypotheses/proposals; recommendations distinguish problem evidence from solution evidence; external sources were read to the extent claimed; unknown dates/versions remain unknown; and later evidence has not been smuggled into an earlier decision.
 
 For Refresh, retain the prior finding and decision, append new evidence, and explain changes in applicability or confidence. Mark findings current, needs recheck, resolved with evidence, or superseded. Never overwrite history solely because a newer source arrived. Follow the user's destination and audience when saving. Use synthetic examples for public demonstrations rather than publishing sensitive research.
+
+## Product truth as supplied context
+
+When `.sanstudio/PRODUCT.md` or `PRODUCT.md` exists, treat it as the product's
+confirmed brief: cite it as a source, do not re-derive what it states, and keep
+its "Evidence on hand" absences as known gaps.
 
 ## Project contract as supplied context
 
