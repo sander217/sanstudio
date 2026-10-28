@@ -85,7 +85,7 @@ Invoke `context-lock` with the research lock. Its key insight must cite at least
 
 ### G2 Direction lock, standard and major
 
-Invoke `direction-lock`. It first names the rut (the category default and its predictable opposite), builds a candidate pool from the audience's world and picks three by spread, not rank. The three must differ in information architecture, interaction, composition or visual emphasis, never only in color, and vary what the visitor mode allows. Each states which research finding it answers, what it optimizes, and its cost. One is recommended; "category standard, played straight" is offered as a quiet door. On lock it writes the six-block direction contract (`references/modes.md`) that G3 builds to.
+Invoke `direction-lock`. It first names the rut (the category default and its predictable opposite), builds a candidate pool from the audience's world and picks three by spread, not rank. The three must differ in information architecture, interaction, composition or visual emphasis, never only in color, and vary what the visitor mode allows. Each states which research finding it answers, what it optimizes, and its cost. One is recommended; the familiar version (the category's usual answer, done well) is offered as a quiet option. On lock it writes the six-block direction contract (`references/modes.md`) that G3 builds to.
 
 ### G3 Design lock
 

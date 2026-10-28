@@ -25,8 +25,7 @@ at the sizes it ships at:
   not imagined.
 
 Settle or disable entrance motion before capturing; an element hidden by
-animation timing reads as missing. Then open each capture once and confirm it
-shows what its name claims: no blank or black region, the right screen, fonts
+animation timing reads as missing. Then open each capture once and check that it really shows the screen and state its filename says: no blank or black region, the right screen, fonts
 loaded, images loaded. An invalid capture is recaptured, never reviewed.
 
 No browser tool: review from source, record `evidence gap: no render`, and say
@@ -53,16 +52,14 @@ A silent single-context review is a failed review.
 
 ## 3. What the reviewer returns
 
-**Specificity verdict.** Does it feel authored for this product, or could an
-unrelated product use it unchanged? Cover the name and say what remains. Name
+**Specificity verdict.** Was this made for this product, or would it fit a different product with only the logo swapped? Cover the name and say what remains. Name
 the `CR-WORLD-001` cluster if it landed in one.
 
-**Promise check.** Each direction-contract block: kept, partly kept or broken,
+**Promise check.** Each direction-contract block (IDEA, LOOK, JOURNEY, FIRST SCREEN, SIGNATURE MOVE, DONE WHEN): kept, partly kept or broken,
 with the evidence on the capture. Skip on `extend` scope.
 
 **Mode check.** The first-viewport duty and self-check for the visitor mode
-(`skills/design-chain/references/modes.md`). For Persuade, the memory test:
-what would someone describe an hour after seeing one viewport?
+(`skills/design-chain/references/modes.md`). For Persuade, the recall test: what could someone describe the next day after seeing only the first screen?
 
 **Heuristics.** Score Nielsen's ten heuristics 0 to 4 (0 absent, 2 workable
 with friction, 4 genuinely excellent). On Persuade and Experience surfaces,

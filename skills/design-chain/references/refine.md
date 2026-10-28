@@ -23,12 +23,10 @@ read as a steer for the next round.
    new idea.
 2. **No new primitives without asking.** A verb never adds a color, font,
    radius, shadow or component the surface does not already own. If the
-   system cannot express the change, name the exact addition and the job it
-   would do, and wait.
+   system cannot express the change, say precisely what you would add and why it is needed, and wait.
 3. **Content stays true.** Existing claims, names and numbers are part of the
    scope. Ask before changing a factual line.
-4. **Refinement preserves.** If the concept itself is wrong, say so and offer
-   `BACK G2` instead of smuggling in a redesign.
+4. **Refinement preserves.** When the problem is the concept rather than the finish, tell the user and offer `BACK G2` instead of slipping a redesign into a refinement.
 5. **Show the diff.** Every verb ends with Step 9's before and after, then the
    Anti-Slop Pass and the review on the changed area.
 6. Record the verb, target and note verbatim in `docs/decisions.md`.
@@ -64,12 +62,7 @@ backlog items you cleared in `docs/review.md`.
 
 ### bolder
 
-Raise one target to the conviction its neighbors already imply. A section
-usually reads flat because it opts out of the system's own strongest moves:
-the display type at full strength, the signature move, the density shift. Use
-those, not new effects; reaching for more effects is the opposite of bold.
-Make one decisive move completely, then quiet everything around it so the move
-reads. Skeleton test: strip the copy; does the structure alone still say what
+Raise one target to the conviction its neighbors already imply. A flat section is usually one that skips the devices the rest of the design already uses well: the display type at full size, the signature move, a change of density. Use those instead of new effects; piling on effects makes a section louder, not bolder. Commit to a single strong change and calm what surrounds it so the change is legible. Skeleton test: strip the copy; does the structure alone still say what
 the section is and why it matters? The result looks more like the same brand,
 not less.
 
@@ -100,8 +93,7 @@ screen. On the major lane this moves to Gate 4's state matrix.
 
 ### clarify
 
-Read the whole interaction path, not isolated strings. Rewrite so the user
-knows what happened, what matters and what to do next. Keep facts, product
+Read the whole interaction path, not isolated strings. Rewrite so the user can tell what just happened, why it matters to them and their next step. Keep facts, product
 terms and voice. Apply `CR-COPY-001` to `004`.
 
 ### typeset

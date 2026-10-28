@@ -52,7 +52,7 @@ Refine verbs give scoped passes at Gate 3: `ITERATE polish|bolder|quieter|distil
 
 - **Visitor mode** (Persuade, Operate, Read, Experience) sets the ambition: a landing page commits to a point of view, a dashboard commits to precision and one signature move.
 - **The rut.** Gate 2 names the page the category always ships and its predictable opposite, refuses both, and picks three directions from a candidate pool by spread rather than rank.
-- **Direction contract.** Six short blocks (thesis, own world, story, first viewport, signature move, finish) that Gate 3 builds to.
+- **Direction contract.** Six short blocks (idea, look, journey, first screen, signature move, done when) that Gate 3 builds to.
 - **Fresh-eyes review.** Gate 3's result is captured in a browser and reviewed by a context that did not build it: specificity, Nielsen heuristics, persona walks, P0 to P3 issues, and a ship, fix, rebuild or recapture disposition.
 
 ## What binds and what is yours

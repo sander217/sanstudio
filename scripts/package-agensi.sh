@@ -55,6 +55,7 @@ for s in "${SKILLS[@]}"; do
 done
 cp "$ROOT/packaging/agensi/README.md" "$PKG/README.md"
 cp "$ROOT/packaging/agensi/NOTICE.md" "$PKG/NOTICE.md"
+mkdir -p "$PKG/licenses" && cp "$ROOT/packaging/agensi/licenses/"*.txt "$PKG/licenses/"
 
 # ---- scan ------------------------------------------------------------------
 echo "scan: private identifiers and local paths"
@@ -95,6 +96,10 @@ if grep -rnEi "$SEC" "$PKG"; then
 fi
 w=$( { grep -rnEi 'base64|\bcurl\b|\bfetch\(|\bsudo\b' "$PKG" || true; } | wc -l | tr -d ' ')
 [[ "$w" == "0" ]] || warn "$w lines mention base64, curl, fetch or sudo; Agensi scores each as a warning"
+
+echo "scan: third-party licences"
+for lic in APACHE-2.0.txt MIT-hallmark.txt MIT-taste-skill.txt; do [[ -f "$PKG/licenses/$lic" ]] || fail "missing licenses/$lic (required by an adapted source)"; done
+grep -q "impeccable" "$PKG/NOTICE.md" && grep -q "taste-skill" "$PKG/NOTICE.md" && grep -q "hallmark" "$PKG/NOTICE.md" && grep -q "design.md" "$PKG/NOTICE.md" || fail "NOTICE.md must credit every adapted source"
 
 echo "scan: cross references"
 missing=0

@@ -177,10 +177,7 @@ Three directions that differ only in color, radius or type are one direction.
 If two share the same `Differs on` axis and layout, replace one before showing them.
 
 Under the three, show the candidate pool as one compact table (number, name,
-one line) so the user can pull another in by number, and one quiet line:
-"Category standard, played straight". It is the user's door, never your
-recommendation. If they take it, ask for two or three products it should sit
-beside and make their craft the bar.
+one line) so the user can pull another in by number, and one quiet line offering the familiar version: the category's usual answer, done well. The user may take it; you never recommend it. If they do, ask which two or three products it should stand next to and hold it to their finish.
 
 ---
 
@@ -252,12 +249,12 @@ Stakeholder Pitch: [2-3 verbatim lines]
 Open Questions for Gate 3: [list]
 
 DIRECTION CONTRACT (about 150 words; never copied into the mockup)
-THESIS: [the one idea + the category default it refuses]
-OWN-WORLD: [palette and component language, recognizable with content removed]
-STORY: [what the visitor understands, believes, does]
-FIRST VIEWPORT: [what is where, at what scale, where the primary action sits]
+IDEA: [the single idea + the usual category layout it rejects]
+LOOK: [colors, type, component style, recognizable with the words blanked out]
+JOURNEY: [what the visitor learns, then trusts, then does]
+FIRST SCREEN: [each element, its size and position, where the main action is]
 SIGNATURE MOVE: [named concretely]
-FINISH: [review disposition ship, craft rules checked, named risks]
+DONE WHEN: [review disposition ship, craft rules checked, risks named]
 ```
 
 ### Handoff Block
@@ -287,7 +284,7 @@ visitor_mode: [echoed from CONTEXT-LOCK]
 invention_scope: surface|world
 rut: {"category_default": "...", "predictable_opposite": "..."}
 candidate_pool: [JSON array of names, ordered by resonance] | none
-direction_contract: {"thesis": "...", "own_world": "...", "story": "...", "first_viewport": "...", "signature_move": "...", "finish": "..."}
+direction_contract: {"idea": "...", "look": "...", "journey": "...", "first_screen": "...", "signature_move": "...", "done_when": "..."}
 iteration_rounds: [N]
 ---END-DIRECTION-LOCK---
 ```

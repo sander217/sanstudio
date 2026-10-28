@@ -25,8 +25,7 @@ reviewer can verify on a render.
   one stroke weight per screen. Emoji or Unicode glyphs as UI icons is an
   immediate reject.
 - `CR-CONTENT-004` No em or en dashes in copy. No trailing punctuation in titles
-  or headings. Curly quotes, a true ellipsis, a non-breaking space inside unit
-  pairs.
+  or headings. Typographic quotes and apostrophes, one ellipsis character, and a no-break space between a number and its unit.
 - `CR-CONTENT-005` Claims come from supplied truth. A number, testimonial, logo
   wall or award the brief did not give is never invented. A missing fact the
   page cannot do without becomes a visible labelled slot ("Venue to be
@@ -42,20 +41,13 @@ reviewer can verify on a render.
 
 ## Copy voice
 
-- `CR-COPY-001` The swap test: a headline that would work on a competitor's
-  page is rewritten with a noun only this product has. Section heads say what
-  the reader gets, never a category label ("Features", "Our story", "Why us").
-- `CR-COPY-002` Banned phrases: "Reimagine", "Whether you're X or Y", "It's not
-  just X, it's Y", "Say goodbye to", "game-changer", "journey", "Seamless",
-  "Elevate", "Quietly trusted by", "Oops", a colon title ("Focus: the app
-  for"), "Click here", "Enter your email below". Fake-perfect numbers
+- `CR-COPY-001` The swap test: if a rival could paste a headline onto their own site unchanged, rewrite it around something only this product has. Section titles tell the reader what they will get, not a generic bucket name such as "Features" or "About us".
+- `CR-COPY-002` Banned phrases: "Unlock", "Supercharge", "Seamless", "Elevate", "next level", "game-changer", "Say goodbye to", "It's not just X, it's Y", "Whether you're X or Y", "Quietly trusted by", "Oops", a headline built as "Name: the app for ...", and link text such as "Click here". Fake-perfect numbers
   (`99.99%`) and startup-slop names (`Acme`, `Nexus`) count as copy slop.
 - `CR-COPY-003` Buttons name the verb of the action ("Book a fitting").
   Errors say what happened and what to do. Empty states say what is empty,
   why it matters and one action.
-- `CR-COPY-004` Budget: headlines seven words or fewer, section heads six or
-  fewer, paragraphs two short sentences, no triads of adjectives ("fast,
-  simple, powerful").
+- `CR-COPY-004` Length: keep headlines under eight words and section titles under seven, paragraphs to two short sentences, and avoid stacking three adjectives ("fast, simple, powerful").
 
 ## Type
 
@@ -75,8 +67,7 @@ reviewer can verify on a render.
   Serif, Outfit, Plus Jakarta Sans) need a reason specific to this brief, and a
   subject association is not one. Native mobile app shells keep SF Pro and
   Roboto for system chrome regardless.
-- `CR-TYPE-003` At most two families: a display face and a body face, or one
-  family for both. A third face carries exactly one role (wordmark, headline
+- `CR-TYPE-003` Use no more than two typefaces, one for display and one for text (one family may cover both). A third face carries exactly one role (wordmark, headline
   figure or code). At most three weights across the page, picked as extremes
   (300 beside 700, 400 beside 800), never 500 beside 600.
 - `CR-TYPE-004` Display: tracking between -0.02em and -0.04em on a
@@ -90,9 +81,7 @@ reviewer can verify on a render.
   balance` on heads, `pretty` on body. `tabular-nums` on figures that compare.
 - `CR-TYPE-005` No eyebrow. The small tracked-uppercase label above a heading
   ("WHY US", "HOW IT WORKS", "01 · Capabilities") is the single most reliable
-  machine tell. The heading carries its own weight. Legal because they name
-  something present: a `<figcaption>`, a `<th>`, a `<label>`, a tab, a byline,
-  a unit after a figure. Labels, chips, nav links and table heads are sentence
+  machine tell. The heading carries its own weight. Labels that name a real thing on the page are fine: a figure caption, a table header, a form label, a tab name, an author line, a unit after a number. Labels, chips, nav links and table heads are sentence
   case and untracked.
 - `CR-TYPE-006` Monospace only for code, figures or measurement, never as a
   costume for "technical" `(default)`.
@@ -101,16 +90,14 @@ reviewer can verify on a render.
 
 - `CR-COLOR-001` At most three colors per screen: surface, primary, one accent.
   Semantic colors (success, danger, warning) do not count but stay restrained.
-- `CR-COLOR-002` Body text contrast is WCAG AA or better (4.5:1; large text,
-  icons, focus rings and field edges 3:1). Low-contrast grey body text is a
+- `CR-COLOR-002` Body text contrast is WCAG AA or better (4.5:1 for body; 3:1 for large text, icons, focus indicators and input borders). Low-contrast grey body text is a
   failure. Grey text never sits on a colored surface; tint secondary text from
   the surface or foreground hue.
 - `CR-COLOR-003` No pure `#000` or `#fff` as surface or text. Neutrals are
   tinted toward the brand's anchor hue (OKLCH chroma 0.005 to 0.018), not
   flat grey.
 - `CR-COLOR-004` The accent is a signal, not a fill `(default)`. Under about 5%
-  of any viewport: the primary control, an active nav item, a focus ring, a
-  link on hover, the one series a chart argues from. A declared posture in
+  of any viewport: the main button, the current nav item, focus indicators, hovered links, and the one data series a chart is about. A declared posture in
   `DESIGN.md` (committed field, drenched surface) is the only way to spend
   more, and a declared surface color is not accent footprint.
 - `CR-COLOR-005` Gradient policy. Gradients are allowed only as a declared
@@ -139,10 +126,8 @@ reviewer can verify on a render.
   marketing site.
 - `CR-LAYOUT-003` Bento grids only when requested `(default)`. Default to single
   column, asymmetric or editorial composition. A web page has a primary axis
-  (left-biased, right-biased, top-heavy or bottom-weighted); centre-biased
-  everywhere is an unmade decision.
-- `CR-LAYOUT-004` The surface ladder: whitespace, then a hairline, then a
-  tinted well (no border), then a card (a border or a shadow, never both). Use
+  (weighted left, right, top or bottom); centering everything means no choice was made.
+- `CR-LAYOUT-004` The surface ladder: whitespace, then a hairline, then a tinted panel without an outline, then a card, which gets an outline or a shadow but not both. Use
   the lowest rung that works. Never a card inside a card, never white cards on
   a tinted page, never a bordered box inside a well, never a colored left
   border thicker than 1px on a card, list item or callout. Card radii 12 to
@@ -150,8 +135,7 @@ reviewer can verify on a render.
   controls only.
 - `CR-LAYOUT-005` Page scaffolds that read as templates `(default)`: same-size
   icon-heading-text cards as the page structure; three identical feature cards
-  in a row; the hero-metric template (big number, small label, supporting
-  stats); section numbers (01 / 02 / 03) when the sequence carries no
+  in a row; the giant-KPI hero (one huge figure, a caption, a row of minor stats); section numbers (01 / 02 / 03) when the sequence carries no
   information. Across a scrolling page each layout family appears at most
   once, and no more than two image-and-text splits run consecutively.
 - `CR-LAYOUT-006` Spacing is a scale (2, 4, 8, 12, 16, 24, 40, 64, 96, 144),
@@ -224,22 +208,14 @@ reviewer can verify on a render.
 
 - `CR-WORLD-001` AI aesthetic clusters `(default)`. Where the brief leaves the
   aesthetic free, do not land in one of the looks AI interfaces converge on
-  regardless of subject: warm cream ground with a high-contrast serif and a
-  terracotta or signal-red accent; near-black with one neon accent and glowing
-  edges; broadsheet hairlines with an italic display serif and small tracked
-  mono labels; flat saturated ink with black boxes, hard offset shadows and
-  heavy condensed type. Each is legitimate when the brief, `TASTE.md` or a
+  regardless of subject: an off-white paper ground with a sharp serif headline and a rust or tomato accent; a black screen lit by one electric color with glow; newspaper rules with a slanted serif display and tiny spaced-out monospace captions; neo-brutalist slabs of bright color with black outlines, solid drop shadows and squeezed bold type. Each is legitimate when the brief, `TASTE.md` or a
   contract calls for it. If someone could guess the aesthetic from the
   category alone, the direction was not decided.
 - `CR-MODE-001` On an Operate surface the chosen world lends type, palette,
-  density and one signature move, and nothing else. Navigation, layout model
-  and controls stay the standard ones for the platform (web components on the
-  web, native controls in an app). A terminal's function-key bar, an
+  density and one signature move, and nothing else. Navigation, page structure and controls remain the platform's usual ones: standard web components on the web, native controls in apps. A terminal's function-key bar, an
   instrument bezel or ruled ledger paper standing in for a table is a costume.
   On a Read surface the world owns the frame and never the reading column.
-- `CR-MODE-002` The first viewport is a thesis, not a header. It does the job
-  `modes.md` gives its visitor mode, and passes the memory test: someone who
-  saw only that viewport could describe something specific an hour later.
+- `CR-MODE-002` The first screen states the idea; it is not a header bar. It does the job `modes.md` gives its visitor mode, and passes the recall test: someone who saw only that screen can name something specific the next day.
 
 ## Motion
 
@@ -247,8 +223,7 @@ reviewer can verify on a render.
   0.4 to 0.8s in all including stagger, from an already visible default; the
   same entrance on every section is the tell. Content is visible without it.
 - `CR-MOTION-002` Animate `transform` and `opacity`; blur, clip-path, mask and
-  shadow only when smooth on the element alone. Never `transition: all`, never
-  animate width, height, top or left. Exponential ease-out for arrivals, no
+  shadow only when smooth on the element alone. Do not use `transition: all`, and do not animate layout properties (width, height, top, left). Exponential ease-out for arrivals, no
   bounce or overshoot on UI state. Every animation has a
   `prefers-reduced-motion` fallback that shows the end state at once.
 - `CR-MOTION-003` Never: parallax, mouse parallax, custom cursors or cursor
@@ -270,8 +245,7 @@ reviewer can verify on a render.
 
 - `CR-FINISH-001` Browser surfaces carry the design: text selection, caret,
   focus ring, scrollbar, underline offset and tabular numerals are themed from
-  the palette, not left at browser defaults. This is the cheapest signal that
-  a page was designed rather than assembled.
+  the palette, not left at browser defaults. Few details say "someone designed this" as cheaply.
 - `CR-FINISH-002` Hero chrome slop: no version label ("V0.6", "BETA", "EARLY
   ACCESS") unless the brief is a launch page; no decoration text strips
   ("BRAND. MOTION. SPATIAL."); no fake locale or weather strip; no tagline,

@@ -39,6 +39,11 @@ already has (search, browser, Figma MCP) and records any missing tool as an
 evidence gap instead of faking it. Your brand stays yours: a `TASTE.md`,
 `PRODUCT.md` or `.sanstudio/` contract in your project overrides its defaults.
 
+**Credits.** Original pipeline and rules, with a few ideas adapted in new
+wording from impeccable (Apache 2.0), design.md (Apache 2.0), hallmark (MIT)
+and taste-skill (MIT). Full credits and licence texts ship in `NOTICE.md` and
+`licenses/`.
+
 ## See it in action (700+ characters works best)
 
 A product designer asks: "lane: standard. Our budgeting app's transaction list

@@ -27,3 +27,8 @@ Third-party material
   design-systems/NOTICE.md there.
 - Reference screenshots of third-party products are not included in this
   package. The annotation files that describe them are original work.
+- Parts of the skills adapt ideas, in new wording, from impeccable (Paul
+  Bakaus, Apache 2.0), design.md (Google LLC, Apache 2.0), hallmark
+  (Hallmark contributors, MIT) and taste-skill (Leonxlnx, MIT). The full
+  credits and licence texts are in packaging/agensi/NOTICE.md and
+  packaging/agensi/licenses/.

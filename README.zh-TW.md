@@ -51,7 +51,7 @@ G3 的精修動詞：`ITERATE polish|bolder|quieter|distill|harden|clarify|types
 
 - **Visitor mode**（Persuade、Operate、Read、Experience）決定野心：landing page 要有觀點，dashboard 要精準加一個招牌設計。
 - **避開俗套**：G2 先寫出這個類別永遠會做的那頁和它的反射性反面，兩個都不做，再從候選池按分散度挑三個方向。
-- **Direction contract**：六段短約定（論點、自己的世界、故事、第一屏、招牌設計、完成標準），G3 照著做。
+- **Direction contract**：六段短約定（核心想法、外觀、使用者路徑、第一屏、招牌設計、完成條件），G3 照著做。
 - **Fresh-eyes review**：G3 做完在瀏覽器截圖，交給沒參與製作的 context 審：具體性、Nielsen 十項、人物走查、P0 到 P3、ship / fix / rebuild / recapture。
 
 ## 哪些是鐵律，哪些是你的

@@ -110,8 +110,7 @@ Match user's language. Design terms in English.
 
 ### From Gate 2 (full pipeline)
 Read `visitor_mode` and `invention_scope` (both blocks) and the
-`direction_contract` (DIRECTION-LOCK). The contract's FIRST VIEWPORT and
-SIGNATURE MOVE are what you build to; the review checks every block. Build the
+`direction_contract` (DIRECTION-LOCK). The contract's FIRST SCREEN and SIGNATURE MOVE are what you build to; the review checks every block. Build the
 locked direction, not a safer interpretation of it. The mode's first-viewport
 duty is in `skills/design-chain/references/modes.md`.
 Read `---CONTEXT-LOCK---` and `---DIRECTION-LOCK---`. Parse: direction, decisions,
@@ -401,7 +400,7 @@ Out of scope: [element]: [why later]
 Confirm before hi-fi. State change magnitude: Tweak | Moderate | Significant.
 
 **Refinement preserves; redesign replaces.** On `extend` or `surface` scope keep
-the incumbent identity, behavior, copy and everything outside scope. On a
+the existing identity, behavior, wording and anything out of scope untouched. On a
 `world` redesign keep product truth, content and function, and replace the
 look; never split the difference by polishing a look you were asked to replace.
 

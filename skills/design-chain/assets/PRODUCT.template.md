@@ -19,8 +19,7 @@ web | ios | android | adaptive
 
 ## Users
 
-Who uses it, in what situation, doing which job. Add other audiences only when
-confirmed.
+Who uses it, in what situation, doing which job. List secondary audiences only if confirmed.
 
 ## Product purpose
 
@@ -28,17 +27,15 @@ What it makes possible, why it exists, what success looks like.
 
 ## Positioning
 
-The mechanism or claim a neighboring product could not truthfully copy.
+What this product does, or can honestly claim, that a close competitor could not.
 
 ## Operating context
 
-Workflows, environments, devices, documents and rituals that are factual parts
-of using or evaluating the product.
+Where and how people actually use or evaluate it: workflows, places, devices, documents, routines.
 
 ## Capabilities and constraints
 
-Confirmed functionality, technical limits, terminology to use exactly, and
-open product decisions.
+What it does today, technical limits, the exact terms to use, and product decisions still open.
 
 ## Brand commitments
 
