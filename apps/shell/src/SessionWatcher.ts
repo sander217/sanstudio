@@ -15,7 +15,10 @@ export interface SessionEntry {
 }
 
 export interface SessionsManifest {
-  root: string;
+  /** Backwards-compat — older server returned `root`, newer returns `sessionsRoot`. */
+  root?: string;
+  sessionsRoot?: string;
+  project?: { id: string; name: string; root: string };
   sessions: SessionEntry[];
 }
 
@@ -62,6 +65,7 @@ function manifestToState(m: SessionsManifest, lastPolledMs: number): SessionStat
 export function startSessionPolling(
   setState: Dispatch<SetStateAction<SessionState>>,
   intervalMs = 1500,
+  projectId: string | null = null,
 ): () => void {
   let cancelled = false;
   let timer: ReturnType<typeof setTimeout> | null = null;
@@ -72,7 +76,10 @@ export function startSessionPolling(
   async function tick() {
     if (cancelled) return;
     try {
-      const res = await fetch('/sessions.json', { cache: 'no-store' });
+      const url = projectId
+        ? `/sessions.json?project=${encodeURIComponent(projectId)}`
+        : '/sessions.json';
+      const res = await fetch(url, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const manifest = (await res.json()) as SessionsManifest;
       const next = manifestToState(manifest, Date.now());
@@ -110,7 +117,25 @@ export function startSessionPolling(
   };
 }
 
-export function artifactUrl(slug: string, htmlFile: string): string {
-  // Encoded so slugs with timestamps and dashes stay clean.
-  return `/sessions/${encodeURIComponent(slug)}/html/${encodeURIComponent(htmlFile)}`;
+export function artifactUrl(
+  slug: string,
+  htmlFile: string,
+  projectId: string | null = null,
+  /** Last-modified ms — appended as a cache-bust query so the iframe
+   * actually navigates when claude rewrites the same file path. */
+  mtimeMs: number = 0,
+  /** Manual cache-bust nonce — bumped by the shell when the user clicks
+   * Refresh or switches projects. Changes the iframe URL even when mtime
+   * is stable, which forces a fresh navigation and re-fetches all assets.
+   * Defends against the case where a previous fetch was cached with a
+   * broken state (e.g. dev server returned octet-stream before a fix). */
+  cacheBust: number = 0,
+): string {
+  const base = `/sessions/${encodeURIComponent(slug)}/html/${encodeURIComponent(htmlFile)}`;
+  const params = new URLSearchParams();
+  if (projectId) params.set('project', projectId);
+  if (mtimeMs > 0) params.set('t', String(mtimeMs));
+  if (cacheBust > 0) params.set('n', String(cacheBust));
+  const qs = params.toString();
+  return qs ? `${base}?${qs}` : base;
 }

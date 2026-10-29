@@ -23,6 +23,9 @@ interface Props {
   /** null = primary file in current session. */
   selectedHtml: string | null;
   onPickHtml: (file: string | null) => void;
+  /** The artifact iframe — used to also close menus on clicks INSIDE it
+   * (cross-document; clicks there don't reach shell's document). */
+  iframe?: HTMLIFrameElement | null;
 }
 
 export function SessionPicker({
@@ -33,18 +36,30 @@ export function SessionPicker({
   onPickSession,
   selectedHtml,
   onPickHtml,
+  iframe,
 }: Props) {
   const [openMenu, setOpenMenu] = useState<'session' | 'html' | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!openMenu) return;
-    function onDocClick(ev: MouseEvent) {
-      if (!wrapRef.current?.contains(ev.target as Node)) setOpenMenu(null);
+    function close() {
+      setOpenMenu(null);
     }
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
-  }, [openMenu]);
+    function onShellClick(ev: MouseEvent) {
+      if (!wrapRef.current?.contains(ev.target as Node)) close();
+    }
+    document.addEventListener('mousedown', onShellClick);
+    // ALSO listen inside the iframe — clicks there never reach the shell
+    // document, so without this the dropdown stays open when the user
+    // clicks in the artifact area.
+    const iframeDoc = iframe?.contentDocument;
+    iframeDoc?.addEventListener('mousedown', close);
+    return () => {
+      document.removeEventListener('mousedown', onShellClick);
+      iframeDoc?.removeEventListener('mousedown', close);
+    };
+  }, [openMenu, iframe]);
 
   const effectiveSession = sessions.find((s) => s.slug === effectiveSlug);
   const htmlFiles = effectiveSession?.htmlFiles ?? [];

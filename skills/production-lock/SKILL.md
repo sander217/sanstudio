@@ -1,16 +1,11 @@
 ---
 name: production-lock
-version: 1.0.0
-description: |
-  Gate 4 of Design Agent Studio. Hardens a VALIDATED Gate 3 prototype into a
-  complete, buildable design package — full state coverage, full screen
-  inventory, responsive matrix, component-library spec, finalized copy, full
-  interaction + accessibility specs, and a dev handoff. Not code. Not a new
-  direction. Completeness and rigor on the already-locked direction.
-
-  Composes the marketplace design skills (design-handoff, design-system,
-  accessibility-review) as engines rather than re-implementing them. Emits an
-  honest Production Readiness Scorecard — never claims auto-shippable.
+description: Gate 4 of sanstudio. Hardens a validated Gate 3 prototype into a complete, buildable design package with full state and screen coverage, responsive matrix, component spec, final copy, interaction and accessibility specs and a dev handoff. Reports an honest readiness scorecard and never claims the design is auto-shippable.
+when_to_use: Invoked by design-chain on the major lane after design-lock is approved. Use directly only when the user asks for a production package, dev handoff, state matrix or component spec by name and a DESIGN-LOCK block already exists. Emits a PRODUCTION-LOCK handoff block.
+metadata:
+  version: 3.1.1
+  suite: sanstudio
+  gate: "4"
 ---
 
 # /production-lock — Complete, Validate, Hand Off
@@ -54,6 +49,14 @@ Match the user's language. Design terms in English.
 
 - Read the `---DESIGN-LOCK---` handoff + the session `DESIGN.md` + the Gate 3
   hi-fi HTML. These are the inputs you harden — not raw material to reinterpret.
+- Read `.sanstudio/qa-policy.yml` when it exists: every gate (design and product
+  phases) becomes a row of the Production Readiness Scorecard, scored against its
+  `criteria`; product-phase gates are reported as "needs runtime evidence", never passed
+  from a mockup. `.sanstudio/EXPERIENCE.md` journeys are the screen inventory's spine.
+- Read `skills/design-lock/references/craft-rules.md` and the user's `TASTE.md`.
+  Gate 4 checks every rule id per state: every pill state for `UI-PILL-001`,
+  every container for `UI-STROKE-001`, every header variant for `UI-NAV-001`,
+  every breakpoint entry for `UI-RESP-001`.
 - Inventory exactly what Gate 3 produced: which screens, which states (Gate 3
   hi-fi's PRIMARY states and documents secondary ones — those documented-only
   states are now your work-list).
@@ -208,7 +211,12 @@ Compose `design:design-handoff`. Write to `docs/dev-handoff.md`.
 
 ## Step 9: Production Readiness Scorecard (the honest gate)
 
-Score each dimension. Be ruthless — this is the credibility of the whole gate:
+Score each dimension. Be ruthless — this is the credibility of the whole gate.
+Run the fresh-eyes review (`skills/design-lock/references/review.md`) over the
+hardened screen set first: its heuristic total, open P0/P1 issues and persona
+breaks feed the Interaction, Accessibility and States rows, and the `harden`
+recipe in `skills/design-chain/references/refine.md` is the checklist for
+extreme inputs:
 
 ```
 🏁 PRODUCTION READINESS
@@ -235,8 +243,10 @@ engineering work. Never report 100% from the gate alone.
 
 ## Step 10: Export + Companion Docs
 
-- Figma export of the FULL set (all screens × states), same path/protocol as
-  Gate 3 Step 14 (detect Figma MCP → MCP push, else bridge server).
+- Figma export of the FULL set (all screens × states), optional and only on
+  the same terms as Gate 3 Step 14: push when a Figma tool is connected and the
+  user agrees, write `figma/design-export.json` when the user asks for the
+  file, otherwise skip. Never use a local bridge or script.
 - Companion docs written to `docs/`: `completeness-matrix.md`,
   `component-library.md`, `interaction-spec.md`, `a11y.md`, `dev-handoff.md`,
   `production-readiness.md`.
@@ -272,7 +282,7 @@ a11y_status: AA-pass | AA-pass-with-flags | blocked
 readiness_pct: [N]%   # complete-by-design, never 100 from the tool alone
 human_required: [content, design-review, eng-feasibility, ...]
 companion_docs: completeness-matrix,component-library,interaction-spec,a11y,dev-handoff,production-readiness
-figma_exported: full-set | partial | none
+figma_exported: full-set | partial | none   # none is normal when Figma is not in use
 ---END-PRODUCTION-LOCK---
 ```
 

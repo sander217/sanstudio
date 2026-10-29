@@ -15,7 +15,7 @@ extracted_tokens:
     # on-surface: "#hex"
   typography:
     # display-lg:
-    #   fontFamily: Inter
+    #   fontFamily: Switzer
     #   fontSize: 48px
     #   fontWeight: 700
     #   lineHeight: 1.1

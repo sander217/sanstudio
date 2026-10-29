@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-OUTPUT_ROOT="${SANSTUDIO_AI_OUTPUT_DIR:-/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output}"
+OUTPUT_ROOT="${SANSTUDIO_OUTPUT:-${SANSTUDIO_AI_OUTPUT_DIR:-$PWD/sanstudio-output}}"
 SESSION_NAME=""
 FIGMA_JSON=""
 INTERACTION_SPEC=""

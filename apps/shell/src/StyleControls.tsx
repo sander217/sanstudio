@@ -209,8 +209,31 @@ interface SliderProps {
   max: number;
   step: number;
   onChange: (raw: string) => void;
+  /** Number input upper bound — defaults to 4× max so users can type
+   * values larger than the slider's design range when needed. */
+  inputMax?: number;
+  inputMin?: number;
 }
-function Slider({ label, unit, value, min, max, step, onChange }: SliderProps) {
+function Slider({ label, unit, value, min, max, step, onChange, inputMax, inputMin }: SliderProps) {
+  const lo = inputMin ?? Math.min(0, min);
+  const hi = inputMax ?? Math.max(max * 4, max);
+  const [draft, setDraft] = useState('');
+  // When the parent value changes (slider drag or external update), wipe
+  // any in-progress text draft so the input mirrors the truth.
+  useEffect(() => {
+    setDraft('');
+  }, [value]);
+  function commit() {
+    if (draft.trim() === '') return;
+    const n = Number(draft);
+    if (!Number.isFinite(n)) {
+      setDraft('');
+      return;
+    }
+    const clamped = Math.max(lo, Math.min(hi, Math.round(n)));
+    setDraft('');
+    onChange(String(clamped));
+  }
   return (
     <div style={row}>
       <label style={labelText}>{label}</label>
@@ -219,14 +242,27 @@ function Slider({ label, unit, value, min, max, step, onChange }: SliderProps) {
         min={min}
         max={max}
         step={step}
-        value={value}
+        value={Math.max(min, Math.min(max, value))}
         onChange={(e) => onChange(e.target.value)}
         style={sliderInput}
       />
-      <span style={valueText}>
-        {value}
-        {unit}
-      </span>
+      <div style={numCell}>
+        <input
+          type="number"
+          min={lo}
+          max={hi}
+          step={step}
+          value={draft === '' ? String(value) : draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onFocus={(e) => e.currentTarget.select()}
+          onBlur={commit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          }}
+          style={numInput}
+        />
+        <span style={unitText}>{unit}</span>
+      </div>
     </div>
   );
 }
@@ -257,9 +293,33 @@ interface ColorPickerProps {
   value: string;
   onChange: (hex: string) => void;
 }
+function normalizeHex(raw: string): string | null {
+  const s = raw.trim();
+  // Accept "abc", "#abc", "abcdef", "#abcdef" — case insensitive.
+  const m = s.match(/^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/);
+  if (!m) return null;
+  let body = m[1];
+  if (body.length === 3) {
+    body = body
+      .split('')
+      .map((c) => c + c)
+      .join('');
+  }
+  return `#${body.toLowerCase()}`;
+}
 function ColorPicker({ label, value, onChange }: ColorPickerProps) {
+  const [draft, setDraft] = useState('');
+  useEffect(() => {
+    setDraft('');
+  }, [value]);
+  function commit() {
+    if (draft.trim() === '') return;
+    const hex = normalizeHex(draft);
+    setDraft('');
+    if (hex) onChange(hex);
+  }
   return (
-    <div style={row}>
+    <div style={colorRow}>
       <label style={labelText}>{label}</label>
       <input
         type="color"
@@ -267,7 +327,25 @@ function ColorPicker({ label, value, onChange }: ColorPickerProps) {
         onChange={(e) => onChange(e.target.value)}
         style={colorInput}
       />
-      <span style={valueText}>{value.toUpperCase()}</span>
+      <input
+        type="text"
+        value={draft === '' ? value.toUpperCase() : draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onFocus={(e) => e.currentTarget.select()}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter') (e.target as HTMLInputElement).blur();
+          else if (e.key === 'Escape') {
+            setDraft('');
+            (e.target as HTMLInputElement).blur();
+          }
+        }}
+        spellCheck={false}
+        autoCapitalize="off"
+        autoCorrect="off"
+        style={hexInput}
+        placeholder="#RRGGBB"
+      />
     </div>
   );
 }
@@ -308,7 +386,7 @@ const sectionTitle: React.CSSProperties = {
 };
 const row: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '90px 1fr 60px',
+  gridTemplateColumns: '80px 1fr 88px',
   alignItems: 'center',
   gap: 8,
 };
@@ -329,11 +407,54 @@ const selectInput: React.CSSProperties = {
   background: '#fff',
 };
 const colorInput: React.CSSProperties = {
-  width: '100%',
+  width: 32,
   height: 28,
   padding: 0,
   border: '1px solid #cbd5e1',
   borderRadius: 4,
   background: '#fff',
   cursor: 'pointer',
+  flex: '0 0 auto',
+};
+const numCell: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 4,
+};
+const numInput: React.CSSProperties = {
+  width: '100%',
+  padding: '3px 6px',
+  border: '1px solid #cbd5e1',
+  borderRadius: 4,
+  background: '#fff',
+  fontSize: 11,
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  color: '#0f172a',
+  textAlign: 'right',
+  boxSizing: 'border-box',
+};
+const unitText: React.CSSProperties = {
+  fontSize: 10,
+  color: '#94a3b8',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  flex: '0 0 auto',
+};
+const hexInput: React.CSSProperties = {
+  width: '100%',
+  padding: '4px 6px',
+  border: '1px solid #cbd5e1',
+  borderRadius: 4,
+  background: '#fff',
+  fontSize: 11,
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  color: '#0f172a',
+  textTransform: 'uppercase',
+  boxSizing: 'border-box',
+};
+// Color rows have 3 slots: label · color swatch · hex input.
+const colorRow: React.CSSProperties = {
+  display: 'grid',
+  gridTemplateColumns: '80px 32px 1fr',
+  alignItems: 'center',
+  gap: 8,
 };

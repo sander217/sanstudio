@@ -1,11 +1,45 @@
 ---
 version: alpha
-name: Sander Personal Manifesto
+name: Sander Taste
 description: |
-  Sander 的個人設計信條，每次 Gate 3 hi-fi 前載入，當 hard constraint。
+  Sander 的個人設計品味。放在工作目錄根部的 TASTE.md 會被 Gate 3 當 defaults 載入。
+  通用工藝規則已搬到 skills/design-lock/references/craft-rules.md，這裡只留品味。
+  上架版不包含這份檔案，買家拿到的是 skills/design-chain/assets/TASTE.template.md。
   結構遵循 DESIGN.md 規範 (skills/design-lock/design-md-spec.md)。
   `colors` / `typography` 是跨專案 fallback；session 的 DESIGN.md 有指定就以它為主。
-  `## Do's and Don'ts` 一律附加到 session 的 binding rules（即使 session DESIGN.md 沒提，也生效）。
+  `## Typography picks
+
+字體要從提示詞和整體風格選出來，不是模型順手拿的。Inter 可以用，產品 UI、工具類介面、品牌本來就用它的時候它常常就是對的答案；不行的是「沒想就用」。craft rule `CR-TYPE-002` 要求 DESIGN.md 寫一行為什麼選這個字。下面是我的起點清單，專案要換就換。
+
+- Display（編輯感、有骨架）：Instrument Serif、Fraunces、Gambetta、Clash Display、Hubot Sans。
+- Body（安靜、字距寬鬆）：Switzer、General Sans、Hanken Grotesk、IBM Plex Sans。
+- 數字和量測：Geist Mono 或 IBM Plex Mono，只給 code、數據、單位，不當「科技感」的戲服。
+- 一頁最多兩個家族、三個字重，字重取兩端（300 配 700、400 配 800）。
+
+## Gradient
+
+漸層只有一種我會用：**Williams F1 2026 塗裝那種深藍**。深到近黑的 navy 做暗邊，往光面一路推到亮一階的 royal blue，像 gloss 車漆上一條寬的高光，不是發光、不是霓虹。色相鎖在藍（255 到 265 度），絕不往紫偏，絕不碰 magenta。craft rule `CR-COLOR-005` 的三停點、單色相、亮度驅動規則照常適用。
+
+```yaml
+gradient:
+  name: williams-blue
+  hue: 258-262        # OKLCH hue, locked; drift past 15 degrees = fail
+  stops:
+    - { name: navy-ink, hex: "#07102C", oklch: "oklch(18% 0.06 267)" }   # dark edge, near-black
+    - { name: royal,    hex: "#0834A7", oklch: "oklch(39% 0.19 264)" }   # the body of the sweep
+    - { name: electric, hex: "#1D59CA", oklch: "oklch(50% 0.19 262)" }   # the gloss highlight band
+  direction: 160deg    # diagonal, dark at top-left or an edge, light sweeping through; never a vertical fade
+  highlight: one broad soft band of electric at 25-45% of the run, then back toward royal; no radial glow
+  ink-on-top: "#F4F6FB" at every point (contrast >= 4.5:1 checked at the electric stop)
+  keyline: optional one hairline of "#3D7BE6" (oklch(60% 0.17 261)) at an edge, as the livery's white keyline; never a second gradient
+  allowed-on: hero field, a section band (one per page), the primary CTA, a large stat tile
+  never-on: text, chips or pills, inputs, behind running body copy, cards inside a card
+  dark-mode: same stops; the page surface itself is navy-ink, the sweep lives on one band only
+```
+
+用法口訣：一頁一條 sweep，深邊在外、光在中間、字永遠是近白。看起來要像夜裡車庫燈下的車漆，不像 SaaS 首頁的 mesh。
+
+## Do's and Don'ts` 一律附加到 session 的 binding rules（即使 session DESIGN.md 沒提，也生效）。
 colors:
   # 中性底：淺色與深色各一個預設。永不使用純 #000 / #fff。
   surface: "#FAFAF7"          # near-white 底（淺色預設）
@@ -87,6 +121,9 @@ colors:
 - Do 字級 ≥3 階，用字級落差建層級，不用顏色建層級。
 - Do 一屏一個焦點，先減再加；能拿掉的元素就拿掉。
 - Do 用留白、hairline、fact-row、字重強調 **取代 chip 與卡片堆疊**。
+- Do 留白要夠：手機 gutter ≥16px、桌面 container gutter ≥64px、web section 間距 120 到 176px、card 內距 web 32 到 40px、app 16 到 20px。頁面看起來空，是標題或內容太小，不是間距太大（`CR-SPACE-001`）。
+- Do 任何有底色、框線或 hover 狀態的盒子，文字離左右邊至少 8px、上下至少 4px（`CR-SPACE-002`）。
+- Do tab / segment / nav 的字四邊至少 8px padding，hover 和 active 的底色、底線、focus ring 都畫在含 padding 的格子上，不是貼著文字；第一個 tab 的字不能貼螢幕邊，bar 自己要有 gutter；各狀態 padding 不變，只變顏色、字重和指示線（`UI-TAB-001`）。
 - Do brand 主色出現 ≥3 處(CTA + 強調 + active)，但不變成第二主色。
 - Do 流程出口回入口：從哪個畫面進的 sub-flow / modal / sheet，完成或取消後回到那個畫面（保留 scroll 與狀態）。要導去別處必須是規格明確要求，並註明例外。
 
@@ -95,12 +132,14 @@ colors:
 - **Don't 文案用破折號**：`—` `–` `&mdash;` `&ndash;` 一律不用，改逗號/句號/改寫。
 - **Don't 標題句尾加標點**：結尾不留句號/逗號/破折號/middle-dot。句中可以。
 - **Don't 用 bento layout（除非被明確要求）**：預設不對稱 / 單欄 / 編輯式。
-- **Don't 花花綠綠**：超過 3 色、彩虹點綴、霓虹、AI 紫漸層、無角色的第二點綴色 = 失敗。
+- **Don't 花花綠綠**：超過 3 色、彩虹點綴、霓虹、AI 紫漸層、無角色的第二點綴色 = 失敗。漸層只有上面 `## Gradient` 宣告的 williams-blue 一種，其他一律不用。
 - **Don't 純黑純白**：用 off-white / charcoal，保留深度。
 - **Don't 過度使用 chip**：chip 只給「真的可枚舉的 tag / filter」，每屏至多 1 群，且不當裝飾。灰底灰字 chip、一排彩色 chip 當資訊 = 失敗；改用 fact-row / 細規線標籤 / 字重色彩強調。
 - Don't 灰色 placeholder：任何畫面有 `#E5E5E5` / `#D1D1D1` 空方塊 = 失敗。用真內容或不放。
 - Don't emoji 當 icon：🦷 📅 ✅ 在 UI 裡 = 即時 reject。用 Iconify SVG。
 - Don't 全字一個級別：所有 17pt 沒階層 = wireframe。
+- **Don't 字體沒選就用**：任何字體（包括 Inter）出現在 DESIGN.md 裡都要有一行理由，對得上提示詞和風格。同一個字體跨不相干的案子一直出現 = 沒選。選字見 `## Typography picks`。
+- **Don't 標題上方放 eyebrow**：「WHY US」「01 · 功能」那種小字 tracked 大寫標籤一律不用，標題自己撐。
 - Don't web pattern in app：hero section、80-120px section gap、50/50 split 在 phone frame 裡 = wrong surface。
 - **Don't 流程結束後把人丟到別處**：完成或取消一個 sub-flow 後跳首頁 / tab 根 / 無關頁 = 失敗，除非被明確要求。
 

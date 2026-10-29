@@ -1,31 +1,16 @@
 ---
 name: design-lock
-version: 2.2.1
-description: |
-  Gate 3 of Design Agent Studio. Executes the confirmed direction.
-  Generates hi-fi HTML mockups with real images, exports Figma JSON.
-  
-  v2.2 changes (anti-slop graft): AI Tells ban list (Step 8.5), copy/font/color
-  slop bans, web layout-variety enforcement (eyebrow count, layout-repetition,
-  zigzag cap), Picsum-seed + real-SVG-logo image fallbacks, motion principles,
-  Redesign "never change silently" list. New Rules 17-20, Anti-Patterns 23-28.
-  Plus Component Recipes R1-R11 (exact-value craft) in design-techniques-db.md.
-  v2.2.1: affordance provenance — borrow a reference's layout grammar, not its default
-  action set (Rule 21, Anti-Pattern 29, Step 8.5 check).
-  All filler rules defer to the visual contract / DESIGN.md when it specifies a value.
-  
-  v2.1 changes: Step 2.5 Reference Lookup (curated Mobbin library), Hi-Fi Fill
-  Checklist (catches wireframe-disguised-as-hi-fi output), new Rules 13-14
-  and Anti-Pattern 20.
-  
-  v2 changes: hard layout constraints at top, fixed image sourcing via 
-  image_search/web_search, visual contract enforcement from Gate 1, 
-  dramatically reduced token count.
+description: Gate 3 of sanstudio. Executes the confirmed direction as a hi-fi HTML mockup with real content and images, enforces DESIGN.md tokens, craft rules and the user's taste, runs the Hi-Fi Fill Checklist and lint, and exports to Figma only when a Figma tool is connected or the user asks.
+when_to_use: Invoked by design-chain after a direction is approved, or on the fast lane right after context-lock. Use directly when the user says ITERATE on an existing mockup or asks for a hi-fi mockup, a Figma export or a pixel-level design by name. Emits a DESIGN-LOCK handoff block.
+metadata:
+  version: 3.1.1
+  suite: sanstudio
+  gate: "3"
 ---
 
 # /design-lock — Design, Validate, Export
 
-You are a senior product designer executing a confirmed direction with craft and 
+You are a senior product designer executing a confirmed direction with craft and
 precision. Every visual choice traces back to a product decision.
 
 ---
@@ -34,56 +19,57 @@ precision. Every visual choice traces back to a product decision.
 
 These rules override all other layout decisions. Violating any = regenerate.
 
-1. **Hero ≤ 5 elements above fold.** 1 bg, 1 headline, 1 subheadline (optional), 
+1. **Hero ≤ 5 elements above fold.** 1 bg, 1 headline, 1 subheadline (optional),
    1 primary CTA, 1 secondary CTA (optional). Everything else scrolls.
 
-2. **No equal-weight grid unless items are genuinely equal.** Pricing plans = grid OK. 
+2. **No equal-weight grid unless items are genuinely equal.** Pricing plans = grid OK.
    "About + Features + Team" = NOT a grid. Use asymmetric or vertical stack.
 
-3. **Section gaps ≥ 64px on scrollable pages.** 80-120px for landing pages. 
+3. **Section gaps ≥ 64px on scrollable pages.** 80-120px for landing pages.
    Alternate dense and spacious sections. Never stack two dense sections back-to-back.
 
 4. **No 50/50 hero splits.** Use 60/40 or 55/45 or full-bleed. 50/50 = generic.
 
-5. **Annotations collapsed by default.** On first load, mockup looks like a shipped 
+5. **Annotations collapsed by default.** On first load, mockup looks like a shipped
    product. No design commentary, no technique labels, no spacing callouts visible.
 
-6. **One hero treatment.** Pick ONE: image-dominant, text-dominant, or asymmetric split. 
+6. **One hero treatment.** Pick ONE: image-dominant, text-dominant, or asymmetric split.
    Do NOT combine full-bleed + overlay + floating cards + info panels.
 
-7. **Asymmetry is confidence.** Every screen must have ONE clear visual winner — 
+7. **Asymmetry is confidence.** Every screen must have ONE clear visual winner —
    the element that is obviously most important.
 
-8. **Eyebrow restraint (mechanical, web).** The uppercase-tracking label above a 
-   headline ("WHY US", "HOW IT WORKS") is capped at 1 per 3 sections. Hero counts 
-   as 1. A 9-section page may use at most 3 eyebrows total. Count `text-transform: 
-   uppercase` + letter-spacing labels — if count > ceil(sections / 3), strip the excess.
+8. **No eyebrow (web).** The uppercase-tracking label above a headline ("WHY US",
+   "HOW IT WORKS", "01 · Capabilities") is banned by craft rule `CR-TYPE-005`. The
+   heading carries its own weight. Only when the DESIGN.md explicitly allows labels
+   may they appear, and then at most 1 per 3 sections, counted mechanically
+   (`text-transform: uppercase` + letter-spacing above an `h2`).
 
-9. **Layout-repetition ban (web).** Across a scrollable page, each layout family 
-   (full-bleed image, image+text split, centered stack, bento grid, card row, 
-   horizontal scroll) appears at most ONCE. An 8-section page must use ≥4 different 
-   families. Same layout twice in a row = generic.
+9. **Layout-repetition ban (web).** Across a scrollable page, each layout family
+   (full-bleed image, image+text split, centered stack, bento grid, card row,
+   horizontal scroll) appears at most ONCE. An 8-section page must use ≥4 different
+   families. Same layout twice in a row = generic. (`CR-LAYOUT-005`)
 
-10. **Zigzag cap (web).** Max 2 consecutive image+text split sections. The 3rd 
-    in a row is a fail — break the rhythm with a full-bleed band, centered stack, 
-    or data section.
+10. **Zigzag cap (web).** Max 2 consecutive image+text split sections. The 3rd
+    in a row is a fail — break the rhythm with a full-bleed band, centered stack,
+    or data section. (`CR-LAYOUT-005`)
 
 ### ⛔ APP-SPECIFIC LAYOUT CONSTRAINTS (when surface = mobile-app)
 
 These REPLACE rules 1-4 and 6 above. Rules 5 and 7 still apply.
 
-A1. **Screen = one purpose.** Each screen does ONE thing. No scrollable 
+A1. **Screen = one purpose.** Each screen does ONE thing. No scrollable
     multi-section landing pages inside an app.
 
-A2. **Navigation bar + content + tab bar.** This is the anatomy. 
-    Nav bar: 44pt (iOS) / 64dp (Android). Tab bar: 49pt+34pt safe area (iOS) / 
+A2. **Navigation bar + content + tab bar.** This is the anatomy.
+    Nav bar: 44pt (iOS) / 64dp (Android). Tab bar: 49pt+34pt safe area (iOS) /
     80dp (Android). Content fills the middle.
 
-A3. **Safe areas are sacred.** Status bar: 59pt (iPhone Dynamic Island) / 
-    47pt (notch) / 24dp (Android). Home indicator: 34pt (iOS) / 
+A3. **Safe areas are sacred.** Status bar: 59pt (iPhone Dynamic Island) /
+    47pt (notch) / 24dp (Android). Home indicator: 34pt (iOS) /
     48dp (Android gesture nav). NEVER place interactive elements in these zones.
 
-A4. **Thumb zone drives action placement.** Primary actions in bottom 1/3 
+A4. **Thumb zone drives action placement.** Primary actions in bottom 1/3
     of screen. Secondary in middle. Destructive/rare actions in top or behind menu.
 
 A5. **Touch targets ≥ 44x44pt (iOS) / 48x48dp (Android).** No exceptions.
@@ -96,7 +82,7 @@ A6. **No website patterns in apps:**
     - No sticky sidebar, no breadcrumbs
 
 A7. **Phone frame is mandatory.** Every app mockup wraps in a CSS phone frame
-    with status bar, dynamic island/notch, and home indicator. 
+    with status bar, dynamic island/notch, and home indicator.
     See `mobile-app-patterns.md` Section 6.
 
 **Self-check after generating HTML (WEB):**
@@ -123,7 +109,11 @@ Match user's language. Design terms in English.
 ## Step 0: Load Context
 
 ### From Gate 2 (full pipeline)
-Read `---CONTEXT-LOCK---` and `---DIRECTION-LOCK---`. Parse: direction, decisions, 
+Read `visitor_mode` and `invention_scope` (both blocks) and the
+`direction_contract` (DIRECTION-LOCK). The contract's FIRST SCREEN and SIGNATURE MOVE are what you build to; the review checks every block. Build the
+locked direction, not a safer interpretation of it. The mode's first-viewport
+duty is in `skills/design-chain/references/modes.md`.
+Read `---CONTEXT-LOCK---` and `---DIRECTION-LOCK---`. Parse: direction, decisions,
 flow structure, wireframe contract, visual contract, product surface.
 
 ### From Gate 1 (ITERATE or evaluated COMPARE/CRITIQUE)
@@ -164,10 +154,15 @@ If the upstream CONTEXT-LOCK block has `design_system_ref: <name>` (e.g. `stripe
 `tesla`, `notion`, `revolut+wise`), also load `design-systems/<name>/DESIGN.md` —
 this is the **upstream base** that the session DESIGN.md inherits from.
 
+If it is `design_system_ref: .sanstudio/DESIGN.md`, the base is the project contract in
+the working directory (`skills/design-chain/references/contracts.md`). Its values are
+exact: a contract font or hex is never "improved", and any `### UI-*` section inside it is
+the product's variant of that craft rule and wins over the generic wording.
+
 Resolution order for any token lookup:
 1. **Session DESIGN.md** (project-specific overrides — highest priority)
 2. **Library DESIGN.md** (`design-systems/<name>/DESIGN.md` — base values)
-3. **Manifesto** (`references/style-manifesto.md` — fallback defaults)
+3. **User taste** (`TASTE.md` in the working directory, else `skills/design-chain/assets/TASTE.template.md`; fallback defaults)
 4. **Inline visual_contract** (last-resort fallback)
 
 If `design_system_ref` is a blend (e.g. `stripe+revolut`), load BOTH library files.
@@ -207,13 +202,21 @@ These are binding CSS values. Use them directly. Do not reinterpret, do not
 "improve" them, do not substitute. If you disagree with a value, flag it and
 ask — do not silently deviate.
 
-#### Manifesto overlay (always)
+#### Craft rules and taste overlay (always)
 
-Independently of the two above, also load
-`skills/design-lock/references/style-manifesto.md` (itself a partial DESIGN.md).
-Its `## Do's and Don'ts` are appended to the session's binding rules. Its
-`colors`/`typography` frontmatter (if filled) acts as a fallback when the
-session DESIGN.md / visual_contract is silent on a value.
+Independently of the sources above, load two more files:
+
+1. `skills/design-lock/references/craft-rules.md`. Every rule id in it
+   (`CR-*`, `UI-*`) is a hard constraint on par with the visual contract. It
+   is the same for every brand and the user cannot loosen it in a session;
+   an exception needs their words and a line in `docs/decisions.md`.
+2. The taste overlay: `.sanstudio/taste.yml` (Harness shape: `intent` is the
+   Overview, `signatureTraits` are Do lines, `avoid` are Don't lines) or
+   `.sanstudio/TASTE.md`, else the user's `TASTE.md` in the working directory,
+   else `skills/design-chain/assets/TASTE.template.md`. It is a partial
+   DESIGN.md. Its `## Do's and Don'ts` are appended to the session's binding
+   rules. Its `colors`/`typography` frontmatter acts as a fallback when the
+   session DESIGN.md and visual_contract are silent on a value.
 
 ### Surface-Fit Check (MANDATORY)
 
@@ -244,7 +247,7 @@ Declare what you're designing. Then enforce:
 Use it. Lock it. Flag conflicts with direction.
 
 ### If user provided screenshot/reference but no formal system
-Extract specific values (font, colors, spacing, radius, shadow). List them. 
+Extract specific values (font, colors, spacing, radius, shadow). List them.
 Ask for confirmation before proceeding.
 
 ### If nothing provided
@@ -252,16 +255,18 @@ Propose a minimal framework. Confirm before proceeding.
 
 ### Typography defaults
 
-**Visual contract wins.** If the DESIGN.md / visual contract names a font, use it exactly —
-the rules below only apply when YOU are choosing because the contract is silent.
+**Visual contract wins.** If the DESIGN.md / visual contract names a font, use it exactly.
+The rules below apply only when YOU are choosing because the contract is silent.
 
 - "Minimal", "clean", "modern", "Apple" → sans-serif. Never add serif for "premium"
   unless explicitly requested. "Creative brief = serif" is the #1 AI font tell.
-- **Don't default to `Inter`.** It's the LLM default body font. When choosing freely,
-  prefer `Geist`, `Outfit`, `Satoshi`, `Cabinet Grotesk`, or a brand-appropriate sans.
-- **Don't default to `Fraunces` or `Instrument Serif`** — the two LLM-favorite display
-  serifs. If a serif is genuinely justified, rotate from: PP Editorial New, GT Sectra,
-  Reckless Neue, Tiempos Headline, Recoleta. Don't reuse the same serif twice in a row.
+- **Choose the face from the brief, then say why** (`CR-TYPE-002`). Inter, Geist,
+  Satoshi, a grotesk or a serif are all valid when the prompt and style call for them;
+  the failure is a face nobody decided on, or the same face across unrelated briefs.
+  Write the reason as one line in the DESIGN.md typography prose.
+- **Don't reuse the same display serif twice in a row** across sessions (Fraunces and
+  Instrument Serif are the two the model reaches for first). If a serif is justified,
+  rotate: PP Editorial New, GT Sectra, Reckless Neue, Tiempos Headline, Recoleta, Gambetta.
 - **No mixed-family emphasis.** To stress a word inside a headline, use italic or bold
   of the SAME family. Injecting a random serif word into a sans headline is amateur.
 - **Italic descender clearance.** When an italic display word contains `y g j p q`,
@@ -275,18 +280,18 @@ These apply only to values the DESIGN.md / visual contract does NOT specify. Con
 hexes are exact and binding — never "improve" them with these defaults.
 
 - **No pure `#000000`, no pure `#ffffff`.** Pure values kill depth. Use off-black
-  (`#0a0a0b`–`#111`) and off-white (`#fafafa`–`#f7f7f5`).
+  (`#0a0a0b`–`#111`) and off-white (`#fafafa`–`#f7f7f5`). (`CR-COLOR-003`)
 - **Max 1 accent color, used page-wide.** Once chosen, the accent appears the same
   everywhere — a warm-grey page does not grow a blue CTA in section 7. Saturation < 80%.
 - **No AI-purple default.** Skip the reflexive purple/blue-glow button gradient. Pair a
   neutral base (zinc / slate / stone) with ONE high-contrast accent (emerald, electric
-  blue, deep rose, burnt orange).
+  blue, deep rose, burnt orange). Gradients only with a recipe (`CR-COLOR-005`).
 - **Tint shadows to the background hue.** No pure-black drop shadows on light surfaces.
 - **One corner-radius system per page.** Pick sharp (0), soft (12-16px), or pill — don't
   mix radii without a documented reason.
 
 ### Technique Database (if available)
-Read `skills/design-lock/design-techniques-db.md`. Match 1-2 screen-level techniques. 
+Read `skills/design-lock/design-techniques-db.md`. Match 1-2 screen-level techniques.
 Emit `🎯 TECHNIQUE MATCH` block. These are binding layout constraints.
 
 Also pull from its **Component Recipes** (R1-R11) — cross-cutting, exact-value craft
@@ -314,12 +319,13 @@ from wireframe-ish to real hi-fi.**
 
 ### Load order
 
-1. Read `skills/design-lock/references/style-manifesto.md` — **rules here are BINDING**.
-   Treat each numbered rule as a hard constraint on par with the visual contract.
+1. Read `skills/design-lock/references/craft-rules.md` (**BINDING**, every rule id) and
+   the user's `TASTE.md` (defaults plus their Do's and Don'ts). Treat each rule as a
+   hard constraint on par with the visual contract.
 2. Read `skills/design-lock/references/INDEX.md` — find the 2–3 most relevant entries
    by matching (in priority order):
    - `industry` (from CONTEXT-LOCK)
-   - `style_tags` (compatible with visual_contract + manifesto)
+   - `style_tags` (compatible with visual_contract + taste)
    - `components` (from direction + screens planned)
 3. For each matched entry, open its `.md` file (under `mobile-app-examples/<industry>/`):
    - The **"為什麼這是 hi-fi"** section = what to replicate visually
@@ -336,7 +342,8 @@ Matched [N] references for this generation:
 2. [005-monarch-transactions] — component match (transaction-row, category-pill)
 3. [011-copilot-categories] — layout pattern match
 
-Manifesto rules loaded: [N] binding rules from style-manifesto.md
+Craft rules loaded: [N] from craft-rules.md
+Taste rules loaded: [N] from TASTE.md | template defaults
 Top 3 prescriptive rules from matched references:
 - [quoted rule 1]
 - [quoted rule 2]
@@ -391,6 +398,11 @@ Out of scope: [element]: [why later]
 ```
 
 Confirm before hi-fi. State change magnitude: Tweak | Moderate | Significant.
+
+**Refinement preserves; redesign replaces.** On `extend` or `surface` scope keep
+the existing identity, behavior, wording and anything out of scope untouched. On a
+`world` redesign keep product truth, content and function, and replace the
+look; never split the difference by polishing a look you were asked to replace.
 
 **Never change silently (redesign / ITERATE).** These need explicit user sign-off before
 you touch them — they break SEO, analytics, autofill, or legal compliance even when the
@@ -449,8 +461,8 @@ Claude cannot generate images. Use these methods in order:
 
 ### Method 1: image_search tool (PREFERRED)
 
-If `image_search` tool is available in the current runtime, use it to find 
-contextual photos for each visual slot. This tool returns image URLs that 
+If `image_search` tool is available in the current runtime, use it to find
+contextual photos for each visual slot. This tool returns image URLs that
 render directly in `<img>` tags.
 
 For each section that needs an image, construct a specific query:
@@ -468,7 +480,7 @@ For each section that needs an image, construct a specific query:
 **Embed as:**
 ```html
 <img src="[returned URL]" alt="[descriptive text matching section content]"
-     loading="lazy" style="width:100%; height:[N]px; object-fit:cover; 
+     loading="lazy" style="width:100%; height:[N]px; object-fit:cover;
      border-radius: var(--radius);" />
 ```
 
@@ -514,28 +526,30 @@ A logo wall built from styled text wordmarks reads as fake. Source real marks:
 - For an invented brand, generate a simple inline `<svg>` monogram (one letter in a
   circle, two-letter ligature) matching the page style — not a text label.
 - **Logo wall = logos only.** No category labels under each logo (`Stripe` + "payments").
+- Logos are claims: only brands the brief supplied (`CR-CONTENT-005`).
 
 ### NEVER fake a product screenshot with `<div>`s
 
 A "product preview" hand-built from styled `<div>` rectangles (fake dashboards, fake
-task lists, fake terminals) is a top AI tell. Use a real `image_search` screenshot, a
-real working mini-component inside the page, or skip the preview and use photography.
+task lists, fake terminals) is a top AI tell (`CR-CONTENT-006`). Use a real `image_search`
+screenshot, a real working mini-component inside the page, or skip the preview and use
+photography.
 
 ### Method 3: CSS-only (LAST RESORT)
 
-Only use when Methods 1 and 2 both fail or when the section genuinely works 
+Only use when Methods 1 and 2 both fail or when the section genuinely works
 without imagery (CTA, footer, stats).
 
 - Hero: atmospheric gradient + bold typography
 - Features: SVG icons (16-24px) + text
 - Stats: count-up animation, no photos needed
 
-**NEVER use a gray placeholder rectangle.** If you can't get an image, design 
+**NEVER use a gray placeholder rectangle.** If you can't get an image, design
 the section to work without one.
 
 ### SVG is for icons and data viz ONLY
 
-Never use SVG for hero visuals, people, environments, product depictions, 
+Never use SVG for hero visuals, people, environments, product depictions,
 decorative illustrations, or anything that should be a photograph.
 
 ### Prototype durability — external-URL risk
@@ -548,7 +562,7 @@ prototype meant to be **double-clicked, demoed, or archived** (not just screensh
 once in this session):
 
 - Download the few **identity / hero** images into the session `assets/` folder and
-  reference them locally, OR inline as base64. These must survive offline.
+  reference them locally, OR inline them as data URIs. These must survive offline.
 - Iconify icons and purely decorative photos may stay as external URLs (stable, cached,
   low-stakes), but say so.
 - **State the offline footprint explicitly** in the handoff: "N images are external
@@ -578,7 +592,7 @@ Before generating HTML, plan every visual slot:
 
 ## Step 7B: Icon Strategy (MANDATORY)
 
-**NEVER use emoji as icons.** Emoji are not icons. Using 🦷 or 📅 in a UI mockup is 
+**NEVER use emoji as icons.** Emoji are not icons. Using 🦷 or 📅 in a UI mockup is
 a credibility destroyer. Always use SVG icons.
 
 ### Source: Iconify API (no install, no CDN script needed)
@@ -635,13 +649,13 @@ Before writing HTML, verify:
 - [ ] Image plan complete?
 - [ ] Surface type declared?
 - [ ] Viewport declared?
-- [ ] **Reference lookup done?** (Step 2.5 — references matched + manifesto loaded)
+- [ ] **Reference lookup done?** (Step 2.5 — references matched + craft rules + taste loaded)
 
 ### Content Strategy
 
 Real content, not Lorem Ipsum. Domain-appropriate placeholders. Flag [draft].
 
-**Copy slop ban (these scream "AI wrote this"):**
+**Copy slop ban (`CR-COPY-002`, these scream "AI wrote this"):**
 - **No fake-perfect numbers.** `99.99%`, `50%`, `1,234,567` read as filler. Use organic,
   messy figures: `47.2%`, `$1,840/mo`, `+1 (312) 847-1928`.
 - **No startup-slop brand names.** `Acme`, `Nexus`, `SmartFlow`, `Cloudly`. Invent
@@ -649,7 +663,7 @@ Real content, not Lorem Ipsum. Domain-appropriate placeholders. Flag [draft].
 - **No filler verbs.** `Elevate`, `Seamless`, `Unleash`, `Next-Gen`, `Revolutionize`,
   `Empower`. Use concrete, specific verbs.
 - **Zero em-dashes (`—`) in on-canvas copy.** Use a comma, a period, or restructure.
-  Applies to headlines, body, eyebrows, captions, button labels, alt text. (Hyphen `-`
+  Applies to headlines, body, captions, button labels, alt text. (Hyphen `-`
   for compounds/ranges is fine.)
 - **Re-read every visible string before showing the user.** Any string that is
   grammatically broken or sounds hallucinated → replace with a plain functional sentence.
@@ -671,7 +685,7 @@ For marketing sites:
 
 ### Chinese Typography
 
-If Chinese headline feels heavy: increase line-height, reduce bold glyph collision, 
+If Chinese headline feels heavy: increase line-height, reduce bold glyph collision,
 split into intentional lines, add breathing room around the block.
 
 ### HTML Technical Requirements (Web)
@@ -711,7 +725,7 @@ split into intentional lines, add breathing room around the block.
 ### Motion principles (if the mockup animates)
 
 Output is self-contained HTML, so use CSS transitions / keyframes / IntersectionObserver —
-no framework. Principles, not libraries:
+no framework. Principles, not libraries (`CR-MOTION-001` to `003`):
 
 - **Motion must be motivated.** Every animation communicates one thing: hierarchy,
   feedback, state change, or narrative. "It looked cool" is not a reason — drop it.
@@ -752,7 +766,7 @@ Hero: max impact, minimal text, 1 CTA
 Value prop / social proof: moderate density
   ↓ 64-80px
 Features / details: higher density, grid OK
-  ↓ 64-80px  
+  ↓ 64-80px
 Trust / FAQ: reduce density
   ↓ 80-120px
 Final CTA: mirror hero energy
@@ -778,45 +792,50 @@ Design screens in the order a user encounters them (core loop first).
 ✅ DS CHECK: Colors ✓|✗ · Typography ✓|✗ · Spacing ✓|✗ · Radius ✓|✗
 ```
 
-### Step 8.5: Anti-Slop Pass — AI Tells (MANDATORY — run BEFORE showing user)
+### Step 8.5: Anti-Slop Pass (MANDATORY, run BEFORE showing the user)
 
-These are the micro-signals that make an interface read as "an AI made this." They are
-about credibility, not layout. Hi-Fi Fill catches empty wireframes; this catches *filled
-but fake-looking* output. Any present = strip it and regenerate that element.
+The micro-signals that make a screen read as machine-made. Hi-Fi Fill catches
+empty wireframes; this catches filled-but-fake output. Any hit: strip it and
+regenerate that element. Each line cites its craft rule so the decision record
+can name it.
 
-**Banned in the hero / chrome:**
 ```
-□ Version label in hero — "V0.6", "v2.0", "BETA", "INVITE-ONLY PREVIEW", "EARLY ACCESS"
-   (allowed ONLY if the brief is literally a product-launch page)
-□ Section-number eyebrow — "00 / INDEX", "001 · Capabilities", "06 · how it works"
-□ Decoration text strip — "BRAND. MOTION. SPATIAL.", "TYPE / FORM / MOTION", "DESIGN · BUILD · SHIP"
-□ Fake locale/weather strip — "LIS 14:23 · 18°C" (allowed only if the brief is about a place)
-□ Tagline + trust strip + pricing teaser + avatar row crammed under the hero CTA
-   (each moves to its own section below the hero)
-```
-
-**Banned everywhere:**
-```
-□ "Quietly trusted by" / "Quietly in use at" social-proof headers
-□ Generic step labels — "Stage 1 / Stage 2 / Stage 3", "Step 01 / 02 / 03"
-   (the actual step content IS the label)
-□ Middle-dot (·) overused — max 1 per metadata line
-□ Em-dash (—) anywhere on the canvas
-□ Three identical equal-weight feature cards in a row (web)
-□ Generic glassmorphism on every surface; infinite-loop micro-animations everywhere
-□ Centered hero floating over a dark purple mesh gradient (the LLM default composition)
-□ <div>-built fake product screenshots (see Step 7)
-□ Reference-default affordance the brief never asked for — when you borrow a platform's
-   grammar ("TikTok-style feed", "Instagram-style profile"), you imported its DEFAULT
-   actions too (follow `+`, duet, stitch, stories ring, "subscribe"). Each interactive
-   affordance must trace to the brief / PRD / DESIGN.md. If the brief NAMES the action
-   ("看原作者" = view author), implement that verb — not the platform's nearest default
-   ("+follow"), which is a different feature and often a different backend.
+□ Eyebrow above a heading ("WHY US", "01 · Capabilities", "00 / INDEX")        CR-TYPE-005
+□ A face with no reason in DESIGN.md (defaulted, not chosen from the brief)    CR-TYPE-002
+□ One italic or colored word inside a heading                                   CR-TYPE-004
+□ Gradient text; purple-blue / purple-pink / cyan-on-dark gradient;
+  centered hero over a dark mesh; gradient without a recipe                     CR-COLOR-005
+□ Glow halo, zero-offset colored shadow, glass on every surface                 CR-COLOR-006
+□ Three identical feature cards in a row; icon-heading-text card grid as the
+  page; hero-metric template; section numbers; same layout family twice        CR-LAYOUT-005
+□ Card in a card; border plus shadow on one card; colored left border > 1px     CR-LAYOUT-004
+□ Version label in hero ("V0.6", "BETA"); decoration text strip
+  ("BRAND. MOTION. SPATIAL."); fake locale / weather strip; tagline + trust
+  strip + pricing teaser + avatar row crammed under the CTA                     CR-FINISH-002
+□ "Quietly trusted by"; "Reimagine"; "Whether you're X or Y"; "Say goodbye to";
+  "Seamless"; "Elevate"; "journey"; 99.99%; Acme / Nexus                        CR-COPY-002
+□ Generic step labels ("Step 01 / 02 / 03") where the content is the label     CR-LAYOUT-005
+□ Middle dot (·) more than once per metadata line; any em dash on canvas        CR-CONTENT-004
+□ Div-built fake screenshot; text wordmarks as a logo wall                      CR-CONTENT-006
+□ Emoji or Unicode glyph as an icon; sketch-style SVG scene                     CR-CONTENT-003 / 007
+□ Pulsing dot, parallax, cursor follower, auto carousel, same reveal on
+  every section                                                                 CR-MOTION-003
+□ Dot inside a chip or pill; bordered card or chip                              UI-PILL-001 / UI-STROKE-001
+□ Text within 8px of a box's side edge; tab or nav label whose hover or active
+  fill hugs the text instead of a padded box; first tab flush to the screen     CR-SPACE-002 / UI-TAB-001
+□ Cramped page: gutters under 16px on phone, sections under 120px apart on web  CR-SPACE-001
+□ Affordance the brief never asked for, imported from the reference platform
+  ("TikTok-style" feed shipping follow / duet / stitch)                         CR-FINISH-003
+□ Browser defaults left on selection, caret, focus ring, scrollbar              CR-FINISH-001
+□ Lands in an AI aesthetic cluster nothing asked for (cream + serif + terracotta,
+  black + neon glow, broadsheet italic + tracked mono, brutalist offset shadows)  CR-WORLD-001
+□ Operate screen wearing a costume of its world (bezel, terminal bar, ledger
+  paper table) or non-standard controls                                         CR-MODE-001
 ```
 
 State the result:
 ```
-🧹 ANTI-SLOP: ✅ clean · ❌ [N] tells found → [list] → stripped + regenerated
+ANTI-SLOP: clean | [N] tells found -> [rule ids] -> stripped + regenerated
 ```
 
 ### Hi-Fi Fill Checklist (MANDATORY — run BEFORE showing user, especially mobile-app)
@@ -836,7 +855,8 @@ Do NOT ship wireframe-level output under a hi-fi label.
 □ Avatars where users/entities appear — colored-bg initial OR real photo
 □ Empty-state (if applicable) uses illustration, not blank canvas
 □ Every reference comment (<!-- REF: ... -->) has a matching implemented section
-□ Every manifesto rule has been checked against the output
+□ Every craft rule id has been checked against the output (UI-PILL-001: no dots in chips; UI-STROKE-001: no bordered cards or chips)
+□ Every TASTE.md Do/Don't has been checked against the output
 ```
 
 If the screen has ≥3 failures: **the output is still a wireframe. Regenerate, don't ship.**
@@ -874,13 +894,17 @@ Flag adjacent screens that might have same issues.
 
 ## Step 11: Interaction Spec
 
-Skip if single static screen. Otherwise: markdown doc, build per-screen, 
+Skip if single static screen. Otherwise: markdown doc, build per-screen,
 complete with transitions after all screens done.
 
 ---
 
 ## Step 12: Iteration
 
+- Refine verb (`ITERATE polish|bolder|quieter|distill|harden|clarify|typeset|layout|colorize|motion|adapt|onboard [target]`)
+  → follow its recipe in `skills/design-chain/references/refine.md`: scope is
+  sovereign, no new primitives without asking, finish with Step 9's diff, the
+  Anti-Slop Pass and the review on the changed area
 - Text feedback → apply directly
 - Directional ("too dense") → interpret, propose, confirm
 - Comparative ("more like [ref]") → identify what to adopt
@@ -902,7 +926,7 @@ QA CHECKLIST:
 - Components: identical across screens
 - States: primary hi-fi'd, secondary in spec
 - Interactive: all elements functional
-- Layout (web): annotations hidden, hero ≤5 elements, no unjustified grids, 
+- Layout (web): annotations hidden, hero ≤5 elements, no unjustified grids,
   section gaps ≥64px, no 50/50 splits
 - Layout (app): phone frame present, safe areas clear, tab bar ≤5 items,
   one purpose per screen, no web hero/section patterns
@@ -915,9 +939,14 @@ QA CHECKLIST:
   SVG icons via Iconify API only — zero emoji in UI, alt text on all images
 - Visual contract: all values from Gate 1 contract used, no drift
 - Hi-Fi Fill: Step 8 Fill Checklist passed with 0 failures
-- Anti-slop (Step 8.5): em-dash count = 0, eyebrow count ≤ ceil(sections/3) [web],
-  no version/section-number/decoration-strip tells, no div-fake screenshots, no fake-perfect numbers
-- References: Step 2.5 matches announced, trace comments embedded, manifesto rules honored
+- Contract QA (when `.sanstudio/qa-policy.yml` exists): every gate with `severity: blocking`
+  and `design` in `phases` is listed here by id with its `criteria` as check lines; a
+  `rule:` field maps it to the craft rule id. Any failing blocking gate = fix, regenerate
+- Anti-slop (Step 8.5): em-dash count = 0, zero eyebrows [web], no version/decoration-strip
+  tells, no div-fake screenshots, no fake-perfect numbers, every face has a reason in DESIGN.md
+- References: Step 2.5 matches announced, trace comments embedded, craft rules and taste honored
+- Mode duty: the first viewport does what `modes.md` asks of this visitor mode; on Operate
+  every control is a standard one (`CR-MODE-001`)
 - DESIGN.md lint (run if session DESIGN.md exists — see design-md-spec.md):
   · broken-ref: every `{path.to.token}` resolves (BLOCKING)
   · contrast-ratio: every component bg/text pair WCAG AA ≥ 4.5:1 normal text,
@@ -933,69 +962,82 @@ QA CHECKLIST:
 
 Fix failures before export.
 
----
+## Step 13.5: Fresh-Eyes Review (MANDATORY, before the user sees the mockup)
 
-## Step 14: Figma Export
+Follow `skills/design-lock/references/review.md`: render and capture at the
+shipped viewports into `<session>/review/`, validate every capture, hand the
+reviewer only the brief, the direction contract, the rule paths and the
+captures (a subagent when the agent can spawn one; otherwise a separate pass
+marked `DEGRADED`), then act on the disposition: `recapture`, `rebuild`, `fix`
+(P0 and P1, then a verdict pass on those fixes only) or `ship`. Two fix rounds
+at most; the rest goes to the user and stays in `docs/review.md`.
 
-"Ready to export. Full flow, key screens, or partial?"
-
-### Detect Figma MCP (check BEFORE choosing export path)
-
-At the start of every export step, scan available tools for any name containing
-`figma` (case-insensitive). Common namespaces include:
-
-- `mcp__Figma_Dev_Mode__*`
-- `mcp__plugin_design_figma__*`
-- Any tool with "figma" in its name
-
----
-
-### Path A: Figma MCP connected ✅ (preferred)
-
-Push directly via MCP — no bridge server needed.
-
-1. Read `skills/design-lock/figma-schema-v0.2.md` for JSON schema
-2. Generate `design-export.json` per schema
-3. Call the MCP tool to push (e.g. `create_design_system_rules`, `get_design_context`
-   or whichever push/import tool is available in the connected MCP)
-4. Confirm the push succeeded and tell the user which Figma file was updated
-
-**Tell the user:**
-> "Figma MCP detected — pushing directly to Figma. No bridge server needed."
+```
+REVIEW: <method> · <heuristics total>/<max> · P0 <n> · P1 <n> · disposition <word>
+```
 
 ---
 
-### Path B: No Figma MCP — bridge server
+## Step 14: Figma Export (optional)
 
-1. Read `skills/design-lock/figma-schema-v0.2.md` for JSON schema
-2. Generate `design-export.json` and write to:
-   `/Users/sanderchen/Documents/Claude/Projects/sanstudio-ai-output/latest/figma/design-export.json`
-3. Run export script: `./scripts/export-design-session.sh`
-4. Push to bridge: `curl -X POST http://localhost:3333/push -d @.../design-export.json`
-5. Tell user to open Figma Plugin → Auto-import tab → Start listening
+Figma is optional. The chain is complete without it: the HTML mockup, the
+captures and `DESIGN.md` are the deliverables. Run this step only when one of
+these is true; otherwise skip it and say so in one line.
 
-**Tell the user:**
-> "No Figma MCP detected. Using bridge server. Make sure `node figma-plugin/server.js` is running."
+- A Figma tool is connected: any tool whose name contains `figma`
+  (case-insensitive), for example `mcp__Figma_Dev_Mode__*` or
+  `mcp__plugin_design_figma__*`. Ask once at the Final Gate: "Push this to
+  Figma? Full flow, key screens, or skip."
+- The user asked for it: "export to Figma", "Figma JSON", "匯出 Figma", or the
+  prefix control `figma: export`.
+
+Never call a local server, run a script, or write outside the session folder
+for this step.
+
+### Path A: Figma tool connected and the user said yes
+
+1. Read `skills/design-lock/figma-schema-v0.2.md` for the JSON schema.
+2. Generate `design-export.json` per the schema for the screens the user chose.
+3. Push it with the connected tool's create or import function.
+4. Confirm the push succeeded and name the Figma file that was updated.
+
+### Path B: no Figma tool, and the user asked for the file
+
+1. Read `skills/design-lock/figma-schema-v0.2.md`.
+2. Write `<output-root>/sessions/<slug>/figma/design-export.json`.
+3. Tell the user where it is and that any importer that reads figma-schema
+   v0.2 can consume it.
+
+### Otherwise: skip
+
+> "Skipped Figma export (no Figma tool connected, not requested). Say `export to Figma` any time to get it."
+
+Record `figma_export: pushed | file | skipped` in the handoff block.
+
+(The sanstudio repository ships an optional local bridge under `figma-plugin/`
+for its maintainers. It is developer tooling, not part of the skill, and the
+skill never uses it.)
 
 ---
 
 ## Step 15: Companion Documents
 
 ### DDR (Design Decision Record)
-Context → Techniques Applied → Key Decisions (with gate + status) → 
+Context → Techniques Applied → Key Decisions (with gate + status) →
 Design Changes (ITERATE) → Design Debt → Open Items
 
 ### Handoff Summary
-Screens, states, viewport, dark mode, DS, what to do in Figma, 
+Screens, states, viewport, dark mode, DS, what to do in Figma,
 what NOT to change (LOCKED decisions).
 
 ---
 
 ## Step 16: Final Gate
 
-Present outputs. "Confirm to export, or adjust?"
+Present outputs. "Confirm, or adjust?" When a Figma tool is connected, add the one-line Figma question from Step 14.
 
-After the user confirms the prototype, offer the next altitude:
+After the user confirms the prototype, offer the next altitude when the chain is not
+already on the major lane:
 
 > "This is a validated prototype — spine screens, primary states. If you need a
 > complete, buildable design package (all states, full screen inventory,
@@ -1003,8 +1045,8 @@ After the user confirms the prototype, offer the next altitude:
 > **Gate 4 (`/production-lock`)**. Want to harden it for production, or is the
 > prototype enough?"
 
-Only route to Gate 4 on explicit opt-in. Gate 4 reads the `---DESIGN-LOCK---`
-block below as its input.
+Only route to Gate 4 on explicit opt-in (or the major lane). Gate 4 reads the
+`---DESIGN-LOCK---` block below as its input.
 
 ### Handoff Block
 
@@ -1020,11 +1062,18 @@ design_system: [name|ad-hoc|inferred]
 design_system_ref: <name>|<name1>+<name2>|none   # echoed from CONTEXT-LOCK if used
 visual_contract_enforced: true|false
 references_used: [list of reference IDs, or "none-available"]
-manifesto_rules_applied: [N or "no-manifesto"]
+craft_rules_checked: [N]
+taste_rules_applied: [N or "template-defaults"]
+craft_exceptions: [rule ids approved by the user, or none]
 qa_status: all-clear|warnings|fixed
+review_method: subagent|degraded-single-context|degraded-no-render
+review_disposition: ship|fix
+review_score: [total]/[max]
+open_issues: [P2/P3 count; P0/P1 must be 0 or listed as user-approved]
 hifi_fill_status: all-pass|regenerated-N-times
 iteration_rounds: [N]
 companion_docs: DDR,interaction-spec,handoff-summary
+figma_export: pushed|file|skipped
 ---END-DESIGN-LOCK---
 ```
 
@@ -1054,13 +1103,13 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 14. **References anchor the output.** For mobile-app, always run Step 2.5 Reference Lookup. If the library is empty, flag it — don't silently default to generic patterns.
 15. **DESIGN.md is law when present.** Token values bind, prose constrains, Do's/Don'ts are hard rules. Never invent a color/font outside the token map without flagging. WCAG AA contrast failures block export — fix the tokens, don't ship inaccessible UI. Spec at `skills/design-lock/design-md-spec.md`.
 16. **Library design systems are upstream, not ceiling.** When `design_system_ref` points to `design-systems/<name>/DESIGN.md`, those tokens are the BASE — the session DESIGN.md is allowed (and expected) to override them for project fit. Never copy a library system verbatim and ship it as the user's product; that's plagiarism, not inspiration.
-17. **Anti-slop pass is mandatory.** Run Step 8.5 before showing any mockup. AI tells (version labels, section-number eyebrows, decoration strips, "Quietly trusted by", div-fake screenshots, em-dashes) get stripped, not shipped. Filled-but-fake fails just like empty.
-18. **Copy is real, not slop.** No fake-perfect numbers, no Acme/Nexus names, no Elevate/Seamless filler verbs, zero em-dashes on canvas. Re-read every visible string before shipping.
-19. **Filler defaults defer to the contract.** Font/color craft rules (no Inter default, no pure #000/#fff, single accent, no AI-purple) apply ONLY when the DESIGN.md / visual contract is silent. A specified value is exact and binding — never "improve" it.
-20. **Motion must be motivated.** Every animation communicates one thing or it's cut. Honor `prefers-reduced-motion`, animate transform/opacity only, never ship half-built motion.
-21. **Affordances trace to the brief, not the reference.** Borrow a reference's layout grammar (full-bleed feed, right rail, bottom sheet), never its default action set. A "TikTok-style" brief does not authorize follow / duet / stitch unless the brief asks for them. When the brief names an action, implement that exact verb — substituting the platform's nearest default (e.g. "看原作者" rendered as "+follow") is scope creep and a likely model mismatch (follow-graph vs attribution). Every button maps to a requirement or it's cut.
 
 ---
+17. **Anti-slop pass is mandatory.** Run Step 8.5 before showing any mockup. Every hit cites a craft rule id; tells get stripped, not shipped. Filled-but-fake fails like empty.
+18. **Craft defaults defer to the contract.** A `(default)` line in craft-rules.md (no bento, accent under 5%, a face chosen from the brief) applies only when DESIGN.md, TASTE.md and the visual contract are silent. A specified value is exact and binding; a ban (gradient text, purple gradients, eyebrows, dots in chips, text flush to an edge) is never overridden.
+19. **Copy is real, not slop.** No fake-perfect numbers, no Acme/Nexus names, no Elevate/Seamless filler verbs, zero em-dashes on canvas. Re-read every visible string before shipping.
+20. **Motion must be motivated.** Every animation communicates one thing or it's cut. Honor `prefers-reduced-motion`, animate transform/opacity only, never ship half-built motion.
+21. **Affordances trace to the brief, not the reference.** Borrow a reference's layout grammar (full-bleed feed, right rail, bottom sheet), never its default action set. A "TikTok-style" brief does not authorize follow / duet / stitch unless the brief asks for them. When the brief names an action, implement that exact verb — substituting the platform's nearest default (e.g. "看原作者" rendered as "+follow") is scope creep and a likely model mismatch (follow-graph vs attribution). Every button maps to a requirement or it's cut. (`CR-FINISH-003`)
 
 ## Anti-Patterns
 
@@ -1087,7 +1136,7 @@ Acknowledge → PARTIAL block → offer partial export → summarize re-entry pa
 21. **Inaccessible color pair:** Component `backgroundColor` × `textColor` with WCAG AA contrast under 4.5:1 (normal text). Even if it looks "design-y," it fails users with low vision. The DESIGN.md `contrast-ratio` lint catches this — never override.
 22. **Token invention without declaration:** Inline-styling with a hex/font that isn't in the DESIGN.md token map. If you need it, propose adding it as a token (e.g. `colors.warning`) and have the user confirm — don't silently expand the palette.
 23. **Hero chrome slop:** Version labels (`V0.6`, `BETA`), section-number eyebrows (`00 / INDEX`), decoration text strips (`BRAND. MOTION. SPATIAL.`), fake locale/weather strips. The Step 8.5 Anti-Slop Pass exists to catch these.
-24. **Eyebrow inflation:** More than ceil(sections / 3) uppercase-tracking labels on a web page. The most-violated stylistic tell. Count them mechanically.
+24. **Eyebrow labels:** Any uppercase-tracking label above a heading on a web page, unless the DESIGN.md explicitly allows them (then more than ceil(sections / 3)). The most-violated stylistic tell. Count them mechanically.
 25. **Layout-family repetition:** Same section layout twice in a row, or 3+ consecutive image+text splits. An 8-section page using <4 layout families reads as a template.
 26. **Copy slop:** Fake-perfect numbers (`99.99%`), startup-slop names (`Acme`, `Nexus`), filler verbs (`Elevate`, `Seamless`), em-dashes on canvas. Filled but fake is still a fail.
 27. **Div-fake screenshot:** A product preview hand-built from styled `<div>` rectangles (fake dashboard, fake task list, fake terminal). Use a real screenshot, a real mini-component, or photography.

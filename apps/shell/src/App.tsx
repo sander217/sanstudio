@@ -9,6 +9,13 @@ import { PromptBar } from './PromptBar';
 import { PreviewIframe } from './PreviewIframe';
 import { RefinePanel } from './RefinePanel';
 import { SessionPicker } from './SessionPicker';
+import { ProjectPicker } from './ProjectPicker';
+import { ViewportPicker } from './ViewportPicker';
+import {
+  readStoredViewport,
+  writeStoredViewport,
+  type Viewport,
+} from './viewportPresets';
 import {
   EMPTY_SESSION_STATE,
   artifactUrl,
@@ -16,6 +23,12 @@ import {
   startSessionPolling,
   type SessionState,
 } from './SessionWatcher';
+import {
+  listProjects,
+  readSelectedProjectId,
+  writeSelectedProjectId,
+  type Project,
+} from './ProjectStore';
 import { getHealth, type DaemonHealth } from './DaemonClient';
 
 const COMPANION_URL = '/refinetool/companion.iife.js';
@@ -44,6 +57,10 @@ export function App() {
   const [resetKey, setResetKey] = useState(0);
   const [iframeEl, setIframeEl] = useState<HTMLIFrameElement | null>(null);
   const [daemon, setDaemon] = useState<DaemonHealth | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [selectedProjectId, setSelectedProjectId] = useState<string | null>(
+    readSelectedProjectId(),
+  );
   // null = auto-follow latest by mtime. Setting to a slug pins the iframe
   // to that session even when newer ones arrive.
   const [pinnedSlug, setPinnedSlug] = useState<string | null>(null);
@@ -51,10 +68,66 @@ export function App() {
   // that file inside whichever session is currently active.
   const [pinnedHtml, setPinnedHtml] = useState<string | null>(null);
   const [sidebarWidth, setSidebarWidth] = useState<number>(readStoredWidth);
+  const [viewport, setViewport] = useState<Viewport>(readStoredViewport);
+  // Bumped on project switch + manual Refresh click. Becomes the `n` query
+  // param on the iframe src, so even stable artifacts re-navigate and
+  // re-fetch every asset — defeats any stale-broken-image cache the
+  // browser is holding onto from earlier failed loads.
+  const [cacheBust, setCacheBust] = useState<number>(0);
   const lastSrcRef = useRef<string | null>(null);
   const dragStartRef = useRef<{ startX: number; startWidth: number } | null>(null);
 
-  useEffect(() => startSessionPolling(setSession, 1500), []);
+  function handleViewportChange(next: Viewport) {
+    setViewport(next);
+    writeStoredViewport(next);
+  }
+
+  function handleRefresh() {
+    setCacheBust(Date.now());
+  }
+
+  // Initial project list fetch + reconciliation: if the stored selection no
+  // longer exists (e.g. user removed the project), fall back to the first.
+  async function refreshProjects() {
+    try {
+      const list = await listProjects();
+      setProjects(list);
+      setSelectedProjectId((cur) => {
+        if (cur && list.some((p) => p.id === cur)) return cur;
+        const fallback = list[0]?.id ?? null;
+        writeSelectedProjectId(fallback);
+        return fallback;
+      });
+    } catch (err) {
+      console.warn('[shell] listProjects failed', err);
+    }
+  }
+
+  useEffect(() => {
+    void refreshProjects();
+  }, []);
+
+  function handleSelectProject(id: string) {
+    setSelectedProjectId(id);
+    writeSelectedProjectId(id);
+    // Clear pinned session/html when switching projects — pins are per-
+    // project and don't make sense across project boundaries.
+    setPinnedSlug(null);
+    setPinnedHtml(null);
+    setSession(EMPTY_SESSION_STATE);
+    // Bump cache-bust so the new project's iframe starts with a fresh
+    // URL — protects against the browser serving cached responses from a
+    // previous load (especially asset failures cached before a server fix).
+    setCacheBust(Date.now());
+  }
+
+  // Re-poll sessions when the selected project changes. Wait until we have
+  // a project ID — the very first render before /api/projects responds has
+  // none, and we don't want to fetch the wrong project's sessions.
+  useEffect(() => {
+    if (!selectedProjectId) return;
+    return startSessionPolling(setSession, 1500, selectedProjectId);
+  }, [selectedProjectId]);
 
   // Probe the daemon at boot. We don't poll — if Claude becomes available
   // mid-session, the user can refresh; that's fine for Layer 1.
@@ -81,7 +154,20 @@ export function App() {
     }
   }, [pinnedSlug, session.all]);
 
-  const src = effectiveSlug && effectiveHtml ? artifactUrl(effectiveSlug, effectiveHtml) : null;
+  // Pass mtime so the iframe's src changes (and reloads) when claude
+  // rewrites the same file path during iterate. cacheBust is bumped on
+  // project switch + manual Refresh so even a stable artifact re-loads
+  // from scratch when the user explicitly asks for it.
+  const src =
+    effectiveSlug && effectiveHtml
+      ? artifactUrl(
+          effectiveSlug,
+          effectiveHtml,
+          selectedProjectId,
+          effectiveSession?.modifiedMs,
+          cacheBust,
+        )
+      : null;
 
   // Reset the panel state when the artifact changes (auto-switch OR pin change).
   useEffect(() => {
@@ -138,11 +224,23 @@ export function App() {
 
   return (
     <div style={layout}>
-      <PromptBar
-        sessionSlug={effectiveSlug}
-        lastError={session.error}
-        daemon={daemon}
-      />
+      <header style={headerBar}>
+        <ProjectPicker
+          projects={projects}
+          selectedId={selectedProjectId}
+          onSelect={handleSelectProject}
+          onProjectsChanged={() => void refreshProjects()}
+          iframe={iframeEl}
+        />
+        <div style={headerPromptWrap}>
+          <PromptBar
+            sessionSlug={effectiveSlug}
+            lastError={session.error}
+            daemon={daemon}
+            projectId={selectedProjectId}
+          />
+        </div>
+      </header>
       <div style={bodyStyle}>
         <main style={stage}>
           <SessionPicker
@@ -153,17 +251,27 @@ export function App() {
             onPickSession={setPinnedSlug}
             selectedHtml={pinnedHtml}
             onPickHtml={setPinnedHtml}
+            iframe={iframeEl}
           />
-          <PreviewIframe
-            src={src}
-            companionUrl={COMPANION_URL}
-            onIframeChange={setIframeEl}
-            onCompanionReady={() => {
-              // The iframe was just navigated; force the panel to re-attach
-              // the postMessage RPC against the fresh contentWindow.
-              setIframeEl((prev) => prev);
-            }}
+          <ViewportPicker
+            viewport={viewport}
+            onChange={handleViewportChange}
+            onRefresh={handleRefresh}
+            iframe={iframeEl}
           />
+          <div style={previewWrap}>
+            <PreviewIframe
+              src={src}
+              companionUrl={COMPANION_URL}
+              onIframeChange={setIframeEl}
+              onCompanionReady={() => {
+                // The iframe was just navigated; force the panel to re-attach
+                // the postMessage RPC against the fresh contentWindow.
+                setIframeEl((prev) => prev);
+              }}
+              viewport={viewport}
+            />
+          </div>
         </main>
         <div
           className="shell-resize-handle"
@@ -182,6 +290,7 @@ export function App() {
             sessionSlug={effectiveSlug}
             resetKey={resetKey}
             daemon={daemon}
+            projectId={selectedProjectId}
           />
         </aside>
       </div>
@@ -191,10 +300,28 @@ export function App() {
 
 const layout: React.CSSProperties = {
   display: 'grid',
-  gridTemplateRows: '52px minmax(0, 1fr)',
+  gridTemplateRows: '56px minmax(0, 1fr)',
   height: '100vh',
   width: '100vw',
   background: '#f1f5f9',
+};
+const headerBar: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 12,
+  padding: '0 12px',
+  background: '#fff',
+  borderBottom: '1px solid #e2e8f0',
+  height: '100%',
+  minWidth: 0,
+};
+const headerPromptWrap: React.CSSProperties = {
+  flex: 1,
+  minWidth: 0,
+  // Reset the PromptBar's outer padding so it sits inline with the picker.
+  height: '100%',
+  display: 'flex',
+  alignItems: 'center',
 };
 const body: React.CSSProperties = {
   display: 'grid',
@@ -210,6 +337,13 @@ const stage: React.CSSProperties = {
   display: 'flex',
   flexDirection: 'column',
   overflow: 'hidden',
+};
+const previewWrap: React.CSSProperties = {
+  flex: 1,
+  minHeight: 0,
+  minWidth: 0,
+  display: 'flex',
+  flexDirection: 'column',
 };
 const sidebar: React.CSSProperties = {
   borderLeft: '1px solid #e2e8f0',

@@ -1,0 +1,34 @@
+sanstudio Commercial License
+
+Copyright (c) 2026 Sander Chen. All rights reserved.
+
+The skill files in this package (every SKILL.md and the files under each
+skill's references/ and assets/ directories) are licensed, not sold.
+
+Permitted
+- Use the skills with AI agents you operate, for your own or your clients'
+  design work, on any number of machines you control.
+- Edit TASTE.md and any copy of TASTE.template.md without restriction.
+- Keep local copies for backup.
+
+Not permitted without written permission
+- Redistributing, reselling, sublicensing or publishing the skill files, in
+  whole or in part, including inside another skill, plugin or marketplace
+  listing.
+- Removing this notice.
+
+No warranty. The skills guide an AI agent; output quality depends on the
+agent, the tools connected and the evidence supplied. Review every artifact
+before relying on it.
+
+Third-party material
+- Files under design-systems/ in the source repository are not part of this
+  package and keep their upstream licenses (Apache 2.0 and MIT); see
+  design-systems/NOTICE.md there.
+- Reference screenshots of third-party products are not included in this
+  package. The annotation files that describe them are original work.
+- Parts of the skills adapt ideas, in new wording, from impeccable (Paul
+  Bakaus, Apache 2.0), design.md (Google LLC, Apache 2.0), hallmark
+  (Hallmark contributors, MIT) and taste-skill (Leonxlnx, MIT). The full
+  credits and licence texts are in packaging/agensi/NOTICE.md and
+  packaging/agensi/licenses/.

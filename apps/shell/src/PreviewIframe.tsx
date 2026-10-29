@@ -6,8 +6,17 @@
 // Deliberately uses a callback ref instead of forwardRef + useImperativeHandle
 // — simpler and more predictable when the component sometimes returns an
 // iframe and sometimes returns an empty-state placeholder.
+//
+// Two layout modes driven by `viewport`:
+//   - fluid: iframe fills the stage (the historical behavior).
+//   - fixed: iframe rendered at exact device dimensions, centered on the
+//     stage with a soft "device frame" look. When viewport.fit is on and
+//     the device is taller/wider than the stage, the frame is scaled down
+//     via CSS transform so the whole screen stays visible without panning.
 
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import type { Viewport } from './viewportPresets';
 
 interface Props {
   /** Path under /sessions/* — e.g. "/sessions/<slug>/html/index.html" */
@@ -18,9 +27,13 @@ interface Props {
   onIframeChange: (el: HTMLIFrameElement | null) => void;
   /** Fires after the companion script has been injected for this load. */
   onCompanionReady?: () => void;
+  /** Device-size constraints. Defaults to fluid (full-stage). */
+  viewport: Viewport;
 }
 
-export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionReady }: Props) {
+const FRAME_PADDING = 24; // breathing room around the fixed device frame.
+
+export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionReady, viewport }: Props) {
   const onChangeRef = useRef(onIframeChange);
   onChangeRef.current = onIframeChange;
   const onReadyRef = useRef(onCompanionReady);
@@ -43,6 +56,20 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
             return;
           }
           if (doc.getElementById('ifl-companion-script')) return;
+          // Companion's "Refine Mode — click any region · ESC to exit"
+          // banner. By default it's `position: fixed; top: 16px` and
+          // floats over artifact content (covers the hero headline).
+          // Push it up 80px so it sits flush with the iframe's top edge
+          // (or clips off entirely) and stops obscuring the design. The
+          // shell's [● Picker on] strip already conveys this state.
+          //
+          // Selector is #ifl-banner (id, set by spawn() in companion).
+          if (!doc.getElementById('ifl-shell-overrides')) {
+            const style = doc.createElement('style');
+            style.id = 'ifl-shell-overrides';
+            style.textContent = `#ifl-banner { top: -64px !important; }`;
+            doc.documentElement.appendChild(style);
+          }
           // Always re-fetch with no-store + a cache-buster query so dev
           // edits to refinetool propagate without a hard browser reload.
           // The bundle is small (~40KB) so re-fetching per iframe load is
@@ -78,6 +105,37 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
     return () => onChangeRef.current(null);
   }, []);
 
+  // Measure the outer stage container so the Fit toggle can scale the
+  // device frame down to fit. MUST use a callback ref (not useEffect+useRef
+  // with [] deps), because the fluid branch returns the bare <iframe> with no
+  // container div — so the effect would run once at mount with ref=null and
+  // never re-fire when the user later switches to a fixed device. That left
+  // stageSize at {0,0}, the Fit math saw availW=availH=0 (which is treated
+  // as "skip scaling, scale=1"), and the device rendered at its native size
+  // overflowing the stage. flex `align-items: center` + `overflow: auto`
+  // then top-clipped the device with no way to scroll back up. The header /
+  // top of the artifact silently disappeared.
+  const [stageSize, setStageSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const setContainerNode = useCallback((el: HTMLDivElement | null) => {
+    resizeObserverRef.current?.disconnect();
+    resizeObserverRef.current = null;
+    if (!el) {
+      setStageSize({ w: 0, h: 0 });
+      return;
+    }
+    // Seed synchronously from clientWidth/Height so the first render in
+    // fixed mode already has real numbers — no flash-of-overflow.
+    setStageSize({ w: el.clientWidth, h: el.clientHeight });
+    const ro = new ResizeObserver((entries) => {
+      const cr = entries[0]?.contentRect;
+      if (cr) setStageSize({ w: cr.width, h: cr.height });
+    });
+    ro.observe(el);
+    resizeObserverRef.current = ro;
+  }, []);
+  useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
+
   if (!src) {
     return (
       <div style={emptyStyle}>
@@ -91,10 +149,72 @@ export function PreviewIframe({ src, companionUrl, onIframeChange, onCompanionRe
     );
   }
 
-  return <iframe ref={setIframeNode} src={src} title="Gate 3 artifact" style={iframeStyle} />;
+  // Fluid mode — same as the historical behavior.
+  if (viewport.mode === 'fluid') {
+    return (
+      <iframe
+        ref={setIframeNode}
+        src={src}
+        title="Gate 3 artifact"
+        style={fluidIframeStyle}
+      />
+    );
+  }
+
+  // Fixed device mode. Compute scale for Fit.
+  const W = viewport.width ?? 393;
+  const H = viewport.height ?? 852;
+  const availW = Math.max(0, stageSize.w - FRAME_PADDING * 2);
+  const availH = Math.max(0, stageSize.h - FRAME_PADDING * 2);
+  const scale =
+    viewport.fit && availW > 0 && availH > 0
+      ? Math.min(availW / W, availH / H, 1)
+      : 1;
+  const scaledW = W * scale;
+  const scaledH = H * scale;
+
+  return (
+    <div ref={setContainerNode} style={fixedStage}>
+      <div
+        style={{
+          ...fixedFrameSlot,
+          width: scaledW,
+          height: scaledH,
+        }}
+      >
+        {/* Inner shell carries the visual chrome (border, shadow). The iframe
+            itself stays sharp-cornered and ungrouped so no pixel of content
+            gets clipped at the rounded corners — matches Chrome DevTools
+            mobile mode behavior, where the viewport edges are square. */}
+        <div
+          style={{
+            ...deviceShellStyle,
+            width: scaledW,
+            height: scaledH,
+          }}
+        >
+          <iframe
+            ref={setIframeNode}
+            src={src}
+            title="Gate 3 artifact"
+            style={{
+              ...deviceIframeStyle,
+              width: W,
+              height: H,
+              transform: scale !== 1 ? `scale(${scale})` : 'none',
+            }}
+          />
+        </div>
+      </div>
+      <div style={dimReadout}>
+        {W} × {H}
+        {scale !== 1 ? `  ·  ${Math.round(scale * 100)}%` : ''}
+      </div>
+    </div>
+  );
 }
 
-const iframeStyle: React.CSSProperties = {
+const fluidIframeStyle: React.CSSProperties = {
   width: '100%',
   height: '100%',
   border: 0,
@@ -102,6 +222,57 @@ const iframeStyle: React.CSSProperties = {
   borderRadius: 8,
   boxShadow: '0 4px 16px rgba(0,0,0,0.06)',
   display: 'block',
+};
+
+const fixedStage: React.CSSProperties = {
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+  display: 'flex',
+  // `safe center` falls back to flex-start when the child overflows. Without
+  // it, plain `center` + overflow:auto clips the top/left edge and the user
+  // can't scroll back to it (the classic Flexbox centering bug). Belt-and-
+  // -suspenders against any edge case where Fit math underestimates.
+  alignItems: 'safe center',
+  justifyContent: 'safe center',
+  overflow: 'auto',
+  padding: FRAME_PADDING,
+  boxSizing: 'border-box',
+};
+
+const fixedFrameSlot: React.CSSProperties = {
+  position: 'relative',
+  flex: '0 0 auto',
+};
+
+const deviceShellStyle: React.CSSProperties = {
+  position: 'relative',
+  background: '#fff',
+  // Shadow only — no border. A 1px border on a shell sized to scaledW × scaledH
+  // would eat 2px from the iframe's content area (overflow:hidden clips the
+  // overflow) and we'd be right back to clipping content at the edges.
+  boxShadow: '0 12px 36px rgba(15,23,42,0.18), 0 0 0 1px rgba(15,23,42,0.08)',
+  overflow: 'hidden',
+};
+
+const deviceIframeStyle: React.CSSProperties = {
+  border: 0,
+  background: '#fff',
+  transformOrigin: 'top left',
+  display: 'block',
+};
+
+const dimReadout: React.CSSProperties = {
+  position: 'absolute',
+  bottom: 8,
+  right: 12,
+  fontSize: 10,
+  color: '#94a3b8',
+  fontFamily: 'ui-monospace, SFMono-Regular, Menlo, monospace',
+  background: 'rgba(255,255,255,0.9)',
+  padding: '2px 6px',
+  borderRadius: 4,
+  pointerEvents: 'none',
 };
 
 const emptyStyle: React.CSSProperties = {

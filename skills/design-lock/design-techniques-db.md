@@ -296,7 +296,7 @@ Format:
     --neutral-900: #0f172a;
     --success: #16a34a;
   }
-  .pricing-demo { max-width: 1100px; margin: 0 auto; padding: 40px 24px; font-family: Inter, sans-serif; color: var(--neutral-900); }
+  .pricing-demo { max-width: 1100px; margin: 0 auto; padding: 40px 24px; font-family: var(--font-body), sans-serif; color: var(--neutral-900); }
   .pricing-demo h2 { margin: 0 0 12px; font-size: 36px; }
   .pricing-demo p { margin: 0 0 40px; color: var(--neutral-500); font-size: 16px; }
   .pricing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
@@ -470,7 +470,7 @@ Format:
     --neutral-500: #64748b;
     --neutral-900: #0f172a;
   }
-  .summary-demo { max-width: 420px; margin: 0 auto; padding: 40px 24px; font-family: Inter, sans-serif; color: var(--neutral-900); }
+  .summary-demo { max-width: 420px; margin: 0 auto; padding: 40px 24px; font-family: var(--font-body), sans-serif; color: var(--neutral-900); }
   .order-summary { position: sticky; top: 24px; border: 1px solid var(--neutral-200); border-radius: 16px; background: var(--neutral-50); padding: 24px; }
   .summary-title { margin: 0 0 20px; font-size: 18px; font-weight: 600; }
   .summary-item { display: flex; justify-content: space-between; gap: 12px; padding: 10px 0; font-size: 14px; }
@@ -606,7 +606,7 @@ Format:
     --green-600: #16a34a;
     --red-600: #dc2626;
   }
-  .dashboard-demo { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; max-width: 1200px; margin: 0 auto; padding: 32px 24px; font-family: Inter, sans-serif; color: var(--neutral-900); background: #f8fafc; }
+  .dashboard-demo { display: grid; grid-template-columns: repeat(12, 1fr); gap: 24px; max-width: 1200px; margin: 0 auto; padding: 32px 24px; font-family: var(--font-body), sans-serif; color: var(--neutral-900); background: #f8fafc; }
   .kpi-card { grid-column: span 3; background: var(--neutral-0); border: 1px solid var(--neutral-200); border-radius: 16px; padding: 20px; }
   .kpi-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--neutral-500); margin-bottom: 8px; }
   .kpi-value { font-size: 30px; font-weight: 600; margin-bottom: 6px; }

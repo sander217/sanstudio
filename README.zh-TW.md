@@ -1,456 +1,79 @@
-[English](README.md) · **繁體中文**
+# sanstudio
 
-# Design Agent Studio — 安裝教學
+給 AI agent 用的設計流程。一句需求進去，出來的是研究報告、鎖定的視覺契約、三個真的不一樣的方向、hi-fi mockup，以及你要的話，一份可以開工的 production 設計包。每一關都停下來等你決定。
 
-給團隊成員的 step-by-step 安裝指南。完成後你就可以在 Claude Code 裡用 AI 做設計思維 → 方向探索 → 高保真設計 → 自動匯出到 Figma。
+在 Claude Code 和任何會載入 `SKILL.md` 資料夾的 agent 都能跑。不帶腳本，自己不連網，用的是你的 agent 本來就有的搜尋、找圖和 Figma 工具。
 
-整個安裝大約需要 **15-20 分鐘**（含基本訓練）。
+## 你會拿到什麼
 
----
+| 關 | skill | 回答的問題 | 產出 |
+|---|---|---|---|
+| G0 | research-synthesis | 用戶為什麼要這個，證據撐得住什麼，還不知道什麼 | `research/report.md` |
+| G1 | context-lock | 做給誰、哪種 surface、哪些顏色和字體 | `DESIGN.md` |
+| G2 | direction-lock | 三種解法，每個都對應一條研究發現 | `html/directions/` |
+| G3 | design-lock | 選定的解法長什麼樣，真內容，lint 通過 | `html/`、`review/` |
+| G4 | production-lock | 工程師開工需要的一切 | `docs/` |
 
-## 它是什麼
+`design-chain` 是入口。它選 lane（fast、standard、major），依序跑關，每關結束停下來等 `APPROVE`、`ITERATE <備註>`、`BACK G<n>` 或 `STOP`。中文也可以：確認、改、回到 G2、停。
 
-Design Agent Studio 是一套 **4-gate 設計系統**，把模糊的需求變成 Figma-ready 的高保真設計。Gate 1–3 是核心循環（想法 → 驗證過的 prototype）；Gate 4 是 opt-in 的硬化關,把驗證過的 prototype 補成完整可建造的設計包：
+## 安裝
+
+把 `skills/` 底下六個資料夾複製到你的 agent 的 `skills/` 目錄（Claude Code 是專案的 `.claude/skills/` 或 `~/.claude/skills/`），或直接裝 Agensi 的 bundle。各關之間用 `skills/<name>/...` 互相引用，所以上層資料夾必須叫 `skills`。每個資料夾的 `references/` 和 `assets/` 要保持完整。
+
+然後在你的專案根目錄（都是選配，都建議）：
+
+```bash
+cp <skills>/design-chain/assets/TASTE.template.md ./TASTE.md
+```
+
+```bash
+mkdir -p .sanstudio && cp <skills>/design-chain/assets/PRODUCT.template.md ./.sanstudio/PRODUCT.md
+```
+
+把 `TASTE.md` 改成你的品牌：顏色、字體、Do 和 Don't。這份是你的，每次 session 都會當 defaults 載入。`PRODUCT.md` 放確定的產品事實（使用者、目的、定位、手上的真資料），之後的 session 不會再問一次。
+
+## 使用
+
+像跟設計師 brief 一樣寫需求，有什麼就附什麼：截圖、ticket、競品網址、一段背景。
 
 ```text
-你說："我需要設計一個 onboarding flow"
-    │
-    ▼
-Gate 1 (/context-lock)    → 理解需求、抽出視覺契約、產出 DESIGN.md
-Gate 2 (/direction-lock)  → 探索 3 個方向、驗證可行性
-Gate 3 (/design-lock)     → 生成 hi-fi HTML + Figma JSON → 自動匯入 Figma
-Gate 4 (/production-lock) → (opt-in) 硬化成完整可建造規格:
-                            全狀態、responsive matrix、component library、a11y、dev handoff
+lane: standard
+記帳 app 的交易列表太雜，用戶說找不到上週的咖啡。截圖附上。tab bar 不要動。
 ```
 
-每次跑完會產出一份 **DESIGN.md**（YAML tokens + Do's/Don'ts），這是貫穿各 Gate 的視覺語言契約。Gate 3 會用它做 lint（WCAG 對比、token 引用是否存在）。
+鏈路先研究，再最多問你兩個問題，然後給你一份 `DESIGN.md`。回 `APPROVE`。它給三個方向。回 `APPROVE` 或「B，但分組用 A 的」。它做出 hi-fi mockup。回 `ITERATE 金額再大一點` 或 `APPROVE`。所有東西都在 `./sanstudio-output/latest/`。
 
----
+開頭控制字：`lane: fast|standard|major`、`research: provided`、`taste: none`、`output: <路徑>`。
 
-## 前置條件
+G3 的精修動詞：`ITERATE polish|bolder|quieter|distill|harden|clarify|typeset|layout|colorize|motion|adapt|onboard [目標]`，中文是打磨、更大膽、收斂、精簡、補強、文案、字體、版面、上色、動態、適配、首次體驗。只動指定的地方，要加新顏色、字體、元件會先問。`REVIEW`（檢查）隨時跑一次 fresh-eyes review。
 
-開始之前，確認你有以下東西：
+## 怎麼避免每次都做出同一頁
 
-| 項目 | 怎麼確認 | 沒有的話 |
-|------|---------|---------|
-| Node.js 18+ | Terminal 打 `node -v` | 去 https://nodejs.org 安裝 LTS 版 |
-| Claude Code | Terminal 打 `claude --version` | 去 https://docs.anthropic.com/en/docs/claude-code 安裝 |
-| Figma 桌面版 | 打開 Figma app | 去 https://figma.com/downloads 下載 |
-| Git | Terminal 打 `git --version` | macOS: `xcode-select --install` / Windows: https://git-scm.com |
+- **Visitor mode**（Persuade、Operate、Read、Experience）決定野心：landing page 要有觀點，dashboard 要精準加一個招牌設計。
+- **避開俗套**：G2 先寫出這個類別永遠會做的那頁和它的反射性反面，兩個都不做，再從候選池按分散度挑三個方向。
+- **Direction contract**：六段短約定（核心想法、外觀、使用者路徑、第一屏、招牌設計、完成條件），G3 照著做。
+- **Fresh-eyes review**：G3 做完在瀏覽器截圖，交給沒參與製作的 context 審：具體性、Nielsen 十項、人物走查、P0 到 P3、ship / fix / rebuild / recapture。
 
----
+## 哪些是鐵律，哪些是你的
 
-## 階段一：安裝 Skills（5 分鐘）
+- `skills/design-lock/references/craft-rules.md` 是跨品牌的工藝規則，每條有編號，例如 `UI-PILL-001`（chip 裡不放圓點）、`UI-STROKE-001`（card 不加框線）。每個品牌都適用。要例外必須你開口，並記進 `docs/decisions.md`。
+- `TASTE.md` 是你的品牌。session 的 `DESIGN.md` 可以覆蓋它的 token，工藝規則蓋過兩者。
 
-Skills 是教 Claude Code 怎麼做設計工作的指令檔案。
+## Figma
 
-### 步驟 1：下載 repo
+選配。有連 Figma MCP 時，Gate 3 問你一次要不要推，要就直接推。沒有連就整段跳過，除非你要求（開頭加 `figma: export` 或說「匯出 Figma」），才把 `figma/design-export.json` 寫進 session 資料夾，格式照 `skills/design-lock/figma-schema-v0.2.md`。
 
-打開 Terminal，進到你的專案目錄：
-
-```bash
-cd ~/your-project
-
-git clone https://github.com/sander217/sanstudio.git .claude/skills/design-agent-studio
-```
-
-> 如果你的專案已經有 `.claude/skills/` 目錄，直接 clone 進去就好。如果沒有，這個指令會自動建立。
-
-### 步驟 2：把 routing 加到專案的 CLAUDE.md
-
-Claude Code 需要知道這些 skill 存在。把 routing 設定加到你專案的 `CLAUDE.md`：
-
-```bash
-cat .claude/skills/design-agent-studio/CLAUDE.md >> CLAUDE.md
-```
-
-> 如果你的專案還沒有 `CLAUDE.md`，這個指令會自動建立一個。
-
-### 步驟 3：驗證
-
-在 Terminal 打開 Claude Code：
-
-```bash
-claude
-```
-
-然後輸入：
-
-```
-我需要設計一個新功能
-```
-
-如果安裝成功，Claude Code 會啟動 `/context-lock`（Gate 1），開始問你關於需求的問題。如果它直接回答你而沒有進入結構化流程，檢查 `CLAUDE.md` 有沒有正確寫入。
-
----
-
-## 階段二：安裝 Figma Plugin（3 分鐘）
-
-Plugin 負責把 AI 生成的設計 JSON 變成 Figma 裡的可編輯元件 —— 內含 **真圖**（base64 內嵌）與 **SVG icon** 原生繪製,frame 尺寸也固定正確。不需要任何第三方匯入工具。
-
-### 步驟 1：編譯 Plugin
-
-```bash
-cd .claude/skills/design-agent-studio/figma-plugin
-
-npm install --save-dev @figma/plugin-typings
-npx tsc
-```
-
-> 如果看到 TypeScript 錯誤，確認 `tsconfig.json` 裡 `strict` 是 `false`。
-
-### 步驟 2：在 Figma 載入 Plugin
-
-1. 打開 **Figma 桌面版**
-2. 左上角 **Figma logo** → **Plugins** → **Development** → **Import plugin from manifest...**
-3. 選擇：`.claude/skills/design-agent-studio/figma-plugin/manifest.json`
-4. Plugin 會出現在 **Plugins → Development → Design Agent Studio**
-
-### 步驟 3：測試 Plugin
-
-1. 在 Figma 開一個新檔案
-2. 右鍵 → **Plugins** → **Development** → **Design Agent Studio**
-3. Plugin 面板打開，看到三個 tab：**Paste JSON** / **Upload file** / **Auto-import**
-4. 打開 `figma-plugin/test-sample.json`，複製 JSON
-5. 貼到 **Paste JSON** tab
-6. preview 顯示 "2 screens, 15+ nodes" → 點 **Import to Figma**
-7. Canvas 上出現兩個 frame：**Welcome / default** 和 **Welcome / empty**
-
-看到兩個設計 frame = Plugin 安裝成功。
-
----
-
-## 階段三：設定自動匯出（2 分鐘）
-
-讓你在 Claude Code 裡說 "export" 就自動把設計送到 Figma。
-
-### 步驟 1：啟動 Bridge Server
-
-開一個新的 Terminal tab（保持開著）：
-
-```bash
-cd .claude/skills/design-agent-studio
-node figma-plugin/server.js
-```
-
-你會看到：
-
-```
-  Design Agent Studio — Bridge Server
-  Listening on http://localhost:3333
-
-  POST /push  — send JSON from Claude Code
-  GET  /pull  — Figma Plugin fetches pending JSON
-  GET  /status — health check
-```
-
-> 這個 Terminal 需要一直開著。Claude 產生的 HTML / JSON / DESIGN.md / handoff docs 會寫到 `~/sanstudio-ai-output/`，不會塞進 repo 根目錄。
-
-### 步驟 2：Figma Plugin 開始監聽
-
-1. 在 Figma 打開 Plugin
-2. 切到 **Auto-import** tab
-3. 點 **Start listening**
-4. 狀態燈從灰色變黃色（"Connected — waiting for export..."）
-
-### 步驟 3：測試自動匯出
-
-```bash
-curl -s -X POST http://localhost:3333/push \
-  -H "Content-Type: application/json" \
-  -d @.claude/skills/design-agent-studio/figma-plugin/test-sample.json
-```
-
-回應應該是：
-
-```json
-{"status":"ok","push_id":1,"screens":2,"nodes":15}
-```
-
-然後看 Figma — 設計自動出現了。
-
----
-
-## 階段四：訓練你的設計 DNA（5 分鐘起，可隨時加碼）
-
-**這一步是把模型從「generic hi-fi」變成「像你會做的東西」的關鍵。** 不做這步系統還是會跑，但出來的東西沒有你的味道。
-
-### 4.1 — 必做：填 style-manifesto.md（10 條鐵則 = 30 分鐘）
-
-打開 `.claude/skills/design-agent-studio/skills/design-lock/references/style-manifesto.md`。
-
-這是一份 **partial DESIGN.md**，每次 Gate 3 hi-fi 都會載入它當 hard constraint。
-
-最低限度填好 `Do's and Don'ts` 一段：
-
-```markdown
-### Do
-- Do 真實內容：所有金額、名字、數字必須是真資料
-- Do 至少一個 data viz：只要 app 有數字，就要有 chart / sparkline / progress
-- Do 字級 ≥3 階：display / headline / body / label
-- ...
-
-### Don't
-- Don't 灰色 placeholder：任何畫面有 #E5E5E5 空方塊 = 失敗
-- Don't emoji 當 icon：🦷 在 UI 裡 = 即時 reject，用 Iconify SVG
-- Don't web pattern in app：80–120px section gap、50/50 split = wrong surface
-- ...
-```
-
-10–20 條具體規則就夠。寫處方式（什麼時候做、什麼時候不做），不要寫感想。
-
-### 4.2 — 強烈建議：補 reference library（每張截圖 5–10 分鐘）
-
-`.claude/skills/design-agent-studio/skills/design-lock/references/mobile-app-examples/` 下面有產業 bucket：
-
-```
-mobile-app-examples/
-├── finance/
-├── accounting/
-├── ecommerce/
-├── social/
-├── wellness/
-├── productivity/
-└── content/
-```
-
-對每個你常做的產業，丟 3–5 張 Mobbin / Dribbble 截圖進去，每張複製 `_template.md` 並填好——**重點是「我的處方」段落**：什麼時候該抄、什麼時候絕對不要。
-
-> **20–30 張標註過的截圖，勝過 200 張沒標註的。** 不要囤積。
-
-### 4.3 — 可選：填 extracted_tokens
-
-每個截圖標註裡有 `extracted_tokens` YAML 區塊。把 hex / fontSize / rounded 抄進去，Gate 3 可以直接拿來當起點 token。
-
----
-
-## 日常使用
-
-### 啟動（每次工作開始）
-
-```bash
-# Terminal Tab 1：Bridge Server（保持開著）
-cd your-project
-node .claude/skills/design-agent-studio/figma-plugin/server.js
-
-# Terminal Tab 2：Claude Code
-cd your-project
-claude
-```
-
-在 Figma 打開 Plugin → Auto-import → Start listening。
-
-### 使用
-
-直接用自然語言跟 Claude Code 說你的設計需求：
-
-```
-> 我需要設計一個 onboarding flow，新用戶進來 3 天內流失 55%
-
-> 這兩個版本哪個比較好？（附截圖）
-
-> 這個 checkout 頁面轉換率只有 23%，幫我看看有什麼問題
-
-> 把這個進度指示器改得更有動力感
-```
-
-系統會自動判斷你的需求類型：
-
-| 你說的 | 系統做的 |
-|--------|---------|
-| "我需要設計..." | 三關全走：理解需求 → 探索方向 → 生成設計 |
-| "哪個版本好？" | 評估分析，你決定要不要繼續做設計 |
-| "這個設計有什麼問題？" | 問題診斷，你決定要不要讓 AI 改 |
-| "改一下這個按鈕" | 跳過方向探索，直接改 |
-
-### 匯出到 Figma
-
-當你對設計滿意，說 "export"。Claude Code 會自動把 JSON 送到 bridge server，Figma Plugin 自動接收並畫出設計。
-
-HTML mockup + DESIGN.md 會留在外部 output session 裡，Figma 只讀 `figma/design-export.json`。
-
----
-
-## DESIGN.md — 跨 Gate 的視覺契約
-
-每次 Gate 1 跑完會產出一份 `DESIGN.md`，路徑：
+## 維護者看的 repo 結構
 
 ```text
-~/sanstudio-ai-output/sessions/<timestamp>-<slug>/DESIGN.md
+skills/            產品本體，gate 地圖見 CLAUDE.md
+TASTE.md           維護者自己的品味，不出貨
+design-systems/    73 份匯入的 DESIGN.md 參考（Apache 2.0 和 MIT），不出貨
+figma-plugin/      維護者用的本機 bridge，不出貨
+packaging/agensi/  marketplace 用的 pack README、NOTICE 和上架文案草稿
+scripts/package-agensi.sh   打 dist/sanstudio-pack-v<版本>.zip 並跑 Agensi 檢查
 ```
 
-這份檔案是 **YAML frontmatter（機讀 design tokens）+ markdown body（rationale + Do's/Don'ts）**：
+## 授權
 
-```yaml
----
-colors:
-  primary: "#0B0F1A"
-  on-surface: "#F4F4F5"
-typography:
-  display-lg:
-    fontFamily: Inter
-    fontSize: 48px
-    fontWeight: 700
-components:
-  button-primary:
-    backgroundColor: "{colors.primary}"   # token reference
-    rounded: "{rounded.full}"
----
-
-## Do's and Don'ts
-- Don't 紫色作為 primary
-- Do balance ≥48pt
-```
-
-**Gate 3 載入 DESIGN.md 後**：
-- 解析 token reference（`{colors.primary}` → `#0B0F1A`）
-- 跑 lint（WCAG AA 對比 ≥ 4.5:1、broken refs、section order）
-- 在生成的 HTML 裡加 token-trace 註解：`<!-- {components.button-primary.backgroundColor} -->`
-- BLOCKING 規則沒過 = 不出 export
-
-**為什麼重要**：以前 Gate 1 跟 Gate 3 之間靠 prose 傳遞視覺意圖（容易丟失），現在靠這份 machine-readable + lintable 的契約。
-
----
-
-## 目錄結構
-
-```
-your-project/
-├── CLAUDE.md                                    ← 你的專案設定（被追加了 routing 規則）
-└── .claude/skills/design-agent-studio/
-    ├── CLAUDE.md                                ← skill routing 設定
-    ├── README.md
-    ├── scripts/
-    │   └── export-design-session.sh
-    ├── skills/
-    │   ├── context-lock/SKILL.md                ← Gate 1
-    │   ├── direction-lock/SKILL.md              ← Gate 2
-    │   └── design-lock/
-    │       ├── SKILL.md                         ← Gate 3
-    │       ├── design-md-spec.md                ← DESIGN.md 格式規範
-    │       ├── design-techniques-db.md
-    │       ├── figma-schema-v0.2.md
-    │       ├── svg-patterns.md
-    │       ├── mobile-app-patterns.md
-    │       └── references/
-    │           ├── INDEX.md
-    │           ├── _template.md
-    │           ├── _DESIGN.example.md
-    │           ├── style-manifesto.md           ← 你的個人設計信條（必填）
-    │           └── mobile-app-examples/         ← 標註過的截圖（自己補）
-    │               ├── finance/
-    │               ├── ecommerce/
-    │               └── ...
-    └── figma-plugin/
-        ├── manifest.json
-        ├── code.ts / code.js
-        ├── ui.html
-        ├── tsconfig.json
-        ├── test-sample.json
-        └── server.js
-```
-
-外部輸出目錄（每次 export 自動建立）：
-
-```text
-~/sanstudio-ai-output/
-├── latest -> sessions/<timestamp>-<slug>
-└── sessions/
-    └── <timestamp>-<slug>/
-        ├── session.json
-        ├── DESIGN.md            ← Gate 1 產出，Gate 3 lint
-        ├── html/                ← hi-fi mockup（每個 screen 一份）
-        ├── figma/
-        │   └── design-export.json
-        └── docs/                ← handoff docs / decisions
-```
-
----
-
-## 常見問題
-
-### Claude Code 沒有進入結構化流程，直接回答我
-
-檢查 `CLAUDE.md`（專案根目錄那個）有沒有 "Design Agent Studio" 的 section。如果沒有，重新跑：
-
-```bash
-cat .claude/skills/design-agent-studio/CLAUDE.md >> CLAUDE.md
-```
-
-### Gate 3 出來的設計很 generic、沒有我的味道
-
-去填 `references/style-manifesto.md` 的 Do's/Don'ts，並補 reference library 的標註截圖。**沒做階段四 = Gate 3 只能用模型預設品味做設計。**
-
-### Plugin 在 Figma 裡找不到
-
-確認你用的是 **Figma 桌面版**，不是瀏覽器版。瀏覽器版不支援載入本地 Plugin。
-
-### Plugin 匯入後 Figma 裡什麼都沒有
-
-可能的原因：
-1. **JSON 格式錯誤** — Plugin UI 會顯示紅色錯誤訊息
-2. **字型沒裝** — Plugin 預設用 Inter。沒有的話去 https://rsms.me/inter/ 下載
-3. **frame 在畫布外面** — 試試 `Cmd+Shift+1`（Zoom to fit）
-
-### Bridge Server 連不上
-
-```bash
-curl http://localhost:3333/status
-```
-
-如果回應 `connection refused`，server 沒在跑。重新啟動：
-
-```bash
-node .claude/skills/design-agent-studio/figma-plugin/server.js
-```
-
-### Auto-import 燈號一直是紅色
-
-紅色 = Plugin 連不到 bridge server。確認：
-1. Bridge server 有在跑（看 Terminal 有沒有 "Listening on http://localhost:3333"）
-2. `manifest.json` 裡 `devAllowedDomains` 包含 `"http://localhost:3333"`
-3. 重新載入 Plugin
-
-### TypeScript 編譯失敗
-
-確認 `tsconfig.json`：
-
-```json
-{
-  "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["ES2017"],
-    "module": "none",
-    "strict": false,
-    "skipLibCheck": true,
-    "noEmitOnError": false,
-    "removeComments": true
-  },
-  "include": ["./code.ts"]
-}
-```
-
-### Export 失敗，提示 "DESIGN.md lint failed: broken-ref"
-
-DESIGN.md 裡有 token reference 找不到對應定義（例如 `{colors.brand}` 但 `colors.brand` 沒宣告）。打開 session 的 `DESIGN.md`，補上缺的 token，重跑 export。
-
-### Export 失敗，提示 "contrast-ratio < 4.5:1"
-
-WCAG AA lint 沒過——前景色跟背景色對比不夠。修 DESIGN.md 的 colors，或調整 component 顏色組合。
-
-### 我用的是 Claude.ai 不是 Claude Code
-
-目前 Design Agent Studio 主要支援 Claude Code。Claude.ai 可以把 skill file 內容貼到 Project Instructions 裡，但自動匯出到 Figma 不可用——需要手動 copy-paste JSON 到 Plugin。
-
----
-
-## 更新
-
-```bash
-cd .claude/skills/design-agent-studio
-git pull
-cd figma-plugin
-npx tsc
-```
-
-然後在 Figma 重新載入 Plugin（不需要重新 import manifest，重新跑 Plugin 就好）。
+商業授權，見 `LICENSE`。`design-systems/` 底下的檔案維持上游授權，見 `design-systems/NOTICE.md`。

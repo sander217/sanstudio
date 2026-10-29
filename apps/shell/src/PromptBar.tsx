@@ -14,9 +14,11 @@ interface Props {
   lastError: string | null;
   /** Daemon health from /api/claude/health. null = still probing. */
   daemon: DaemonHealth | null;
+  /** Project ID — passed to runIterate so claude spawns in the right cwd. */
+  projectId?: string | null;
 }
 
-export function PromptBar({ sessionSlug, lastError, daemon }: Props) {
+export function PromptBar({ sessionSlug, lastError, daemon, projectId }: Props) {
   const [draft, setDraft] = useState('');
   const [busy, setBusy] = useState<'sending' | 'copied' | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
@@ -54,7 +56,7 @@ export function PromptBar({ sessionSlug, lastError, daemon }: Props) {
     setProgress('Starting Claude…');
     try {
       const startedAt = Date.now();
-      for await (const evt of runIterate({ prompt: text })) {
+      for await (const evt of runIterate({ prompt: text, projectId })) {
         if (evt.type === 'started') setProgress('Claude is running Gate 1 → 2 → 3…');
         else if (evt.type === 'stdout') {
           // Show the last non-empty line as a heartbeat.
@@ -101,10 +103,9 @@ export function PromptBar({ sessionSlug, lastError, daemon }: Props) {
       : 'Layer 0 · manual sync';
 
   return (
-    <header style={bar}>
+    <div style={bar}>
       <div style={brand}>
         <span style={dot} />
-        <strong style={brandText}>sanstudio · shell</strong>
         <span style={subtle} title={daemon && !daemon.ok ? daemon.error : undefined}>
           {layerLabel}
         </span>
@@ -145,18 +146,16 @@ export function PromptBar({ sessionSlug, lastError, daemon }: Props) {
           <span style={statusIdle}>● waiting for first artifact</span>
         )}
       </div>
-    </header>
+    </div>
   );
 }
 
 const bar: React.CSSProperties = {
   display: 'grid',
-  gridTemplateColumns: '220px 1fr 200px',
+  gridTemplateColumns: '120px 1fr 220px',
   alignItems: 'center',
-  gap: 16,
-  padding: '10px 16px',
-  borderBottom: '1px solid #e2e8f0',
-  background: '#fff',
+  gap: 12,
+  width: '100%',
   fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif',
 };
 const brand: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 8 };
