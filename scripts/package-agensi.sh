@@ -58,6 +58,15 @@ cp "$ROOT/packaging/agensi/NOTICE.md" "$PKG/NOTICE.md"
 mkdir -p "$PKG/licenses" && cp "$ROOT/packaging/agensi/licenses/"*.txt "$PKG/licenses/"
 
 # ---- scan ------------------------------------------------------------------
+echo "scan: git file modes"
+# A file stored as a symlink (mode 120000) checks out as a plain file on a
+# machine with core.symlinks=false, so the bug hides on macOS, then breaks
+# Linux clones with "File name too long". Every tracked file must be regular.
+if git -C "$ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  links=$(git -C "$ROOT" ls-files -s | awk '$1==120000 {print $4}')
+  [[ -z "$links" ]] || { echo "$links" | sed 's/^/  symlink entry: /'; fail "tracked symlink entries; fix with: git rm --cached <file> && git add <file>"; }
+fi
+
 echo "scan: private identifiers and local paths"
 FORBIDDEN='/Users/|localhost|127\.0\.0\.1|sanstudio-ai-output|gamegen|xtraspots|xtraplug|northstar|royroshen|sander@|style-manifesto'
 if grep -rnEi "$FORBIDDEN" "$PKG" ; then
