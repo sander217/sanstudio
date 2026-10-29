@@ -11,7 +11,7 @@
 | G0 | research-synthesis | 用戶為什麼要這個，證據撐得住什麼，還不知道什麼 | `research/report.md` |
 | G1 | context-lock | 做給誰、哪種 surface、哪些顏色和字體 | `DESIGN.md` |
 | G2 | direction-lock | 三種解法，每個都對應一條研究發現 | `html/directions/` |
-| G3 | design-lock | 選定的解法長什麼樣，真內容，lint 通過 | `html/`、`figma/design-export.json` |
+| G3 | design-lock | 選定的解法長什麼樣，真內容，lint 通過 | `html/`、`review/` |
 | G4 | production-lock | 工程師開工需要的一切 | `docs/` |
 
 `design-chain` 是入口。它選 lane（fast、standard、major），依序跑關，每關結束停下來等 `APPROVE`、`ITERATE <備註>`、`BACK G<n>` 或 `STOP`。中文也可以：確認、改、回到 G2、停。
@@ -61,7 +61,7 @@ G3 的精修動詞：`ITERATE polish|bolder|quieter|distill|harden|clarify|types
 
 ## Figma
 
-有連 Figma MCP 時，Gate 3 直接推。沒有的話，它把 `figma/design-export.json` 寫進 session 資料夾，格式照 `skills/design-lock/figma-schema-v0.2.md`。
+選配。有連 Figma MCP 時，Gate 3 問你一次要不要推，要就直接推。沒有連就整段跳過，除非你要求（開頭加 `figma: export` 或說「匯出 Figma」），才把 `figma/design-export.json` 寫進 session 資料夾，格式照 `skills/design-lock/figma-schema-v0.2.md`。
 
 ## 維護者看的 repo 結構
 

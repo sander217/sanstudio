@@ -80,7 +80,7 @@ Every visual artifact is an HTML file on disk, never inline. Images are mandator
 
 ## Figma
 
-When a Figma MCP is connected, Gate 3 pushes directly. Otherwise it writes `figma/design-export.json` (schema in `skills/design-lock/figma-schema-v0.2.md`) and makes no network call. The local bridge in `figma-plugin/` is maintainer tooling: `node figma-plugin/server.js`, then Figma plugin, Auto-import, Start listening. The skills never assume it is running.
+Figma is optional. When a Figma MCP is connected, Gate 3 asks once and pushes. Without one it skips Figma unless the user asks (`figma: export` or "export to Figma"), then writes `figma/design-export.json` (schema in `skills/design-lock/figma-schema-v0.2.md`). It never calls a local server. The local bridge in `figma-plugin/` is maintainer tooling: `node figma-plugin/server.js`, then Figma plugin, Auto-import, Start listening. The skills never assume it is running.
 
 ## Handoff blocks
 

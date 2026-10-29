@@ -1,9 +1,9 @@
 ---
 name: design-lock
-description: Gate 3 of sanstudio. Executes the confirmed direction as a hi-fi HTML mockup with real content and images, enforces DESIGN.md tokens, craft rules and the user's taste, runs the Hi-Fi Fill Checklist and lint, and exports Figma JSON when a Figma tool is connected.
+description: Gate 3 of sanstudio. Executes the confirmed direction as a hi-fi HTML mockup with real content and images, enforces DESIGN.md tokens, craft rules and the user's taste, runs the Hi-Fi Fill Checklist and lint, and exports to Figma only when a Figma tool is connected or the user asks.
 when_to_use: Invoked by design-chain after a direction is approved, or on the fast lane right after context-lock. Use directly when the user says ITERATE on an existing mockup or asks for a hi-fi mockup, a Figma export or a pixel-level design by name. Emits a DESIGN-LOCK handoff block.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   suite: sanstudio
   gate: "3"
 ---
@@ -978,50 +978,45 @@ REVIEW: <method> · <heuristics total>/<max> · P0 <n> · P1 <n> · disposition 
 
 ---
 
-## Step 14: Figma Export
+## Step 14: Figma Export (optional)
 
-"Ready to export. Full flow, key screens, or partial?"
+Figma is optional. The chain is complete without it: the HTML mockup, the
+captures and `DESIGN.md` are the deliverables. Run this step only when one of
+these is true; otherwise skip it and say so in one line.
 
-### Detect Figma MCP (check BEFORE choosing export path)
+- A Figma tool is connected: any tool whose name contains `figma`
+  (case-insensitive), for example `mcp__Figma_Dev_Mode__*` or
+  `mcp__plugin_design_figma__*`. Ask once at the Final Gate: "Push this to
+  Figma? Full flow, key screens, or skip."
+- The user asked for it: "export to Figma", "Figma JSON", "匯出 Figma", or the
+  prefix control `figma: export`.
 
-At the start of every export step, scan available tools for any name containing
-`figma` (case-insensitive). Common namespaces include:
+Never call a local server, run a script, or write outside the session folder
+for this step.
 
-- `mcp__Figma_Dev_Mode__*`
-- `mcp__plugin_design_figma__*`
-- Any tool with "figma" in its name
+### Path A: Figma tool connected and the user said yes
 
----
+1. Read `skills/design-lock/figma-schema-v0.2.md` for the JSON schema.
+2. Generate `design-export.json` per the schema for the screens the user chose.
+3. Push it with the connected tool's create or import function.
+4. Confirm the push succeeded and name the Figma file that was updated.
 
-### Path A: Figma MCP connected ✅ (preferred)
+### Path B: no Figma tool, and the user asked for the file
 
-Push directly via MCP — no bridge server needed.
+1. Read `skills/design-lock/figma-schema-v0.2.md`.
+2. Write `<output-root>/sessions/<slug>/figma/design-export.json`.
+3. Tell the user where it is and that any importer that reads figma-schema
+   v0.2 can consume it.
 
-1. Read `skills/design-lock/figma-schema-v0.2.md` for JSON schema
-2. Generate `design-export.json` per schema
-3. Call the MCP tool to push (e.g. `create_design_system_rules`, `get_design_context`
-   or whichever push/import tool is available in the connected MCP)
-4. Confirm the push succeeded and tell the user which Figma file was updated
+### Otherwise: skip
 
-**Tell the user:**
-> "Figma MCP detected — pushing directly to Figma. No bridge server needed."
+> "Skipped Figma export (no Figma tool connected, not requested). Say `export to Figma` any time to get it."
 
----
-
-### Path B: No Figma MCP — file export only
-
-1. Read `skills/design-lock/figma-schema-v0.2.md` for JSON schema
-2. Generate `design-export.json` and write it to the session output:
-   `<output-root>/sessions/<slug>/figma/design-export.json`
-3. Tell the user where the file is and that it follows figma-schema v0.2, so
-   any importer that reads that schema can consume it. Make no network call.
-
-**Tell the user:**
-> "No Figma tool detected. Wrote figma/design-export.json to the session folder. Connect a Figma MCP to push directly next time."
+Record `figma_export: pushed | file | skipped` in the handoff block.
 
 (The sanstudio repository ships an optional local bridge under `figma-plugin/`
 for its maintainers. It is developer tooling, not part of the skill, and the
-skill never assumes it is running.)
+skill never uses it.)
 
 ---
 
@@ -1039,7 +1034,7 @@ what NOT to change (LOCKED decisions).
 
 ## Step 16: Final Gate
 
-Present outputs. "Confirm to export, or adjust?"
+Present outputs. "Confirm, or adjust?" When a Figma tool is connected, add the one-line Figma question from Step 14.
 
 After the user confirms the prototype, offer the next altitude when the chain is not
 already on the major lane:
@@ -1078,6 +1073,7 @@ open_issues: [P2/P3 count; P0/P1 must be 0 or listed as user-approved]
 hifi_fill_status: all-pass|regenerated-N-times
 iteration_rounds: [N]
 companion_docs: DDR,interaction-spec,handoff-summary
+figma_export: pushed|file|skipped
 ---END-DESIGN-LOCK---
 ```
 

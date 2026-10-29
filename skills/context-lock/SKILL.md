@@ -3,7 +3,7 @@ name: context-lock
 description: Gate 1 of sanstudio. Turns a fuzzy design request plus the research lock into a locked design spec with concrete visual constraints (hex colors, fonts, layout, surface) and a session DESIGN.md. Infers who the user is and why they need this before asking anything.
 when_to_use: Invoked by design-chain after research. Use directly only when the user asks for the context or visual contract step by name, uploads a UI screenshot or reference URL for extraction, or asks for a design critique or comparison. Emits a CONTEXT-LOCK handoff block.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   suite: sanstudio
   gate: "1"
 ---

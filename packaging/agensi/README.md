@@ -38,7 +38,7 @@ or redesign, `major` when engineering will build from it.
 | G0 | research-synthesis | research report with findings and gaps |
 | G1 | context-lock | session DESIGN.md (tokens and rules) |
 | G2 | direction-lock | three directions and a direction contract |
-| G3 | design-lock | hi-fi HTML, captures, review, Figma JSON |
+| G3 | design-lock | hi-fi HTML, captures, review, optional Figma export |
 | G4 | production-lock | states, components, handoff, readiness scorecard |
 
 ## Make it yours

@@ -10,6 +10,7 @@ The user steers the chain with a small vocabulary. Nothing else advances a gate.
 | `research: provided` | The user supplies findings. G0 runs Evaluate on them instead of Explore. G0 still runs. |
 | `taste: none` | Ignore `TASTE.md` for this session. Craft rules still apply. |
 | `output: <path>` | Use this output root for the session. |
+| `figma: export` | Produce the Figma export at Gate 3 even without a Figma tool (writes `figma/design-export.json`). Without this or a connected Figma tool, Gate 3 skips Figma. |
 
 ## Gate replies, after a handoff block
 

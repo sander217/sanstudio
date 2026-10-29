@@ -3,7 +3,7 @@ name: production-lock
 description: Gate 4 of sanstudio. Hardens a validated Gate 3 prototype into a complete, buildable design package with full state and screen coverage, responsive matrix, component spec, final copy, interaction and accessibility specs and a dev handoff. Reports an honest readiness scorecard and never claims the design is auto-shippable.
 when_to_use: Invoked by design-chain on the major lane after design-lock is approved. Use directly only when the user asks for a production package, dev handoff, state matrix or component spec by name and a DESIGN-LOCK block already exists. Emits a PRODUCTION-LOCK handoff block.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   suite: sanstudio
   gate: "4"
 ---
@@ -243,8 +243,10 @@ engineering work. Never report 100% from the gate alone.
 
 ## Step 10: Export + Companion Docs
 
-- Figma export of the FULL set (all screens × states), same path/protocol as
-  Gate 3 Step 14 (detect Figma MCP → MCP push, else bridge server).
+- Figma export of the FULL set (all screens × states), optional and only on
+  the same terms as Gate 3 Step 14: push when a Figma tool is connected and the
+  user agrees, write `figma/design-export.json` when the user asks for the
+  file, otherwise skip. Never use a local bridge or script.
 - Companion docs written to `docs/`: `completeness-matrix.md`,
   `component-library.md`, `interaction-spec.md`, `a11y.md`, `dev-handoff.md`,
   `production-readiness.md`.
@@ -280,7 +282,7 @@ a11y_status: AA-pass | AA-pass-with-flags | blocked
 readiness_pct: [N]%   # complete-by-design, never 100 from the tool alone
 human_required: [content, design-review, eng-feasibility, ...]
 companion_docs: completeness-matrix,component-library,interaction-spec,a11y,dev-handoff,production-readiness
-figma_exported: full-set | partial | none
+figma_exported: full-set | partial | none   # none is normal when Figma is not in use
 ---END-PRODUCTION-LOCK---
 ```
 

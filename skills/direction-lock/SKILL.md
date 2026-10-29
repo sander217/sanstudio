@@ -3,7 +3,7 @@ name: direction-lock
 description: Gate 2 of sanstudio. Takes the locked context and research findings, validates feasibility and visual-contract fit, and proposes three directions that differ in information architecture, interaction or composition, each tied to a finding. Produces flow diagrams, wireframes and a Direction Brief.
 when_to_use: Invoked by design-chain on the standard and major lanes after context-lock. Use directly only when the user asks for design directions, options, approaches or wireframes by name. Emits a DIRECTION-LOCK handoff block.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   suite: sanstudio
   gate: "2"
 ---

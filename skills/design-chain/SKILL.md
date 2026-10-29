@@ -3,7 +3,7 @@ name: design-chain
 description: One entry point for the whole sanstudio design pipeline. Turns a design request plus evidence into research, a locked visual contract, meaningfully different directions, a hi-fi mockup and, when asked, a production design package, pausing for your decision at every gate.
 when_to_use: Use when the user wants to design, redesign, critique or iterate on any interface (website, landing page, mobile app, dashboard, component or flow) and has not named a single gate. Triggers include "design this", "redesign", "make a mockup", "I need a landing page", "help me design", "幫我設計", "設計一個", "改一下這個 UI", a UI screenshot, a Figma link or a reference URL. Do not use for a one-line copy fix or a question that needs no design artifact.
 metadata:
-  version: 3.1.0
+  version: 3.1.1
   suite: sanstudio
   role: orchestrator
 ---
@@ -89,7 +89,7 @@ Invoke `direction-lock`. It first names the rut (the category default and its pr
 
 ### G3 Design lock
 
-Invoke `design-lock` for the chosen direction (fast lane: the single inferred direction). It loads `DESIGN.md`, the craft rules, the user's taste and the reference library, produces hi-fi HTML with real content, runs the Anti-Slop Pass, Hi-Fi Fill Checklist and `DESIGN.md` lint, then a **fresh-eyes review** from rendered captures by a context that did not build it (`skills/design-lock/references/review.md`), and acts on its disposition before the user sees anything. It exports Figma JSON when a Figma tool is connected.
+Invoke `design-lock` for the chosen direction (fast lane: the single inferred direction). It loads `DESIGN.md`, the craft rules, the user's taste and the reference library, produces hi-fi HTML with real content, runs the Anti-Slop Pass, Hi-Fi Fill Checklist and `DESIGN.md` lint, then a **fresh-eyes review** from rendered captures by a context that did not build it (`skills/design-lock/references/review.md`), and acts on its disposition before the user sees anything. Figma export is optional: it pushes when a Figma tool is connected and you agree, writes the JSON file only when you ask, and otherwise skips.
 
 ### G4 Production lock, major only
 
@@ -123,7 +123,7 @@ At the end of the lane, list what exists and where:
 | Direction wireframes (G2) | `html/directions/` |
 | Hi-fi mockup (G3) | `html/` |
 | Captures and review (G3) | `review/`, `docs/review.md` |
-| Figma export (G3, when connected) | `figma/design-export.json` |
+| Figma export (G3, optional, only when connected or asked) | Figma file, or `figma/design-export.json` |
 | Production package (G4) | `docs/` |
 | Decision record | `docs/decisions.md` |
 

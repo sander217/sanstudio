@@ -11,7 +11,7 @@ Works in Claude Code and any agent that loads `SKILL.md` folders. Ships no scrip
 | G0 | research-synthesis | Why does the user want this, what does the evidence support, what is unknown | `research/report.md` |
 | G1 | context-lock | Who it is for, which surface, which colors and fonts | `DESIGN.md` |
 | G2 | direction-lock | Three ways to solve it, each tied to a finding | `html/directions/` |
-| G3 | design-lock | What the chosen way looks like, real content, lint passed | `html/`, `figma/design-export.json` |
+| G3 | design-lock | What the chosen way looks like, real content, lint passed | `html/`, `review/` |
 | G4 | production-lock | What engineering needs to build it | `docs/` |
 
 `design-chain` is the entry point. It picks a lane (fast, standard or major), runs the gates, and stops after each one for `APPROVE`, `ITERATE <note>`, `BACK G<n>` or `STOP`.
@@ -62,7 +62,7 @@ Refine verbs give scoped passes at Gate 3: `ITERATE polish|bolder|quieter|distil
 
 ## Figma
 
-With a Figma MCP connected, Gate 3 pushes the mockup directly. Without one it writes `figma/design-export.json` in the session folder, following `skills/design-lock/figma-schema-v0.2.md`.
+Optional. With a Figma MCP connected, Gate 3 asks once and pushes the mockup directly. Without one it skips Figma entirely, unless you ask (`figma: export` or "export to Figma"), in which case it writes `figma/design-export.json` following `skills/design-lock/figma-schema-v0.2.md`.
 
 ## Repository layout for maintainers
 

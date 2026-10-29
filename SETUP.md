@@ -200,7 +200,7 @@ ITERATE bolder hero
 | 視覺契約 | `DESIGN.md` | 下次 session 直接帶入 |
 | 方向 wireframe | `html/directions/` | 給團隊看為什麼選這個 |
 | hi-fi mockup | `html/` | 瀏覽器打開看，給工程師對照 |
-| Figma 匯出 | `figma/design-export.json` | 有 MCP 時已直接推進 Figma |
+| Figma 匯出（選配） | Figma 檔，或 `figma/design-export.json` | 只有連了 Figma MCP 或你要求時才產出 |
 | 決策紀錄 | `docs/decisions.md` | 每關的 APPROVE、ITERATE、BACK |
 | 截圖和審查 | `review/`、`docs/review.md` | 分數、問題清單，`ITERATE polish` 的待辦 |
 | 設計包 | `docs/` | major lane 才有 |
@@ -224,7 +224,7 @@ mockup 是提案預覽，不是產品程式碼。鏈路永遠不寫你的產品 
 
 鏈路自己不帶腳本、不連網。它用你的 agent 本來就有的工具：web search、image search、瀏覽器、Mobbin 之類的 pattern library、Figma MCP。缺哪個就在產出裡記一行 evidence gap，繼續跑，不會卡住。
 
-Figma：有連 Figma MCP，G3 直接推。沒有，它把 `figma/design-export.json` 寫進 session 資料夾，格式照 `skills/design-lock/figma-schema-v0.2.md`。
+Figma 是選配：有連 Figma MCP，G3 會問你一次要不要推。沒有連就整段跳過，除非你開頭加 `figma: export` 或說「匯出 Figma」，才把 `figma/design-export.json` 寫進 session 資料夾，格式照 `skills/design-lock/figma-schema-v0.2.md`。
 
 ---
 
